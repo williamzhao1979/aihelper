@@ -1,0 +1,48 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "submit": "提交",
+    "cancel": "取消",
+    "success": "成功",
+    "failed": "失败"
+  },
+  "header": {
+    "title": "多平台 AI",
+    "subtitle": "一次提问，多个AI平台同时回答",
+    "language": "语言"
+  },
+  "form": {
+    "inputLabel": "输入您的问题或提示词",
+    "inputPlaceholder": "请输入您想要询问的问题，支持多行输入...",
+    "submitButton": "提交查询",
+    "submitting": "查询中...",
+    "selectServices": "选择AI平台",
+    "completed": "已完成",
+    "noServiceSelected": "请至少选择一个AI平台",
+    "streamingMode": "流式响应",
+    "streamingDescription": "实时获取AI响应",
+    "standardMode": "标准模式",
+    "standardDescription": "等待完整响应后显示",
+    "proFeature": "专业版功能"
+  },
+  "services": {
+    "chatgpt": "ChatGPT",
+    "deepseek": "DeepSeek",
+    "github": "GitHub Copilot",
+    "microsoft": "Microsoft Copilot"
+  },
+  "results": {
+    "title": "AI 回复结果",
+    "errorPrefix": "错误:",
+    "noResponse": "未收到回复",
+    "streaming": "正在接收回复...",
+    "streamComplete": "回复完成"
+  },
+  "errors": {
+    "networkError": "网络连接错误，请检查您的网络连接",
+    "apiError": "API调用失败，请稍后重试",
+    "invalidInput": "请输入有效的问题",
+    "serverError": "服务器错误，请稍后重试"
+  }
+}

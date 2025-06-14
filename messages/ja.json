@@ -1,0 +1,48 @@
+{
+  "common": {
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "submit": "送信",
+    "cancel": "キャンセル",
+    "success": "成功",
+    "failed": "失敗"
+  },
+  "header": {
+    "title": "マルチプラットフォーム AI",
+    "subtitle": "一度の質問で複数のAIプラットフォームから同時に回答を取得",
+    "language": "言語"
+  },
+  "form": {
+    "inputLabel": "質問またはプロンプトを入力してください",
+    "inputPlaceholder": "質問を入力してください。複数行に対応しています...",
+    "submitButton": "クエリを送信",
+    "submitting": "クエリ中...",
+    "selectServices": "AIプラットフォームを選択",
+    "completed": "完了",
+    "noServiceSelected": "少なくとも1つのAIプラットフォームを選択してください",
+    "streamingMode": "ストリーミング応答",
+    "streamingDescription": "リアルタイムでAI応答を取得",
+    "standardMode": "標準モード",
+    "standardDescription": "完全な応答を待機",
+    "proFeature": "プロ機能"
+  },
+  "services": {
+    "chatgpt": "ChatGPT",
+    "deepseek": "DeepSeek",
+    "github": "GitHub Copilot",
+    "microsoft": "Microsoft Copilot"
+  },
+  "results": {
+    "title": "AI応答結果",
+    "errorPrefix": "エラー:",
+    "noResponse": "応答を受信できませんでした",
+    "streaming": "応答を受信中...",
+    "streamComplete": "応答完了"
+  },
+  "errors": {
+    "networkError": "ネットワーク接続エラーです。インターネット接続を確認してください",
+    "apiError": "API呼び出しに失敗しました。後でもう一度お試しください",
+    "invalidInput": "有効な質問を入力してください",
+    "serverError": "サーバーエラーです。後でもう一度お試しください"
+  }
+}
