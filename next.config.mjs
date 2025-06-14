@@ -1,7 +1,7 @@
 import createNextIntlPlugin from 'next-intl/plugin';
- 
-const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
- 
+
+const withNextIntl = createNextIntlPlugin();
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -14,8 +14,12 @@ const nextConfig = {
     unoptimized: true,
   },
   experimental: {
-    optimizePackageImports: ['lucide-react']
-  }
+    // Remove any experimental features that might cause issues
+  },
+  // Ensure proper static generation
+  output: 'standalone',
+  // Add proper error handling for missing translations
+  i18n: undefined, // Let next-intl handle i18n
 };
- 
+
 export default withNextIntl(nextConfig);

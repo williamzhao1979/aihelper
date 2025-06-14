@@ -72,10 +72,10 @@ export default function MultiPlatformAI() {
   const [isMounted, setIsMounted] = useState(false)
 
   const services: Service[] = [
-    { key: "chatgpt", name: t("services.chatgpt"), color: "from-green-400 to-green-600" },
-    { key: "deepseek", name: t("services.deepseek"), color: "from-purple-400 to-purple-600" },
-    { key: "github", name: t("services.github"), color: "from-gray-600 to-gray-800" },
-    { key: "microsoft", name: t("services.microsoft"), color: "from-blue-400 to-blue-600" },
+    { key: "chatgpt", name: "ChatGPT", color: "from-green-400 to-green-600" },
+    { key: "deepseek", name: "DeepSeek", color: "from-purple-400 to-purple-600" },
+    { key: "github", name: "GitHub Copilot", color: "from-gray-600 to-gray-800" },
+    { key: "microsoft", name: "Microsoft Copilot", color: "from-blue-400 to-blue-600" },
   ]
 
   // Check subscription status when user is authenticated
@@ -128,7 +128,7 @@ export default function MultiPlatformAI() {
 
     const selectedCount = Object.values(selectedServices).filter(Boolean).length
     if (selectedCount === 0) {
-      setError(t("form.noServiceSelected"))
+      setError("请至少选择一个AI服务")
       return
     }
 
@@ -212,9 +212,9 @@ export default function MultiPlatformAI() {
       if (err instanceof Error && err.name === "AbortError") {
         setError("Request cancelled")
       } else if (err instanceof TypeError && err.message.includes("fetch")) {
-        setError(t("errors.networkError"))
+        setError("网络错误，请检查网络连接")
       } else {
-        setError(err instanceof Error ? err.message : t("errors.serverError"))
+        setError(err instanceof Error ? err.message : "服务器错误")
       }
     } finally {
       setIsLoading(false)
@@ -226,7 +226,7 @@ export default function MultiPlatformAI() {
 
     const selectedCount = Object.values(selectedServices).filter(Boolean).length
     if (selectedCount === 0) {
-      setError(t("form.noServiceSelected"))
+      setError("请至少选择一个AI服务")
       return
     }
 
@@ -250,19 +250,19 @@ export default function MultiPlatformAI() {
       const data: ApiResponse = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || t("errors.apiError"))
+        throw new Error(data.error || "API错误")
       }
 
       if (data.success) {
         setResponses(data.results)
       } else {
-        throw new Error(data.error || t("errors.serverError"))
+        throw new Error(data.error || "服务器错误")
       }
     } catch (err) {
       if (err instanceof TypeError && err.message.includes("fetch")) {
-        setError(t("errors.networkError"))
+        setError("网络错误，请检查网络连接")
       } else {
-        setError(err instanceof Error ? err.message : t("errors.serverError"))
+        setError(err instanceof Error ? err.message : "服务器错误")
       }
     } finally {
       setIsLoading(false)
@@ -282,6 +282,18 @@ export default function MultiPlatformAI() {
 
   const canUseStreaming = session && hasActiveSubscription
 
+  // Don't render until mounted to avoid hydration issues
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span>加载中...</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="container mx-auto px-4 py-8 max-w-5xl">
@@ -294,14 +306,14 @@ export default function MultiPlatformAI() {
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent font-chinese">
-                {t("header.title")}
+                多平台 AI
               </h1>
             </div>
             <div className="flex-1 flex justify-end">
               <LanguageSwitcher />
             </div>
           </div>
-          <p className="text-gray-600 text-lg font-medium font-chinese">{t("header.subtitle")}</p>
+          <p className="text-gray-600 text-lg font-medium font-chinese">一次提问，多个AI平台同时回答</p>
         </div>
 
         {/* Input Section */}
@@ -309,11 +321,9 @@ export default function MultiPlatformAI() {
           <CardContent className="p-8">
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3 font-chinese">
-                  {t("form.inputLabel")}
-                </label>
+                <label className="block text-sm font-semibold text-gray-700 mb-3 font-chinese">输入您的问题</label>
                 <Textarea
-                  placeholder={t("form.inputPlaceholder")}
+                  placeholder="请输入您想要询问的问题..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   disabled={isLoading}
@@ -333,12 +343,12 @@ export default function MultiPlatformAI() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-gray-800 font-chinese">
-                          {isStreaming ? t("form.streamingMode") : t("form.standardMode")}
+                          {isStreaming ? "流式响应" : "标准响应"}
                         </span>
                         {isStreaming && (
                           <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
                             <Crown className="w-3 h-3" />
-                            <span>{t("form.proFeature")}</span>
+                            <span>专业功能</span>
                           </div>
                         )}
                         {!canUseStreaming && (
@@ -349,13 +359,13 @@ export default function MultiPlatformAI() {
                         )}
                       </div>
                       <p className="text-sm text-gray-600 font-chinese">
-                        {isStreaming ? t("form.streamingDescription") : t("form.standardDescription")}
+                        {isStreaming ? "实时显示AI回答过程" : "等待所有AI完成后显示结果"}
                       </p>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {isMounted && !canUseStreaming && isStreaming && (
+                  {!canUseStreaming && isStreaming && (
                     <SubscriptionDialog>
                       <Button
                         size="sm"
@@ -393,7 +403,7 @@ export default function MultiPlatformAI() {
                   ) : (
                     <Send className="w-4 h-4" />
                   )}
-                  {isLoading ? t("form.submitting") : t("form.submitButton")}
+                  {isLoading ? "提交中..." : "提交问题"}
                 </Button>
                 {isLoading && (
                   <div className="flex items-center gap-4 flex-1">
@@ -408,7 +418,7 @@ export default function MultiPlatformAI() {
                           isStreaming ? "bg-purple-500" : "bg-blue-500"
                         }`}
                       ></div>
-                      {completedCount}/{selectedCount} {t("form.completed")}
+                      {completedCount}/{selectedCount} 已完成
                     </div>
                   </div>
                 )}
@@ -427,7 +437,7 @@ export default function MultiPlatformAI() {
 
         {/* Service Selection */}
         <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4 font-chinese">{t("form.selectServices")}</h3>
+          <h3 className="text-lg font-semibold text-gray-700 mb-4 font-chinese">选择AI服务</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {services.map((service) => (
               <button
@@ -469,7 +479,7 @@ export default function MultiPlatformAI() {
         {/* Response Cards */}
         {(responses.length > 0 || streamingResponses.size > 0) && (
           <div className="space-y-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-6 font-chinese">{t("results.title")}</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-6 font-chinese">AI回答结果</h3>
 
             {/* Standard Responses */}
             {responses.map((aiResponse, index) => {
@@ -501,13 +511,11 @@ export default function MultiPlatformAI() {
                       {aiResponse.error ? (
                         <div className="flex items-center gap-2 text-red-600">
                           <AlertCircle className="w-4 h-4" />
-                          <span className="font-chinese">
-                            {t("results.errorPrefix")} {aiResponse.error}
-                          </span>
+                          <span className="font-chinese">错误: {aiResponse.error}</span>
                         </div>
                       ) : (
                         <div className="text-gray-700 leading-relaxed text-base font-chinese whitespace-pre-wrap">
-                          {aiResponse.response || t("results.noResponse")}
+                          {aiResponse.response || "暂无回答"}
                         </div>
                       )}
                     </div>
@@ -545,7 +553,7 @@ export default function MultiPlatformAI() {
                   <CardContent className="min-h-[200px] pt-0">
                     <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
                       <div className="text-gray-700 leading-relaxed text-base font-chinese whitespace-pre-wrap">
-                        {content || t("results.streaming")}
+                        {content || "正在流式回答中..."}
                         {isLoading && <span className="animate-pulse">|</span>}
                       </div>
                     </div>
@@ -557,31 +565,27 @@ export default function MultiPlatformAI() {
         )}
 
         {/* Authentication Status */}
-        {isMounted && (
-          <>
-            {status === "loading" ? (
-              <Card className="mt-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm">
-                <CardContent className="flex items-center justify-center p-6">
-                  <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                  <span>检查登录状态...</span>
-                </CardContent>
-              </Card>
-            ) : !session ? (
-              <Card className="mt-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm">
-                <CardContent className="p-6 text-center">
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    <Lock className="w-5 h-5 text-gray-500" />
-                    <span className="text-lg font-semibold">登录以使用完整功能</span>
-                  </div>
-                  <p className="text-gray-600 mb-4">登录后可使用流式响应等专业功能</p>
-                  <Button onClick={() => signIn()} className="bg-blue-600 hover:bg-blue-700">
-                    立即登录
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : null}
-          </>
-        )}
+        {status === "loading" ? (
+          <Card className="mt-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+            <CardContent className="flex items-center justify-center p-6">
+              <Loader2 className="w-6 h-6 animate-spin mr-2" />
+              <span>检查登录状态...</span>
+            </CardContent>
+          </Card>
+        ) : !session ? (
+          <Card className="mt-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+            <CardContent className="p-6 text-center">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Lock className="w-5 h-5 text-gray-500" />
+                <span className="text-lg font-semibold">登录以使用完整功能</span>
+              </div>
+              <p className="text-gray-600 mb-4">登录后可使用流式响应等专业功能</p>
+              <Button onClick={() => signIn()} className="bg-blue-600 hover:bg-blue-700">
+                立即登录
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </div>
   )
