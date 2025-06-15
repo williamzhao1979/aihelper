@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation"
+import DaddyGoFamilyPage from "@/components/daddy-go-family-page"
 
-export default function RootPage() {
-  // Redirect to the default locale
-  redirect("/zh")
+export default function Home() {
+  return <DaddyGoFamilyPage />
 }
