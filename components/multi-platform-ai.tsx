@@ -11,6 +11,8 @@ import { Switch } from "@/components/ui/switch"
 import { Check, Sparkles, Send, AlertCircle, Loader2, Zap, Crown, Lock } from "lucide-react"
 import LanguageSwitcher from "./language-switcher"
 import SubscriptionDialog from "./subscription-dialog"
+import Link from "next/link"
+import { useLocale } from "next-intl"
 
 interface AIResponse {
   service: string
@@ -53,6 +55,7 @@ interface Service {
 export default function MultiPlatformAI() {
   const t = useTranslations()
   const { data: session, status } = useSession()
+  const locale = useLocale()
 
   const [prompt, setPrompt] = useState("")
   const [selectedServices, setSelectedServices] = useState<SelectedServices>({
@@ -572,12 +575,11 @@ export default function MultiPlatformAI() {
               <span className="text-lg font-semibold font-chinese">更多功能</span>
             </div>
             <p className="text-gray-600 mb-4 font-chinese">体验我们的图像文字识别和审核功能</p>
-            <Button
-              onClick={() => (window.location.href = "/textreview")}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-chinese"
-            >
-              前往文字审核页面
-            </Button>
+            <Link href={`/${locale}/textreview`}>
+              <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-chinese">
+                前往文字审核页面
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 
