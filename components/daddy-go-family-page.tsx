@@ -4,7 +4,9 @@ import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Heart, Home, Star, Search, Smile, Camera, Eye, EyeOff, Sparkles, Gift } from "lucide-react"
+import { Heart, Home, Star, Search, Smile, Camera, Eye, EyeOff, Sparkles, Gift, ArrowLeft } from "lucide-react"
+import Link from "next/link"
+import { useLocale } from "next-intl"
 
 interface FamilyPhoto {
   url: string
@@ -19,6 +21,7 @@ interface FloatingHeart {
 }
 
 export default function DaddyGoFamilyPage() {
+  const locale = useLocale()
   const [showRiddleAnswer, setShowRiddleAnswer] = useState(false)
   const [currentPhoto, setCurrentPhoto] = useState<FamilyPhoto | null>(null)
   const [floatingHearts, setFloatingHearts] = useState<FloatingHeart[]>([])
@@ -111,6 +114,19 @@ export default function DaddyGoFamilyPage() {
       </div>
 
       <div className="max-w-4xl mx-auto p-4 space-y-8 relative z-20">
+        {/* Back to Home Button */}
+        <div className="flex justify-start">
+          <Link href={`/${locale}`}>
+            <Button
+              variant="outline"
+              className="bg-white/80 backdrop-blur-sm hover:bg-white/90 transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              返回首页
+            </Button>
+          </Link>
+        </div>
+
         {/* Header */}
         <Card className="relative overflow-hidden bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 text-white border-0 shadow-2xl">
           <div className="absolute inset-0 bg-gradient-to-r from-pink-500/20 to-blue-500/20 backdrop-blur-sm"></div>

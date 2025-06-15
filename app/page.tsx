@@ -1,5 +1,7 @@
-import DaddyGoFamilyPage from "@/components/daddy-go-family-page"
+// Restore the original redirect to default locale
+import { redirect } from "next/navigation"
 
-export default function Home() {
-  return <DaddyGoFamilyPage />
+export default function RootPage() {
+  // Redirect to the default locale
+  redirect("/zh")
 }
