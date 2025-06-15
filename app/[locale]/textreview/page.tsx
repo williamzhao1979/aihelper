@@ -570,6 +570,102 @@ export default function TextReviewPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Tutorial Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Languages className="w-5 h-5" />
+              使用教程
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center mb-6">
+              <p className="text-gray-600">以下是详细的使用步骤，帮助您更好地使用OCR文本提取功能</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Tutorial Step 1 */}
+              <div className="space-y-4">
+                <div className="text-center">
+                  <Badge variant="outline" className="mb-3 px-4 py-2 text-lg font-semibold">
+                    步骤 1: 上传图片
+                  </Badge>
+                </div>
+                <div className="border rounded-lg overflow-hidden bg-gray-50">
+                  <img
+                    src="/placeholder.svg?height=300&width=500&text=Tutorial+Step+1+-+Upload+Images"
+                    alt="教程步骤1 - 上传图片"
+                    className="w-full h-64 object-cover"
+                  />
+                </div>
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <h3 className="font-semibold text-blue-900 mb-2">上传和排序图片</h3>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• 拖拽图片到上传区域或点击选择图片</li>
+                    <li>• 支持JPG、PNG格式，最大10MB</li>
+                    <li>• 使用上下箭头调整图片顺序</li>
+                    <li>• 可以删除不需要的图片</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Tutorial Step 2 */}
+              <div className="space-y-4">
+                <div className="text-center">
+                  <Badge variant="outline" className="mb-3 px-4 py-2 text-lg font-semibold">
+                    步骤 2: 处理选项
+                  </Badge>
+                </div>
+                <div className="border rounded-lg overflow-hidden bg-gray-50">
+                  <img
+                    src="/placeholder.svg?height=300&width=500&text=Tutorial+Step+2+-+Processing+Options"
+                    alt="教程步骤2 - 处理选项"
+                    className="w-full h-64 object-cover"
+                  />
+                </div>
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <h3 className="font-semibold text-green-900 mb-2">选择处理方式</h3>
+                  <ul className="text-sm text-green-800 space-y-1">
+                    <li>
+                      • <strong>单独处理</strong>：每张图片独立识别文字
+                    </li>
+                    <li>
+                      • <strong>合并处理</strong>：将所有图片文字合并为一篇文章
+                    </li>
+                    <li>• 点击"调用OpenAI"开始处理</li>
+                    <li>• 等待AI分析和文字提取完成</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h3 className="font-semibold text-yellow-900 mb-3 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5" />
+                使用提示
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-yellow-800">
+                <div>
+                  <h4 className="font-medium mb-2">图片质量建议：</h4>
+                  <ul className="space-y-1">
+                    <li>• 确保文字清晰可见</li>
+                    <li>• 避免模糊或倾斜的图片</li>
+                    <li>• 光线充足，对比度良好</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">处理结果：</h4>
+                  <ul className="space-y-1">
+                    <li>• 自动检测文字语言</li>
+                    <li>• 提供原始和修正文本</li>
+                    <li>• 给出改进建议</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
