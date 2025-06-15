@@ -460,13 +460,13 @@ export default function TextReviewPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">提取的文本:</label>
-                      <div className="p-4 bg-gray-50 rounded-lg h-80 overflow-y-auto border">
+                      <div className="p-4 bg-gray-50 rounded-lg h-full overflow-y-auto border">
                         <p className="text-sm leading-relaxed whitespace-pre-wrap">{mergedResult.result.text}</p>
                       </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">修正后的文本:</label>
-                      <div className="p-4 bg-blue-50 rounded-lg h-80 overflow-y-auto border border-blue-200">
+                      <div className="p-4 bg-blue-50 rounded-lg h-full overflow-y-auto border border-blue-200">
                         <p className="text-sm leading-relaxed whitespace-pre-wrap">
                           {mergedResult.result.text_refined}
                         </p>
@@ -584,7 +584,7 @@ export default function TextReviewPage() {
               <p className="text-gray-600">以下是详细的使用步骤，帮助您更好地使用OCR文本提取功能</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-8">
               {/* Tutorial Step 1 */}
               <div className="space-y-4">
                 <div className="text-center">
@@ -594,9 +594,11 @@ export default function TextReviewPage() {
                 </div>
                 <div className="border rounded-lg overflow-hidden bg-gray-50">
                   <img
-                    src="/placeholder.svg?height=300&width=500&text=Tutorial+Step+1+-+Upload+Images"
+                    // src="/textreview-step1.png?height=300&width=500&text=Tutorial+Step+1+-+Upload+Images"
+                    src="/textreview-step1.png?text=Tutorial+Step+1+-+Upload+Images"
                     alt="教程步骤1 - 上传图片"
-                    className="w-full h-64 object-cover"
+                    // className="w-full h-64 object-cover"
+                    className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="p-4 bg-blue-50 rounded-lg">
@@ -619,9 +621,11 @@ export default function TextReviewPage() {
                 </div>
                 <div className="border rounded-lg overflow-hidden bg-gray-50">
                   <img
-                    src="/placeholder.svg?height=300&width=500&text=Tutorial+Step+2+-+Processing+Options"
+                    // src="/textreview-step2.png?height=300&width=500&text=Tutorial+Step+2+-+Processing+Options"
+                    src="/textreview-step2.png?text=Tutorial+Step+2+-+Processing+Options"
                     alt="教程步骤2 - 处理选项"
-                    className="w-full h-64 object-cover"
+                    // className="w-full h-64 object-cover"
+                    className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="p-4 bg-green-50 rounded-lg">
