@@ -45,6 +45,43 @@ interface MergedOCRResult {
   error?: string
 }
 
+// Add image compression utility
+const compressImage = (file: File, maxWidth = 1024, quality = 0.8): Promise<File> => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement("canvas")
+    const ctx = canvas.getContext("2d")!
+    const img = new Image()
+
+    img.onload = () => {
+      // Calculate new dimensions
+      const ratio = Math.min(maxWidth / img.width, maxWidth / img.height)
+      canvas.width = img.width * ratio
+      canvas.height = img.height * ratio
+
+      // Draw and compress
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const compressedFile = new File([blob], file.name, {
+              type: "image/jpeg",
+              lastModified: Date.now(),
+            })
+            resolve(compressedFile)
+          } else {
+            resolve(file) // Fallback to original if compression fails
+          }
+        },
+        "image/jpeg",
+        quality,
+      )
+    }
+
+    img.src = URL.createObjectURL(file)
+  })
+}
+
 export default function TextReviewPage() {
   const [images, setImages] = useState<UploadedImage[]>([])
   const [results, setResults] = useState<OCRResult[]>([])
@@ -94,21 +131,43 @@ export default function TextReviewPage() {
     fileInputRef.current?.click()
   }
 
-  const addImages = (files: File[]) => {
-    files.forEach((file, fileIndex) => {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const newImage: UploadedImage = {
-          id: `${baseId}-${Date.now()}-${fileIndex}-${file.name}`,
-          name: file.name,
-          size: file.size,
-          preview: e.target?.result as string,
-          file: file,
+  const addImages = async (files: File[]) => {
+    for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
+      const file = files[fileIndex]
+
+      try {
+        // Compress image if it's larger than 2MB
+        const compressedFile = file.size > 2 * 1024 * 1024 ? await compressImage(file, 1024, 0.8) : file
+
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const newImage: UploadedImage = {
+            id: `${baseId}-${Date.now()}-${fileIndex}-${file.name}`,
+            name: file.name,
+            size: compressedFile.size,
+            preview: e.target?.result as string,
+            file: compressedFile,
+          }
+          setImages((prev) => [...prev, newImage])
         }
-        setImages((prev) => [...prev, newImage])
+        reader.readAsDataURL(compressedFile)
+      } catch (error) {
+        console.error(`Failed to process ${file.name}:`, error)
+        // Still add the original file if compression fails
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const newImage: UploadedImage = {
+            id: `${baseId}-${Date.now()}-${fileIndex}-${file.name}`,
+            name: file.name,
+            size: file.size,
+            preview: e.target?.result as string,
+            file: file,
+          }
+          setImages((prev) => [...prev, newImage])
+        }
+        reader.readAsDataURL(file)
       }
-      reader.readAsDataURL(file)
-    })
+    }
   }
 
   const removeImage = (id: string) => {
@@ -149,6 +208,16 @@ export default function TextReviewPage() {
     setError(null)
 
     try {
+      // Check total file size before sending
+      const totalSize = images.reduce((sum, img) => sum + img.file.size, 0)
+      const maxSize = 10 * 1024 * 1024 // 10MB limit
+
+      if (totalSize > maxSize) {
+        throw new Error(
+          `总文件大小 (${formatFileSize(totalSize)}) 超过限制 (${formatFileSize(maxSize)})。请压缩图片或减少图片数量。`,
+        )
+      }
+
       // Prepare FormData
       const formData = new FormData()
       formData.append("mergeImages", mergeImages.toString())
@@ -158,7 +227,7 @@ export default function TextReviewPage() {
         formData.append(`image_${index}`, image.file)
       })
 
-      console.log(`Processing ${images.length} images, merge: ${mergeImages}`)
+      console.log(`Processing ${images.length} images, merge: ${mergeImages}, total size: ${formatFileSize(totalSize)}`)
 
       // Call the API
       const response = await fetch("/api/ocr", {
@@ -166,11 +235,25 @@ export default function TextReviewPage() {
         body: formData,
       })
 
-      const data = await response.json()
+      // Handle 413 specifically
+      if (response.status === 413) {
+        throw new Error("上传的图片总大小超过服务器限制。请压缩图片或减少图片数量后重试。")
+      }
+
+      let data
+      try {
+        data = await response.json()
+      } catch (parseError) {
+        if (response.status === 413) {
+          throw new Error("上传的图片总大小超过服务器限制。请压缩图片或减少图片数量后重试。")
+        }
+        throw new Error(`服务器响应格式错误 (状态码: ${response.status})`)
+      }
+
       console.log("API Response:", data)
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to process images")
+        throw new Error(data.error || `请求失败 (状态码: ${response.status})`)
       }
 
       if (!data.success) {
@@ -280,6 +363,7 @@ export default function TextReviewPage() {
                   选择图片
                 </Button>
                 <p className="text-sm text-gray-500">支持格式：JPG, PNG (最大10MB)</p>
+                <p className="text-xs text-orange-600 mt-1">提示：大文件将自动压缩以提高处理速度</p>
               </div>
             </CardContent>
           </Card>
