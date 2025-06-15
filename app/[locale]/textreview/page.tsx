@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
+import { useState, useRef, useId } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -54,6 +54,7 @@ export default function TextReviewPage() {
   const [mergeImages, setMergeImages] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const baseId = useId()
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -94,11 +95,11 @@ export default function TextReviewPage() {
   }
 
   const addImages = (files: File[]) => {
-    files.forEach((file) => {
+    files.forEach((file, fileIndex) => {
       const reader = new FileReader()
       reader.onload = (e) => {
         const newImage: UploadedImage = {
-          id: Math.random().toString(36).substr(2, 9),
+          id: `${baseId}-${Date.now()}-${fileIndex}-${file.name}`,
           name: file.name,
           size: file.size,
           preview: e.target?.result as string,
@@ -584,7 +585,7 @@ export default function TextReviewPage() {
               <p className="text-gray-600">以下是详细的使用步骤，帮助您更好地使用OCR文本提取功能</p>
             </div>
 
-          <div className="grid grid-cols-1 gap-8">
+            <div className="grid grid-cols-1 gap-8">
               {/* Tutorial Step 1 */}
               <div className="space-y-4">
                 <div className="text-center">
