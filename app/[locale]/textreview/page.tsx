@@ -594,7 +594,7 @@ export default function TextReviewPage() {
                   </Badge>
                 </div>
                 <div className="border rounded-lg overflow-hidden bg-gray-50">
-                  <img src="/tutorial-step-1.png" alt="教程步骤1 - 上传图片" className="w-full h-64 object-cover" />
+                  <img src="/textreview-step1.png" alt="教程步骤1 - 上传图片" className="w-full h-full object-cover" />
                 </div>
                 <div className="p-4 bg-blue-50 rounded-lg">
                   <h3 className="font-semibold text-blue-900 mb-2">上传和排序图片</h3>
@@ -615,7 +615,7 @@ export default function TextReviewPage() {
                   </Badge>
                 </div>
                 <div className="border rounded-lg overflow-hidden bg-gray-50">
-                  <img src="/tutorial-step-2.png" alt="教程步骤2 - 处理选项" className="w-full h-64 object-cover" />
+                  <img src="/textreview-step2.png" alt="教程步骤2 - 处理选项" className="w-full h-full object-cover" />
                 </div>
                 <div className="p-4 bg-green-50 rounded-lg">
                   <h3 className="font-semibold text-green-900 mb-2">选择处理方式</h3>
