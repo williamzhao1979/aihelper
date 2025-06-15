@@ -157,6 +157,8 @@ export default function TextReviewPage() {
         formData.append(`image_${index}`, image.file)
       })
 
+      console.log(`Processing ${images.length} images, merge: ${mergeImages}`)
+
       // Call the API
       const response = await fetch("/api/ocr", {
         method: "POST",
@@ -164,21 +166,34 @@ export default function TextReviewPage() {
       })
 
       const data = await response.json()
+      console.log("API Response:", data)
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to process images")
       }
 
+      if (!data.success) {
+        throw new Error(data.error || "Processing failed")
+      }
+
       if (data.merged) {
         // Handle merged result
+        console.log("Setting merged result:", data)
         setMergedResult(data)
       } else {
         // Handle individual results
+        console.log("Setting individual results:", data.results)
         setResults(data.results || [])
       }
     } catch (error) {
       console.error("Error processing images:", error)
-      setError(error instanceof Error ? error.message : "Failed to process images")
+      const errorMessage = error instanceof Error ? error.message : "Failed to process images"
+      setError(errorMessage)
+
+      // Show more detailed error for debugging
+      if (error instanceof Error && error.message.includes("schema")) {
+        setError(`Schema validation error: ${error.message}. Please try again or contact support.`)
+      }
     } finally {
       setIsProcessing(false)
     }
@@ -214,6 +229,9 @@ export default function TextReviewPage() {
                 <p className="font-medium">处理错误</p>
               </div>
               <p className="text-red-600 mt-2">{error}</p>
+              <Button variant="outline" size="sm" onClick={() => setError(null)} className="mt-2">
+                关闭
+              </Button>
             </CardContent>
           </Card>
         )}
