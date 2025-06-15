@@ -30,24 +30,24 @@ export default function DaddyGoFamilyPage() {
 
   const familyPhotos: FamilyPhoto[] = [
     {
-      url: "/placeholder.svg?height=300&width=400&text=Family+Dinner",
-      caption: "一家人围坐在餐桌旁讨论周末计划",
+      url: "/family1.jpg?height=300&width=400&text=Family",
+      caption: "",
     },
     {
-      url: "/placeholder.svg?height=300&width=400&text=Reading+Together",
-      caption: "父女一起在客厅阅读的温馨时光",
+      url: "/drawing1.jpg?height=300&width=400&text=Family",
+      caption: "",
     },
     {
-      url: "/placeholder.svg?height=300&width=400&text=Family+Meeting",
-      caption: "家庭会议中的欢乐时刻",
+      url: "/drawing2.jpg?height=300&width=400&text=Family",
+      caption: "",
     },
     {
-      url: "/placeholder.svg?height=300&width=400&text=Game+Night",
-      caption: "家庭游戏夜的全家福",
+      url: "/daddy1.png?height=full&width=full",
+      caption: "",
     },
     {
-      url: "/placeholder.svg?height=300&width=400&text=Weekend+Fun",
-      caption: "周末全家一起制作手工的快乐时光",
+      url: "/daddy2.png?height=full&width=full",
+      caption: "",
     },
   ]
 
@@ -154,30 +154,28 @@ export default function DaddyGoFamilyPage() {
           </CardHeader>
           <CardContent className="p-8 space-y-6">
             <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-2xl p-6 border-l-4 border-pink-400 relative overflow-hidden">
-              <div className="absolute top-2 right-2">
+              {/* <div className="absolute top-2 right-2">
                 <Badge className="bg-yellow-400 text-yellow-900 hover:bg-yellow-500">13岁</Badge>
-              </div>
+              </div> */}
               <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                给大宝贝 <Heart className="w-5 h-5 text-pink-500 animate-pulse" />
+                给逗逗 <Heart className="w-5 h-5 text-pink-500 animate-pulse" />
               </h3>
               <div className="space-y-3 text-gray-700 leading-relaxed">
-                <p>亲爱的孩子：</p>
-                <p>愿你像春天的花朵一样绽放，像夏日的阳光一样灿烂，在成长的路上永远保持那份纯真与勇气。</p>
-                <p className="font-semibold text-pink-600">爸爸会一直做你最坚实的后盾，见证你每一个精彩的瞬间！</p>
+                <p className="font-semibold text-pink-600">暑假快乐！爸爸会一直做你最坚实的后盾，见证你每一个精彩的瞬间！</p>
               </div>
             </div>
 
             <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl p-6 border-l-4 border-blue-400 relative overflow-hidden">
-              <div className="absolute top-2 right-2">
+              {/* <div className="absolute top-2 right-2">
                 <Badge className="bg-green-400 text-green-900 hover:bg-green-500">9岁</Badge>
-              </div>
+              </div> */}
               <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                给小宝贝 <Heart className="w-5 h-5 text-blue-500 animate-pulse" />
+                给乐乐 <Heart className="w-5 h-5 text-blue-500 animate-pulse" />
               </h3>
               <div className="space-y-3 text-gray-700 leading-relaxed">
-                <p>亲爱的小天使：</p>
-                <p>愿你的每一天都充满欢声笑语，像小鸟一样自由快乐，像彩虹一样绚丽多彩。</p>
-                <p className="font-semibold text-blue-600">爸爸永远是你最忠实的观众，欣赏你创造的每一个奇迹！</p>
+                <p className="font-semibold text-blue-600">
+                  愿你的每一天都充满欢声笑语，像小鸟一样自由快乐，像彩虹一样绚丽多彩。
+                  爸爸永远是你最忠实的观众，欣赏你创造的每一个奇迹！</p>
               </div>
             </div>
 
@@ -200,22 +198,11 @@ export default function DaddyGoFamilyPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-8 space-y-6">
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl p-6 border-l-4 border-yellow-400">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">给大宝贝</h3>
-              <div className="space-y-3 text-gray-700 leading-relaxed">
-                <p>爸爸看到你在学业上的努力，就像看到一颗正在打磨的钻石，每一面都在闪闪发光！</p>
-                <p className="font-semibold text-orange-600">
-                  记住：成功不是终点，而是沿途风景的总和。享受学习的过程，爸爸为你骄傲！
-                </p>
-              </div>
-            </div>
-
             <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-2xl p-6 border-l-4 border-green-400">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">给小宝贝</h3>
+              <h3 className="text-xl font-bold text-gray-800 mb-4">逗乐</h3>
               <div className="space-y-3 text-gray-700 leading-relaxed">
-                <p>你最近的表现简直像小火箭一样冲上云霄！爸爸看到了你的每一个进步。</p>
                 <p className="font-semibold text-teal-600">
-                  就像拼图一样，每一天的努力都在完成人生美丽的图画。继续加油，小冠军！
+                  暑假开心快乐！期待分享日记和画作。
                 </p>
               </div>
             </div>
@@ -322,7 +309,7 @@ export default function DaddyGoFamilyPage() {
                     <img
                       src={currentPhoto.url || "/placeholder.svg"}
                       alt={currentPhoto.caption}
-                      className="w-full h-64 object-cover transition-transform duration-300 hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                     />
                   </div>
                   <p className="text-gray-600 italic text-lg">{currentPhoto.caption}</p>

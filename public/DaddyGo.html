@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DaddyGo的温馨小屋</title>
+    <style>
+        :root {
+            --primary-color: #FF6B8B;
+            --secondary-color: #4ECDC4;
+            --accent-color: #FFBE0B;
+            --light-bg: #FFF9F9;
+            --card-bg: #FFFFFF;
+        }
+        
+        body {
+            font-family: 'Ma Shan Zheng', 'Comic Sans MS', cursive, sans-serif;
+            background-color: var(--light-bg);
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            background-image: radial-gradient(circle at 10% 20%, rgba(255,214,214,0.3) 0%, transparent 20%),
+                            radial-gradient(circle at 90% 80%, rgba(214,255,250,0.3) 0%, transparent 20%);
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+            transform: rotate(30deg);
+        }
+        
+        h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .section {
+            background-color: var(--card-bg);
+            border-radius: 18px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        
+        .section:hover {
+            transform: translateY(-5px);
+        }
+        
+        .section::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+        }
+        
+        h2 {
+            color: var(--primary-color);
+            font-size: 1.8em;
+            margin-top: 0;
+            padding-bottom: 10px;
+            border-bottom: 2px dashed rgba(78, 205, 196, 0.3);
+            display: flex;
+            align-items: center;
+        }
+        
+        .message-box {
+            background: rgba(255, 245, 245, 0.7);
+            border-radius: 12px;
+            padding: 18px;
+            margin: 18px 0;
+            border-left: 4px solid var(--accent-color);
+            position: relative;
+        }
+        
+        .message-box::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 20px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid var(--accent-color);
+            opacity: 0.3;
+        }
+        
+        .tongue-twister, .joke, .riddle, .daily-photo {
+            background: rgba(248, 249, 250, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            position: relative;
+            border: 1px dashed rgba(0,0,0,0.1);
+        }
+        
+        .daily-photo {
+            text-align: center;
+            padding: 15px;
+        }
+        
+        .daily-photo img {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+        
+        .photo-caption {
+            font-style: italic;
+            color: #666;
+            margin-top: 10px;
+        }
+        
+        .riddle {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.1) 0%, rgba(255, 190, 11, 0.1) 100%);
+        }
+        
+        .tongue-twister {
+            background: linear-gradient(135deg, rgba(255, 107, 139, 0.1) 0%, rgba(255, 190, 11, 0.1) 100%);
+        }
+        
+        .joke {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.1) 0%, rgba(255, 107, 139, 0.1) 100%);
+        }
+        
+        .riddle-answer {
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-top: 15px;
+            display: none;
+            padding: 10px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 8px;
+        }
+        
+        footer {
+            margin-top: 50px;
+            color: #888;
+            font-size: 0.9em;
+            padding: 20px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .heart {
+            color: var(--primary-color);
+            font-size: 1.3em;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        
+        .emoji {
+            font-size: 1.6em;
+            margin-right: 10px;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .show-answer {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin-top: 15px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(255, 190, 11, 0.3);
+        }
+        
+        .show-answer:hover {
+            background: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(255, 107, 139, 0.4);
+        }
+        
+        .age-tag {
+            background: var(--accent-color);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            margin-left: 12px;
+            font-weight: bold;
+        }
+        
+        .floating-hearts {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        
+        .heart-particle {
+            position: absolute;
+            font-size: 1.2em;
+            color: var(--primary-color);
+            opacity: 0;
+            animation: float-up 4s linear infinite;
+        }
+        
+        @keyframes float-up {
+            0% { transform: translateY(100px) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.7; }
+            90% { opacity: 0.7; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .section {
+                padding: 15px;
+            }
+            
+            h2 {
+                font-size: 1.5em;
+            }
+            
+            .message-box {
+                padding: 12px;
+            }
+            
+            .tongue-twister, .joke, .riddle, .daily-photo {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="floating-hearts" id="hearts-container"></div>
+        <h1><span class="emoji">🏡</span> DaddyGo的温馨小屋</h1>
+        <p class="subtitle">装满爱与温暖的每一天</p>
+    </header>
+    
+    <div class="section">
+        <h2><span class="emoji">💝</span> 来自爸爸的祝福</h2>
+        
+        <div class="message-box">
+            <h3>给大宝贝 <span class="age-tag">13岁</span></h3>
+            <p>亲爱的孩子：</p>
+            <p>愿你像春天的花朵一样绽放，像夏日的阳光一样灿烂，在成长的路上永远保持那份纯真与勇气。</p>
+            <p>爸爸会一直做你最坚实的后盾，见证你每一个精彩的瞬间！</p>
+        </div>
+        
+        <div class="message-box">
+            <h3>给小宝贝 <span class="age-tag">9岁</span></h3>
+            <p>亲爱的小天使：</p>
+            <p>愿你的每一天都充满欢声笑语，像小鸟一样自由快乐，像彩虹一样绚丽多彩。</p>
+            <p>爸爸永远是你最忠实的观众，欣赏你创造的每一个奇迹！</p>
+        </div>
+        
+        <p style="text-align: center; margin-top: 20px;">爸爸永远爱你们 <span class="heart">❤️</span><span class="heart">❤️</span></p>
+    </div>
+
+    <div class="section">
+        <h2><span class="emoji">🌟</span> 来自爸爸的鼓励</h2>
+        
+        <div class="message-box">
+            <h3>给大宝贝</h3>
+            <p>爸爸看到你在学业上的努力，就像看到一颗正在打磨的钻石，每一面都在闪闪发光！</p>
+            <p>记住：成功不是终点，而是沿途风景的总和。享受学习的过程，爸爸为你骄傲！</p>
+        </div>
+        
+        <div class="message-box">
+            <h3>给小宝贝</h3>
+            <p>你最近的表现简直像小火箭一样冲上云霄！爸爸看到了你的每一个进步。</p>
+            <p>就像拼图一样，每一天的努力都在完成人生美丽的图画。继续加油，小冠军！</p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2><span class="emoji">🔍</span> 今日谜语</h2>
+        <div class="riddle">
+            <p>有头没有尾，有角没有嘴，</p>
+            <p>摇动角和水，水从尾流出。</p>
+            <p>（打一生活用品）</p>
+            <button class="show-answer">显示答案</button>
+            <p class="riddle-answer">答案：水龙头</p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2><span class="emoji">😝</span> 今日绕口令</h2>
+        <div class="tongue-twister">
+            <p>四是四，十是十，</p>
+            <p>十四是十四，四十是四十。</p>
+            <p>谁能分得清，请来试一试！</p>
+            <p>（爸爸挑战了三次才说顺溜呢~）</p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2><span class="emoji">😂</span> 今日笑话</h2>
+        <div class="joke">
+            <p>老师问："谁能用'果然'造个句子？"</p>
+            <p>小明举手："先吃水果，然后喝汽水。"</p>
+            <p>老师："不对，不是'果然后'！"</p>
+            <p>小明想了想："那我重新造——先吃水果，然，后再喝汽水。"</p>
+            <p>（希望这个笑话能带给你们欢乐的时光 😊）</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2><span class="emoji">📸</span> 今日家庭照片</h2>
+        <div class="daily-photo">
+            <img id="family-photo" src="" alt="温馨家庭照片">
+            <p class="photo-caption" id="photo-caption"></p>
+        </div>
+    </div>
+    
+    <footer>
+        <p>制作于 <span id="date"></span> · 装满父爱的小屋 <span class="heart">❤️</span></p>
+    </footer>
+    
+    <script>
+        // 自动显示当前日期
+        document.getElementById('date').textContent = new Date().toLocaleDateString('zh-CN');
+        
+        // 标题颜色动画
+        const headings = document.querySelectorAll('h1, h2');
+        setInterval(() => {
+            headings.forEach(heading => {
+                const colors = ['#FF6B8B', '#4ECDC4', '#FFBE0B', '#A569BD', '#1ABC9C'];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                heading.style.color = randomColor;
+            });
+        }, 2000);
+        
+        // 谜语答案显示/隐藏
+        const showAnswerButtons = document.querySelectorAll('.show-answer');
+        showAnswerButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const answer = this.nextElementSibling;
+                if (answer.style.display === 'block') {
+                    answer.style.display = 'none';
+                    this.textContent = '显示答案';
+                } else {
+                    answer.style.display = 'block';
+                    this.textContent = '隐藏答案';
+                }
+            });
+        });
+        
+        // 创建漂浮爱心
+        const heartsContainer = document.getElementById('hearts-container');
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart-particle');
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + '%';
+            heart.style.animationDuration = 3 + Math.random() * 3 + 's';
+            heart.style.fontSize = (0.5 + Math.random() * 1.5) + 'em';
+            heartsContainer.appendChild(heart);
+            
+            setTimeout(() => {
+                heart.remove();
+            }, 4000);
+        }
+        
+        // 定期生成爱心
+        setInterval(createHeart, 300);
+        
+        // 初始生成一些爱心
+        for (let i = 0; i < 10; i++) {
+            setTimeout(createHeart, i * 300);
+        }
+        
+        // 随机家庭照片
+        const familyPhotos = [
+            {
+                url: 'https://images.unsplash.com/photo-1607748851687-ba9a10438621?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+                caption: '一家人围坐在餐桌旁讨论周末计划'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1516589091380-5d6017739378?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+                caption: '父女一起在客厅阅读的温馨时光'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+                caption: '家庭会议中的欢乐时刻'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1573497491765-dccce02b29df?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+                caption: '一起制定家庭规则的认真讨论'
+            },
+            {
+                url: 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
+                caption: '家庭游戏夜的全家福'
+            }
+        ];
+        
+        function showRandomPhoto() {
+            const randomIndex = Math.floor(Math.random() * familyPhotos.length);
+            const photo = familyPhotos[randomIndex];
+            document.getElementById('family-photo').src = photo.url;
+            document.getElementById('family-photo').alt = photo.caption;
+            document.getElementById('photo-caption').textContent = photo.caption;
+        }
+        
+        // 页面加载时显示随机照片
+        showRandomPhoto();
+        
+        // 每天更换照片（可选）
+        // setInterval(showRandomPhoto, 24 * 60 * 60 * 1000);
+    </script>
+</body>
+</html>
