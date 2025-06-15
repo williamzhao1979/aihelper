@@ -574,10 +574,10 @@ export default function MultiPlatformAI() {
               <Sparkles className="w-5 h-5 text-blue-500" />
               <span className="text-lg font-semibold font-chinese">更多功能</span>
             </div>
-            <p className="text-gray-600 mb-4 font-chinese">体验我们的图像文字识别和审核功能</p>
+            <p className="text-gray-600 mb-4 font-chinese">图像文字识别和修改建议</p>
             <Link href={`/${locale}/textreview`}>
               <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-chinese">
-                前往文字审核页面
+                前往AI文章助手
               </Button>
             </Link>
           </CardContent>
