@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
+import { useState, useRef, useId } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -54,6 +54,7 @@ export default function TextReviewPage() {
   const [mergeImages, setMergeImages] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const baseId = useId()
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -94,11 +95,11 @@ export default function TextReviewPage() {
   }
 
   const addImages = (files: File[]) => {
-    files.forEach((file) => {
+    files.forEach((file, fileIndex) => {
       const reader = new FileReader()
       reader.onload = (e) => {
         const newImage: UploadedImage = {
-          id: Math.random().toString(36).substr(2, 9),
+          id: `${baseId}-${Date.now()}-${fileIndex}-${file.name}`,
           name: file.name,
           size: file.size,
           preview: e.target?.result as string,
@@ -157,6 +158,8 @@ export default function TextReviewPage() {
         formData.append(`image_${index}`, image.file)
       })
 
+      console.log(`Processing ${images.length} images, merge: ${mergeImages}`)
+
       // Call the API
       const response = await fetch("/api/ocr", {
         method: "POST",
@@ -164,21 +167,34 @@ export default function TextReviewPage() {
       })
 
       const data = await response.json()
+      console.log("API Response:", data)
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to process images")
       }
 
+      if (!data.success) {
+        throw new Error(data.error || "Processing failed")
+      }
+
       if (data.merged) {
         // Handle merged result
+        console.log("Setting merged result:", data)
         setMergedResult(data)
       } else {
         // Handle individual results
+        console.log("Setting individual results:", data.results)
         setResults(data.results || [])
       }
     } catch (error) {
       console.error("Error processing images:", error)
-      setError(error instanceof Error ? error.message : "Failed to process images")
+      const errorMessage = error instanceof Error ? error.message : "Failed to process images"
+      setError(errorMessage)
+
+      // Show more detailed error for debugging
+      if (error instanceof Error && error.message.includes("schema")) {
+        setError(`Schema validation error: ${error.message}. Please try again or contact support.`)
+      }
     } finally {
       setIsProcessing(false)
     }
@@ -214,6 +230,9 @@ export default function TextReviewPage() {
                 <p className="font-medium">处理错误</p>
               </div>
               <p className="text-red-600 mt-2">{error}</p>
+              <Button variant="outline" size="sm" onClick={() => setError(null)} className="mt-2">
+                关闭
+              </Button>
             </CardContent>
           </Card>
         )}
@@ -442,13 +461,13 @@ export default function TextReviewPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">提取的文本:</label>
-                      <div className="p-4 bg-gray-50 rounded-lg h-80 overflow-y-auto border">
+                      <div className="p-4 bg-gray-50 rounded-lg h-full overflow-y-auto border">
                         <p className="text-sm leading-relaxed whitespace-pre-wrap">{mergedResult.result.text}</p>
                       </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">修正后的文本:</label>
-                      <div className="p-4 bg-blue-50 rounded-lg h-80 overflow-y-auto border border-blue-200">
+                      <div className="p-4 bg-blue-50 rounded-lg h-full overflow-y-auto border border-blue-200">
                         <p className="text-sm leading-relaxed whitespace-pre-wrap">
                           {mergedResult.result.text_refined}
                         </p>
@@ -552,6 +571,94 @@ export default function TextReviewPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Tutorial Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Languages className="w-5 h-5" />
+              使用教程
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="text-center mb-6">
+              <p className="text-gray-600">以下是详细的使用步骤，帮助您更好地使用OCR文本提取功能</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-8">
+              {/* Tutorial Step 1 */}
+              <div className="space-y-4">
+                <div className="text-center">
+                  <Badge variant="outline" className="mb-3 px-4 py-2 text-lg font-semibold">
+                    步骤 1: 上传图片
+                  </Badge>
+                </div>
+                <div className="border rounded-lg overflow-hidden bg-gray-50">
+                  <img src="/tutorial-step-1.png" alt="教程步骤1 - 上传图片" className="w-full h-64 object-cover" />
+                </div>
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <h3 className="font-semibold text-blue-900 mb-2">上传和排序图片</h3>
+                  <ul className="text-sm text-blue-800 space-y-1">
+                    <li>• 拖拽图片到上传区域或点击选择图片</li>
+                    <li>• 支持JPG、PNG格式，最大10MB</li>
+                    <li>• 使用上下箭头调整图片顺序</li>
+                    <li>• 可以删除不需要的图片</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Tutorial Step 2 */}
+              <div className="space-y-4">
+                <div className="text-center">
+                  <Badge variant="outline" className="mb-3 px-4 py-2 text-lg font-semibold">
+                    步骤 2: 处理选项
+                  </Badge>
+                </div>
+                <div className="border rounded-lg overflow-hidden bg-gray-50">
+                  <img src="/tutorial-step-2.png" alt="教程步骤2 - 处理选项" className="w-full h-64 object-cover" />
+                </div>
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <h3 className="font-semibold text-green-900 mb-2">选择处理方式</h3>
+                  <ul className="text-sm text-green-800 space-y-1">
+                    <li>
+                      • <strong>单独处理</strong>：每张图片独立识别文字
+                    </li>
+                    <li>
+                      • <strong>合并处理</strong>：将所有图片文字合并为一篇文章
+                    </li>
+                    <li>• 点击"调用OpenAI"开始处理</li>
+                    <li>• 等待AI分析和文字提取完成</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h3 className="font-semibold text-yellow-900 mb-3 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5" />
+                使用提示
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-yellow-800">
+                <div>
+                  <h4 className="font-medium mb-2">图片质量建议：</h4>
+                  <ul className="space-y-1">
+                    <li>• 确保文字清晰可见</li>
+                    <li>• 避免模糊或倾斜的图片</li>
+                    <li>• 光线充足，对比度良好</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">处理结果：</h4>
+                  <ul className="space-y-1">
+                    <li>• 自动检测文字语言</li>
+                    <li>• 提供原始和修正文本</li>
+                    <li>• 给出改进建议</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

@@ -67,7 +67,7 @@ export default async function RootLayout({ children, params }: Props) {
 
   return (
     <html lang={locale}>
-      <body className="font-chinese antialiased">
+      <body className="antialiased" suppressHydrationWarning={true}>
         <AuthProvider>
           <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
         </AuthProvider>

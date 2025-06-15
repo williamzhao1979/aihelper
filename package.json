@@ -54,6 +54,7 @@
     "next-intl": "latest",
     "next-themes": "latest",
     "nodemailer": "latest",
+    "openai": "latest",
     "react": "^19",
     "react-day-picker": "latest",
     "react-dom": "^19",
@@ -65,7 +66,8 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "latest",
-    "zod": "^3.24.1"
+    "ws": "latest",
+    "zod": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

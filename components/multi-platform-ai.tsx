@@ -11,6 +11,8 @@ import { Switch } from "@/components/ui/switch"
 import { Check, Sparkles, Send, AlertCircle, Loader2, Zap, Crown, Lock } from "lucide-react"
 import LanguageSwitcher from "./language-switcher"
 import SubscriptionDialog from "./subscription-dialog"
+import Link from "next/link"
+import { useLocale } from "next-intl"
 
 interface AIResponse {
   service: string
@@ -53,13 +55,14 @@ interface Service {
 export default function MultiPlatformAI() {
   const t = useTranslations()
   const { data: session, status } = useSession()
+  const locale = useLocale()
 
   const [prompt, setPrompt] = useState("")
   const [selectedServices, setSelectedServices] = useState<SelectedServices>({
     chatgpt: true,
     deepseek: true,
-    github: true,
-    microsoft: true,
+    github: false,
+    microsoft: false,
   })
   const [isLoading, setIsLoading] = useState(false)
   const [responses, setResponses] = useState<AIResponse[]>([])
@@ -563,6 +566,22 @@ export default function MultiPlatformAI() {
             })}
           </div>
         )}
+
+        {/* Link to Text Review Page */}
+        <Card className="mt-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+          <CardContent className="p-6 text-center">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Sparkles className="w-5 h-5 text-blue-500" />
+              <span className="text-lg font-semibold font-chinese">更多功能</span>
+            </div>
+            <p className="text-gray-600 mb-4 font-chinese">体验我们的图像文字识别和审核功能</p>
+            <Link href={`/${locale}/textreview`}>
+              <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-chinese">
+                前往文字审核页面
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
 
         {/* Authentication Status */}
         {status === "loading" ? (
