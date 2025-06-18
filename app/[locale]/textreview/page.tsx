@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Upload, X, Languages, CheckCircle, AlertCircle, ChevronUp, ChevronDown } from "lucide-react"
+import { Upload, X, Languages, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Sparkles } from "lucide-react"
+import Link from "next/link"
+import { useLocale } from "next-intl"
 
 interface UploadedImage {
   id: string
@@ -98,6 +100,7 @@ export default function TextReviewPage() {
   const baseId = useId()
   const [noWait, setNoWait] = useState(true)
   const [processingRequests, setProcessingRequests] = useState<Set<string>>(new Set())
+  const locale = useLocale()
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -861,6 +864,22 @@ export default function TextReviewPage() {
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Link to Text Review Page */}
+        <Card className="mt-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+          <CardContent className="p-6 text-center">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Sparkles className="w-5 h-5 text-blue-500" />
+              <span className="text-lg font-semibold font-chinese">更多功能</span>
+            </div>
+            <p className="text-gray-600 mb-4 font-chinese">多个主流AI服务问答</p>
+            <Link href={`/${locale}/chat`}>
+              <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-chinese">
+                前往多AI问答
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>

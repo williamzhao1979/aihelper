@@ -24,7 +24,7 @@ export async function generateMetadata({
   const { locale } = await params
 
   const titles = {
-    zh: "多平台 AI - 智能助手",
+    zh: "AI助手 - 使用多个主流AI平台",
     en: "Multi-Platform AI - AI Assistant",
     ja: "マルチプラットフォーム AI - AIアシスタント",
   }

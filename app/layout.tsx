@@ -3,18 +3,18 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "多平台 AI - Multi-Platform AI Assistant",
-  description: "一次提问，多个AI平台同时回答 - Ask once, get answers from multiple AI platforms",
+  title: "AI助手 - 使用多个主流AI平台",
+  description: "AI助手 - 使用多个主流AI平台 - Ask once, get answers from multiple AI platforms",
   keywords: ["AI", "ChatGPT", "DeepSeek", "GitHub Copilot", "Microsoft Copilot", "多平台AI"],
   authors: [{ name: "Multi-Platform AI" }],
   openGraph: {
-    title: "多平台 AI - Multi-Platform AI Assistant",
+    title: "AI助手 - 使用多个主流AI平台",
     description: "一次提问，多个AI平台同时回答",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "多平台 AI - Multi-Platform AI Assistant",
+    title: "AI助手 - 使用多个主流AI平台",
     description: "一次提问，多个AI平台同时回答",
   },
     generator: 'v0.dev'
