@@ -176,14 +176,16 @@ export default function TextReviewPage() {
 
   const removeImage = (id: string) => {
     setImages((prev) => prev.filter((img) => img.id !== id))
-    setResults([])
-    setMergedResult(null)
+    // 移除这两行，不再清空结果
+    // setResults([])
+    // setMergedResult(null)
   }
 
   const clearAllImages = () => {
     setImages([])
-    setResults([])
-    setMergedResult(null)
+    // 移除这两行，不再清空结果
+    // setResults([])
+    // setMergedResult(null)
     setError(null)
   }
 
@@ -553,15 +555,18 @@ export default function TextReviewPage() {
               )}
             </CardHeader>
             <CardContent className="space-y-6">
-              {isProcessing ? (
-                <div className="text-center py-12">
+              {/* 处理中状态 - 始终在最上方显示 */}
+              {isProcessing && (
+                <div className="text-center py-8 border rounded-lg bg-purple-50">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4" />
                   <p className="text-gray-600 text-lg">
                     {mergeImages ? "正在合并处理所有图片..." : "正在处理图片，请稍候..."}
                   </p>
                 </div>
-              ) : mergedResult?.result ? (
-                // Merged Result Display
+              )}
+
+              {/* 合并结果显示 */}
+              {mergedResult?.result && (
                 <div className="border rounded-lg p-6 bg-white shadow-sm">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="flex -space-x-2">
@@ -637,8 +642,10 @@ export default function TextReviewPage() {
                     </div>
                   </div>
                 </div>
-              ) : (
-                // Individual Results Display
+              )}
+
+              {/* 个别结果显示 */}
+              {results.length > 0 &&
                 results.map((result, index) => (
                   <div key={`${result.imageIndex}-${index}`} className="border rounded-lg p-6 bg-white shadow-sm">
                     <div className="flex items-center gap-4 mb-4">
@@ -720,8 +727,7 @@ export default function TextReviewPage() {
                       </div>
                     )}
                   </div>
-                ))
-              )}
+                ))}
             </CardContent>
           </Card>
         )}
