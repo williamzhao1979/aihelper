@@ -29,6 +29,8 @@ interface OCRResult {
     end: string
   }
   error?: string
+  timestamp?: number
+  batchId?: string
 }
 
 interface MergedOCRResult {
@@ -43,6 +45,8 @@ interface MergedOCRResult {
     image_count: number
   }
   error?: string
+  timestamp?: number
+  batchId?: string
 }
 
 // Add image compression utility
@@ -172,14 +176,16 @@ export default function TextReviewPage() {
 
   const removeImage = (id: string) => {
     setImages((prev) => prev.filter((img) => img.id !== id))
-    setResults([])
-    setMergedResult(null)
+    // 移除这两行，不再清空结果
+    // setResults([])
+    // setMergedResult(null)
   }
 
   const clearAllImages = () => {
     setImages([])
-    setResults([])
-    setMergedResult(null)
+    // 移除这两行，不再清空结果
+    // setResults([])
+    // setMergedResult(null)
     setError(null)
   }
 
@@ -203,8 +209,9 @@ export default function TextReviewPage() {
     if (images.length === 0) return
 
     setIsProcessing(true)
-    setResults([])
-    setMergedResult(null)
+    // 移除这两行，保留之前的结果
+    // setResults([])
+    // setMergedResult(null)
     setError(null)
 
     try {
@@ -261,13 +268,50 @@ export default function TextReviewPage() {
       }
 
       if (data.merged) {
-        // Handle merged result
+        // Handle merged result - 添加到现有结果前面
         console.log("Setting merged result:", data)
-        setMergedResult(data)
+        const newMergedResult = {
+          ...data,
+          timestamp: Date.now(),
+          batchId: `batch-${Date.now()}`,
+        }
+        setMergedResult((prev) => (prev ? newMergedResult : newMergedResult))
+        // 如果有新的合并结果，将之前的个别结果添加到results前面
+        if (mergedResult && mergedResult.result) {
+          setResults((prevResults) => [
+            {
+              imageIndex: -1,
+              imageName: "Previous Merged Result",
+              success: true,
+              result: mergedResult.result,
+              timestamp: mergedResult.timestamp || Date.now() - 1000,
+              batchId: mergedResult.batchId || "previous-batch",
+            },
+            ...prevResults,
+          ])
+        }
       } else {
-        // Handle individual results
+        // Handle individual results - 添加到现有结果前面
         console.log("Setting individual results:", data.results)
-        setResults(data.results || [])
+        const newResults = (data.results || []).map((result) => ({
+          ...result,
+          timestamp: Date.now(),
+          batchId: `batch-${Date.now()}`,
+        }))
+        setResults((prevResults) => [...newResults, ...prevResults])
+        // 如果之前有合并结果，将其转换为个别结果并添加到列表
+        if (mergedResult?.result) {
+          const previousMergedAsResult = {
+            imageIndex: -1,
+            imageName: "Previous Merged Result",
+            success: true,
+            result: mergedResult.result,
+            timestamp: mergedResult.timestamp || Date.now() - 1000,
+            batchId: mergedResult.batchId || "previous-batch",
+          }
+          setResults((prev) => [...prev, previousMergedAsResult])
+          setMergedResult(null)
+        }
       }
     } catch (error) {
       console.error("Error processing images:", error)
@@ -481,7 +525,7 @@ export default function TextReviewPage() {
         {/* Results Section */}
         {(results.length > 0 || mergedResult || isProcessing) && (
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Languages className="w-5 h-5" />
                 AI处理结果
@@ -490,18 +534,39 @@ export default function TextReviewPage() {
                     合并处理 ({mergedResult.result.image_count} 张图片)
                   </Badge>
                 )}
+                {results.length > 0 && (
+                  <Badge variant="outline" className="ml-2">
+                    历史结果: {results.length}
+                  </Badge>
+                )}
               </CardTitle>
+              {(results.length > 0 || mergedResult) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setResults([])
+                    setMergedResult(null)
+                  }}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  清除历史
+                </Button>
+              )}
             </CardHeader>
             <CardContent className="space-y-6">
-              {isProcessing ? (
-                <div className="text-center py-12">
+              {/* 处理中状态 - 始终在最上方显示 */}
+              {isProcessing && (
+                <div className="text-center py-8 border rounded-lg bg-purple-50">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4" />
                   <p className="text-gray-600 text-lg">
                     {mergeImages ? "正在合并处理所有图片..." : "正在处理图片，请稍候..."}
                   </p>
                 </div>
-              ) : mergedResult?.result ? (
-                // Merged Result Display
+              )}
+
+              {/* 合并结果显示 */}
+              {mergedResult?.result && (
                 <div className="border rounded-lg p-6 bg-white shadow-sm">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="flex -space-x-2">
@@ -525,7 +590,12 @@ export default function TextReviewPage() {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-medium text-lg">合并处理结果</h3>
-                      <p className="text-sm text-gray-500">共处理 {mergedResult.result.image_count} 张图片</p>
+                      <p className="text-sm text-gray-500">
+                        共处理 {mergedResult.result.image_count} 张图片
+                        {mergedResult.timestamp && (
+                          <span className="ml-2">• {new Date(mergedResult.timestamp).toLocaleString()}</span>
+                        )}
+                      </p>
                     </div>
                     <Badge variant="default" className="px-3 py-1">
                       <CheckCircle className="w-3 h-3 mr-1" />
@@ -572,8 +642,10 @@ export default function TextReviewPage() {
                     </div>
                   </div>
                 </div>
-              ) : (
-                // Individual Results Display
+              )}
+
+              {/* 个别结果显示 */}
+              {results.length > 0 &&
                 results.map((result, index) => (
                   <div key={`${result.imageIndex}-${index}`} className="border rounded-lg p-6 bg-white shadow-sm">
                     <div className="flex items-center gap-4 mb-4">
@@ -586,7 +658,12 @@ export default function TextReviewPage() {
                       </div>
                       <div className="flex-1">
                         <h3 className="font-medium text-lg">图片 {result.imageIndex + 1}</h3>
-                        <p className="text-sm text-gray-500">{result.imageName}</p>
+                        <p className="text-sm text-gray-500">
+                          {result.imageName}
+                          {result.timestamp && (
+                            <span className="ml-2">• {new Date(result.timestamp).toLocaleString()}</span>
+                          )}
+                        </p>
                       </div>
                       <Badge variant={result.success ? "default" : "destructive"} className="px-3 py-1">
                         {result.success ? (
@@ -650,8 +727,7 @@ export default function TextReviewPage() {
                       </div>
                     )}
                   </div>
-                ))
-              )}
+                ))}
             </CardContent>
           </Card>
         )}
