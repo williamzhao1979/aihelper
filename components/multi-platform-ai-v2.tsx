@@ -513,7 +513,7 @@ export default function MultiPlatformAIV2() {
                   placeholder="请输入您想要询问的问题..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  disabled={isProcessing}
+                  disabled={isLoading}
                   className="min-h-[140px] border-2 border-gray-200 focus:border-purple-400 focus:ring-purple-400/20 focus:ring-4 resize-none text-gray-700 placeholder:text-gray-400 rounded-xl text-base leading-relaxed transition-all duration-200 font-chinese disabled:opacity-50"
                 />
               </div>
@@ -588,7 +588,7 @@ export default function MultiPlatformAIV2() {
                 <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border">
                   <button
                     onClick={() => handleResponseModeChange("standard")}
-                    disabled={isProcessing}
+                    disabled={isLoading}
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                       responseMode === "standard"
                         ? "bg-blue-500 text-white shadow-md"
@@ -599,7 +599,7 @@ export default function MultiPlatformAIV2() {
                   </button>
                   <button
                     onClick={() => handleResponseModeChange("async")}
-                    disabled={isProcessing}
+                    disabled={isLoading}
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                       responseMode === "async"
                         ? "bg-indigo-500 text-white shadow-md"
@@ -610,7 +610,7 @@ export default function MultiPlatformAIV2() {
                   </button>
                   <button
                     onClick={() => handleResponseModeChange("streaming")}
-                    disabled={isProcessing || !canUseStreaming}
+                    disabled={isLoading || !canUseStreaming}
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                       responseMode === "streaming"
                         ? "bg-purple-500 text-white shadow-md"
@@ -626,7 +626,7 @@ export default function MultiPlatformAIV2() {
 
                 <Button
                   onClick={handleSubmit}
-                  disabled={!prompt.trim() || isProcessing || selectedCount === 0}
+                  disabled={!prompt.trim() || isLoading || selectedCount === 0}
                   className={`px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-chinese ${
                     responseMode === "streaming"
                       ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
@@ -635,7 +635,7 @@ export default function MultiPlatformAIV2() {
                         : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                   } text-white`}
                 >
-                  {isProcessing ? (
+                  {isLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : responseMode === "streaming" ? (
                     <Zap className="w-4 h-4" />
@@ -644,7 +644,7 @@ export default function MultiPlatformAIV2() {
                   ) : (
                     <Send className="w-4 h-4" />
                   )}
-                  {isProcessing ? "处理中..." : "提交问题"}
+                  {isLoading ? "提交中..." : "提交问题"}
                 </Button>
 
                 {/* 异步处理状态显示 */}
@@ -685,7 +685,7 @@ export default function MultiPlatformAIV2() {
               <button
                 key={service.key}
                 onClick={() => toggleService(service.key)}
-                disabled={isProcessing}
+                disabled={isLoading}
                 className={`relative p-4 rounded-2xl border-2 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed ${
                   selectedServices[service.key]
                     ? "border-transparent shadow-lg scale-105"
