@@ -3,5 +3,93 @@
     "title": "Settings",
     "version": "Version Selection",
     "language": "Language Settings"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "success": "Success",
+    "failed": "Failed"
+  },
+  "header": {
+    "title": "One AI Assistant to Enjoy Smart Services Across Multiple Platforms!",
+    "subtitle": "Ask once, get answers from multiple AI platforms - Enhanced Experience",
+    "language": "Language"
+  },
+  "chat": {
+    "subtitle": "Compare answers from multiple AI platforms simultaneously to find the best solution",
+    "enhancedVersion": "Enhanced",
+    "professionalFeature": "Pro",
+    "recommended": "Recommended",
+    "needSubscription": "Subscription Required",
+    "upgrade": "Upgrade",
+    "streamingMode": "Real-time Streaming",
+    "asyncMode": "Async Parallel",
+    "standardMode": "Standard",
+    "streamingDescription": "Real-time display of AI response process for the best experience",
+    "asyncDescription": "Parallel processing of multiple requests for improved efficiency",
+    "standardDescription": "Traditional synchronous processing method",
+    "inputLabel": "Enter your question",
+    "inputPlaceholder": "Please enter your question...",
+    "selectServices": "Select AI Services",
+    "submitButton": "Send Question",
+    "submitting": "Processing...",
+    "processing": "Processing",
+    "completed": "Completed",
+    "resultsTitle": "AI Response Results",
+    "realtimeStreaming": "Real-time Streaming Response",
+    "questionContent": "Question:",
+    "noResults": "No results yet, please submit a question to get AI responses",
+    "moreFeatures": "More Features",
+    "imageTextRecognition": "Support image text recognition and artwork evaluation",
+    "goToTextReview": "Text Recognition Assistant",
+    "goToArtReview": "Art Review Assistant",
+    "checkingLoginStatus": "Checking login status...",
+    "loginForFullFeatures": "Login to unlock full features",
+    "loginDescription": "Login to access advanced features like real-time streaming responses",
+    "loginNow": "Login Now",
+    "duplicateDetection": "Duplicate Detection",
+    "duplicateMessage": "Detected the same question and service selection, continue to submit?",
+    "yes": "Yes, continue",
+    "noServiceSelected": "Please select at least one AI service",
+    "networkError": "Network connection error, please check your network and try again",
+    "serverError": "Server error, please try again later",
+    "apiError": "API call failed",
+    "errorPrefix": "Error: ",
+    "noResponse": "No response"
+  },
+  "form": {
+    "inputLabel": "Enter your question or prompt",
+    "inputPlaceholder": "Please enter your question, supports multiple lines...",
+    "submitButton": "Submit Query",
+    "submitting": "Querying...",
+    "selectServices": "Select AI Platforms",
+    "completed": "Completed",
+    "noServiceSelected": "Please select at least one AI platform",
+    "streamingMode": "Streaming Response",
+    "streamingDescription": "Get real-time AI responses",
+    "standardMode": "Standard Mode",
+    "standardDescription": "Wait for complete response",
+    "proFeature": "Pro Feature"
+  },
+  "services": {
+    "chatgpt": "ChatGPT",
+    "deepseek": "DeepSeek",
+    "github": "GitHub Copilot",
+    "microsoft": "Microsoft Copilot"
+  },
+  "results": {
+    "title": "AI Response Results",
+    "errorPrefix": "Error:",
+    "noResponse": "No response received",
+    "streaming": "Receiving response...",
+    "streamComplete": "Response complete"
+  },
+  "errors": {
+    "networkError": "Network connection error, please check your internet connection",
+    "apiError": "API call failed, please try again later",
+    "invalidInput": "Please enter a valid question",
+    "serverError": "Server error, please try again later"
   }
 }

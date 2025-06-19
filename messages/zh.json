@@ -3,5 +3,93 @@
     "title": "设置",
     "version": "版本选择",
     "language": "语言设置"
+  },
+  "common": {
+  "loading": "加载中...",
+  "error": "错误",
+  "submit": "提交",
+  "cancel": "取消",
+  "success": "成功",
+  "failed": "失败"
+  },
+  "header": {
+    "title": "一个 AI 助手，畅享多平台 AI 智能服务！",
+    "subtitle": "一次提问，多个AI平台同时回答 - 增强体验版",
+    "language": "语言"
+  },
+  "chat": {
+    "subtitle": "同时对比多个AI平台的回答，找到最佳解决方案",
+    "enhancedVersion": "增强版",
+    "professionalFeature": "专业功能",
+    "recommended": "推荐",
+    "needSubscription": "需要订阅",
+    "upgrade": "升级",
+    "streamingMode": "实时流式",
+    "asyncMode": "异步并行",
+    "standardMode": "标准模式",
+    "streamingDescription": "实时显示AI回答过程，获得最佳体验",
+    "asyncDescription": "并行处理多个请求，提高效率",
+    "standardDescription": "传统同步处理方式",
+    "inputLabel": "请输入您的问题",
+    "inputPlaceholder": "请输入您想要询问的问题...",
+    "selectServices": "选择AI服务",
+    "submitButton": "发送问题",
+    "submitting": "处理中...",
+    "processing": "处理中",
+    "completed": "已完成",
+    "resultsTitle": "AI回答结果",
+    "realtimeStreaming": "实时流式回答",
+    "questionContent": "问题内容：",
+    "noResults": "暂无结果，请提交问题获取AI回答",
+    "moreFeatures": "更多功能",
+    "imageTextRecognition": "支持图片文字识别和艺术作品评价",
+    "goToTextReview": "文字识别助手",
+    "goToArtReview": "绘画评价助手",
+    "checkingLoginStatus": "检查登录状态...",
+    "loginForFullFeatures": "登录解锁完整功能",
+    "loginDescription": "登录后可使用实时流式回答等高级功能",
+    "loginNow": "立即登录",
+    "duplicateDetection": "重复检测",
+    "duplicateMessage": "检测到相同的问题和服务选择，是否继续提交？",
+    "yes": "是的，继续",
+    "noServiceSelected": "请至少选择一个AI服务",
+    "networkError": "网络连接错误，请检查网络后重试",
+    "serverError": "服务器错误，请稍后重试",
+    "apiError": "API调用失败",
+    "errorPrefix": "错误：",
+    "noResponse": "暂无回答"
+  },
+  "form": {
+    "inputLabel": "输入您的问题或提示词",
+    "inputPlaceholder": "请输入您想要询问的问题，支持多行输入...",
+    "submitButton": "提交查询",
+    "submitting": "查询中...",
+    "selectServices": "选择AI平台",
+    "completed": "已完成",
+    "noServiceSelected": "请至少选择一个AI平台",
+    "streamingMode": "流式响应",
+    "streamingDescription": "实时获取AI响应",
+    "standardMode": "标准模式",
+    "standardDescription": "等待完整响应后显示",
+    "proFeature": "专业版功能"
+  },
+  "services": {
+    "chatgpt": "ChatGPT",
+    "deepseek": "DeepSeek",
+    "github": "GitHub Copilot",
+    "microsoft": "Microsoft Copilot"
+  },
+  "results": {
+    "title": "AI 回复结果",
+    "errorPrefix": "错误:",
+    "noResponse": "未收到回复",
+    "streaming": "正在接收回复...",
+    "streamComplete": "回复完成"
+  },
+  "errors": {
+    "networkError": "网络连接错误，请检查您的网络连接",
+    "apiError": "API调用失败，请稍后重试",
+    "invalidInput": "请输入有效的问题",
+    "serverError": "服务器错误，请稍后重试"
   }
 }
