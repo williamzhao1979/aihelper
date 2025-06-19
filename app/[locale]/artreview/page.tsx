@@ -18,15 +18,15 @@ interface UploadedImage {
   file: File
 }
 
-interface OCRResult {
+interface ArtReviewResult {
   imageIndex: number
   imageName: string
   success: boolean
   result?: {
-    lang: string
-    text: string
-    advice: string[]
-    text_refined: string
+    style: string
+    description: string
+    evaluation: string
+    suggestions: string[]
     return: string
     end: string
   }
@@ -35,13 +35,13 @@ interface OCRResult {
   batchId?: string
 }
 
-interface MergedOCRResult {
+interface MergedArtReviewResult {
   success: boolean
   result?: {
-    lang: string
-    text: string
-    advice: string[]
-    text_refined: string
+    style: string
+    description: string
+    evaluation: string
+    suggestions: string[]
     return: string
     end: string
     image_count: number
@@ -88,10 +88,10 @@ const compressImage = (file: File, maxWidth = 1024, quality = 0.8): Promise<File
   })
 }
 
-export default function TextReviewPage() {
+export default function ArtReviewPage() {
   const [images, setImages] = useState<UploadedImage[]>([])
-  const [results, setResults] = useState<OCRResult[]>([])
-  const [mergedResult, setMergedResult] = useState<MergedOCRResult | null>(null)
+  const [results, setResults] = useState<ArtReviewResult[]>([])
+  const [mergedResult, setMergedResult] = useState<MergedArtReviewResult | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [mergeImages, setMergeImages] = useState(false)
@@ -184,16 +184,10 @@ export default function TextReviewPage() {
 
   const removeImage = (id: string) => {
     setImages((prev) => prev.filter((img) => img.id !== id))
-    // 移除这两行，不再清空结果
-    // setResults([])
-    // setMergedResult(null)
   }
 
   const clearAllImages = () => {
     setImages([])
-    // 移除这两行，不再清空结果
-    // setResults([])
-    // setMergedResult(null)
     setError(null)
   }
 
@@ -231,7 +225,7 @@ export default function TextReviewPage() {
     return false // 没有变化
   }
 
-  const processWithOpenAI = async () => {
+  const processWithAI = async () => {
     if (images.length === 0) return
 
     // 检查是否为首次使用或内容是否有变化
@@ -287,7 +281,7 @@ export default function TextReviewPage() {
       console.log(`Processing ${images.length} images, merge: ${mergeImages}, total size: ${formatFileSize(totalSize)}`)
 
       // Call the API
-      const response = await fetch("/api/ocr", {
+      const response = await fetch("/api/art-review", {
         method: "POST",
         body: formData,
       })
@@ -410,11 +404,9 @@ export default function TextReviewPage() {
         {/* Header */}
         <div className="text-center">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
-            AI文章修改，支持多图片上传，<span className="text-red-500">OCR文本提取</span>
+            AI绘画评价，支持多图片上传，<span className="text-red-500">艺术作品分析</span>
           </h1>
-          <p className="text-gray-600 text-lg">
-            上传多张包含文本的图片，调整顺序后提交，OpenAI将自动识别文字并返回结果
-          </p>
+          <p className="text-gray-600 text-lg">上传您的绘画作品，调整顺序后提交，AI将自动分析并给出专业评价</p>
         </div>
 
         {/* Error Display */}
@@ -463,7 +455,7 @@ export default function TextReviewPage() {
                   }`}
                 />
                 <p className="text-lg font-medium text-gray-700 mb-2">
-                  {dragOver ? "松开鼠标上传文件" : "拖放图片到此处或"}
+                  {dragOver ? "松开鼠标上传文件" : "拖放绘画作品到此处或"}
                 </p>
                 <Button
                   variant="outline"
@@ -473,7 +465,7 @@ export default function TextReviewPage() {
                     handleButtonClick()
                   }}
                 >
-                  选择图片
+                  选择绘画作品
                 </Button>
                 <p className="text-sm text-gray-500">支持格式：JPG, PNG (最大10MB)</p>
                 <p className="text-xs text-orange-600 mt-1">提示：大文件将自动压缩以提高处理速度</p>
@@ -486,7 +478,7 @@ export default function TextReviewPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  已上传图片 ({images.length})<Badge variant="secondary">拖拽图片可调整顺序</Badge>
+                  已上传作品 ({images.length})<Badge variant="secondary">拖拽作品可调整顺序</Badge>
                 </CardTitle>
                 <Button variant="outline" size="sm" onClick={clearAllImages}>
                   <X className="w-4 h-4 mr-2" />
@@ -567,7 +559,7 @@ export default function TextReviewPage() {
                       htmlFor="merge-images"
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                     >
-                      合并图像
+                      整体评价
                     </label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -584,7 +576,7 @@ export default function TextReviewPage() {
                     </label>
                   </div>
                   <Button
-                    onClick={processWithOpenAI}
+                    onClick={processWithAI}
                     disabled={!noWait && isProcessing}
                     size="lg"
                     className="bg-purple-600 hover:bg-purple-700 px-8 py-3 text-lg"
@@ -592,10 +584,10 @@ export default function TextReviewPage() {
                     {!noWait && isProcessing ? (
                       <>
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
-                        处理中...
+                        评价中...
                       </>
                     ) : (
-                      "开始AI处理"
+                      "开始AI评价"
                     )}
                   </Button>
                 </div>
@@ -610,20 +602,20 @@ export default function TextReviewPage() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Languages className="w-5 h-5" />
-                AI处理结果
+                AI评价
                 {mergedResult?.result && (
                   <Badge variant="secondary" className="ml-2">
-                    合并处理 ({mergedResult.result.image_count} 张图片)
+                    整体评价 ({mergedResult.result.image_count} 幅作品)
                   </Badge>
                 )}
                 {results.length > 0 && (
                   <Badge variant="outline" className="ml-2">
-                    历史结果: {results.length}
+                    历史评价: {results.length}
                   </Badge>
                 )}
                 {processingRequests.size > 0 && (
                   <Badge variant="default" className="ml-2 bg-orange-500">
-                    处理中: {processingRequests.size}
+                    评价中: {processingRequests.size}
                   </Badge>
                 )}
               </CardTitle>
@@ -648,13 +640,13 @@ export default function TextReviewPage() {
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4" />
                   <p className="text-gray-600 text-lg">
                     {processingRequests.size > 0
-                      ? `正在异步处理 ${processingRequests.size} 个请求...`
+                      ? `正在异步评价 ${processingRequests.size} 个请求...`
                       : mergeImages
-                        ? "正在合并处理所有图片..."
-                        : "正在处理图片，请稍候..."}
+                        ? "正在整体评价所有作品..."
+                        : "正在评价作品，请稍候..."}
                   </p>
                   {processingRequests.size > 0 && (
-                    <p className="text-sm text-gray-500 mt-2">异步模式：可以继续添加新的处理请求</p>
+                    <p className="text-sm text-gray-500 mt-2">异步模式：可以继续添加新的评价请求</p>
                   )}
                 </div>
               )}
@@ -683,9 +675,9 @@ export default function TextReviewPage() {
                       )}
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-medium text-lg">合并处理结果</h3>
+                      <h3 className="font-medium text-lg">整体评价结果</h3>
                       <p className="text-sm text-gray-500">
-                        共处理 {mergedResult.result.image_count} 张图片
+                        共评价 {mergedResult.result.image_count} 幅作品
                         {mergedResult.timestamp && (
                           <span className="ml-2">• {new Date(mergedResult.timestamp).toLocaleString()}</span>
                         )}
@@ -698,38 +690,36 @@ export default function TextReviewPage() {
                   </div>
 
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">检测语言:</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">作品风格:</label>
                     <div className="p-3 bg-gray-50 rounded-lg">
                       <Badge variant="outline" className="text-sm px-3 py-1">
-                        {mergedResult.result.lang}
+                        {mergedResult.result.style}
                       </Badge>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">提取的文本:</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">作品描述:</label>
                       <div className="p-4 bg-gray-50 rounded-lg h-full overflow-y-auto border">
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{mergedResult.result.text}</p>
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{mergedResult.result.description}</p>
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">修正后的文本:</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">专业评价:</label>
                       <div className="p-4 bg-blue-50 rounded-lg h-full overflow-y-auto border border-blue-200">
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                          {mergedResult.result.text_refined}
-                        </p>
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{mergedResult.result.evaluation}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">修改建议:</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">改进建议:</label>
                     <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                       <ul className="text-sm space-y-1">
-                        {mergedResult.result.advice.map((advice, index) => (
+                        {mergedResult.result.suggestions.map((suggestion, index) => (
                           <li key={index} className="leading-relaxed">
-                            {advice}
+                            {suggestion}
                           </li>
                         ))}
                       </ul>
@@ -751,7 +741,7 @@ export default function TextReviewPage() {
                         />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-medium text-lg">图片 {result.imageIndex + 1}</h3>
+                        <h3 className="font-medium text-lg">作品 {result.imageIndex + 1}</h3>
                         <p className="text-sm text-gray-500">
                           {result.imageName}
                           {result.timestamp && (
@@ -777,38 +767,36 @@ export default function TextReviewPage() {
                     {result.success && result.result ? (
                       <>
                         <div className="mb-4">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">检测语言:</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">作品风格:</label>
                           <div className="p-3 bg-gray-50 rounded-lg">
                             <Badge variant="outline" className="text-sm px-3 py-1">
-                              {result.result.lang}
+                              {result.result.style}
                             </Badge>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">提取的文本:</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">作品描述:</label>
                             <div className="p-4 bg-gray-50 rounded-lg h-64 overflow-y-auto border">
-                              <p className="text-sm leading-relaxed whitespace-pre-wrap">{result.result.text}</p>
+                              <p className="text-sm leading-relaxed whitespace-pre-wrap">{result.result.description}</p>
                             </div>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">修正后的文本:</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">专业评价:</label>
                             <div className="p-4 bg-blue-50 rounded-lg h-64 overflow-y-auto border border-blue-200">
-                              <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                                {result.result.text_refined}
-                              </p>
+                              <p className="text-sm leading-relaxed whitespace-pre-wrap">{result.result.evaluation}</p>
                             </div>
                           </div>
                         </div>
 
                         <div className="mt-4">
-                          <label className="block text-sm font-medium text-gray-700 mb-2">修改建议:</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">改进建议:</label>
                           <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                             <ul className="text-sm space-y-1">
-                              {result.result.advice.map((advice, adviceIndex) => (
-                                <li key={adviceIndex} className="leading-relaxed">
-                                  {advice}
+                              {result.result.suggestions.map((suggestion, suggestionIndex) => (
+                                <li key={suggestionIndex} className="leading-relaxed">
+                                  {suggestion}
                                 </li>
                               ))}
                             </ul>
@@ -817,7 +805,7 @@ export default function TextReviewPage() {
                       </>
                     ) : (
                       <div className="p-4 bg-red-50 rounded-lg border border-red-200">
-                        <p className="text-red-600 text-sm">处理失败: {result.error || "未知错误"}</p>
+                        <p className="text-red-600 text-sm">评价失败: {result.error || "未知错误"}</p>
                       </div>
                     )}
                   </div>
@@ -836,7 +824,7 @@ export default function TextReviewPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="text-center mb-6">
-              <p className="text-gray-600">以下是详细的使用步骤，帮助您更好地使用OCR文本提取功能</p>
+              <p className="text-gray-600">以下是详细的使用步骤，帮助您更好地使用AI绘画评价功能</p>
             </div>
 
             <div className="grid grid-cols-1 gap-8">
@@ -844,19 +832,19 @@ export default function TextReviewPage() {
               <div className="space-y-4">
                 <div className="text-center">
                   <Badge variant="outline" className="mb-3 px-4 py-2 text-lg font-semibold">
-                    步骤 1: 上传图片
+                    步骤 1: 上传绘画作品
                   </Badge>
                 </div>
                 <div className="border rounded-lg overflow-hidden bg-gray-50">
-                  <img src="/textreview-step1.png" alt="教程步骤1 - 上传图片" className="w-full h-full object-cover" />
+                  <img src="/textreview-step1.png" alt="教程步骤1 - 上传作品" className="w-full h-full object-cover" />
                 </div>
                 <div className="p-4 bg-blue-50 rounded-lg">
-                  <h3 className="font-semibold text-blue-900 mb-2">上传和排序图片</h3>
+                  <h3 className="font-semibold text-blue-900 mb-2">上传和排序作品</h3>
                   <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• 拖拽图片到上传区域或点击选择图片</li>
+                    <li>• 拖拽绘画作品到上传区域或点击选择</li>
                     <li>• 支持JPG、PNG格式，最大10MB</li>
-                    <li>• 使用上下箭头调整图片顺序</li>
-                    <li>• 可以删除不需要的图片</li>
+                    <li>• 使用上下箭头调整作品顺序</li>
+                    <li>• 可以删除不需要的作品</li>
                   </ul>
                 </div>
               </div>
@@ -865,23 +853,23 @@ export default function TextReviewPage() {
               <div className="space-y-4">
                 <div className="text-center">
                   <Badge variant="outline" className="mb-3 px-4 py-2 text-lg font-semibold">
-                    步骤 2: 处理选项
+                    步骤 2: 评价选项
                   </Badge>
                 </div>
                 <div className="border rounded-lg overflow-hidden bg-gray-50">
-                  <img src="/textreview-step2.png" alt="教程步骤2 - 处理选项" className="w-full h-full object-cover" />
+                  <img src="/textreview-step2.png" alt="教程步骤2 - 评价选项" className="w-full h-full object-cover" />
                 </div>
                 <div className="p-4 bg-green-50 rounded-lg">
-                  <h3 className="font-semibold text-green-900 mb-2">选择处理方式</h3>
+                  <h3 className="font-semibold text-green-900 mb-2">选择评价方式</h3>
                   <ul className="text-sm text-green-800 space-y-1">
                     <li>
-                      • <strong>单独处理</strong>：每张图片独立识别文字
+                      • <strong>单独评价</strong>：每幅作品独立分析评价
                     </li>
                     <li>
-                      • <strong>合并处理</strong>：将所有图片文字合并为一篇文章
+                      • <strong>整体评价</strong>：将所有作品作为系列进行综合评价
                     </li>
-                    <li>• 点击"开始AI处理"开始处理</li>
-                    <li>• 等待AI分析和文字提取完成</li>
+                    <li>• 点击"开始AI评价"开始分析</li>
+                    <li>• 等待AI艺术分析和评价完成</li>
                   </ul>
                 </div>
               </div>
@@ -894,19 +882,21 @@ export default function TextReviewPage() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-yellow-800">
                 <div>
-                  <h4 className="font-medium mb-2">图片质量建议：</h4>
+                  <h4 className="font-medium mb-2">作品质量建议：</h4>
                   <ul className="space-y-1">
-                    <li>• 确保文字清晰可见</li>
-                    <li>• 避免模糊或倾斜的图片</li>
-                    <li>• 光线充足，对比度良好</li>
+                    <li>• 确保作品图像清晰</li>
+                    <li>• 避免反光或阴影遮挡</li>
+                    <li>• 光线充足，色彩还原度好</li>
+                    <li>• 尽量包含完整作品</li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-medium mb-2">处理结果：</h4>
+                  <h4 className="font-medium mb-2">评价结果：</h4>
                   <ul className="space-y-1">
-                    <li>• 自动检测文字语言</li>
-                    <li>• 提供原始和修正文本</li>
-                    <li>• 给出改进建议</li>
+                    <li>• 自动识别艺术风格</li>
+                    <li>• 提供详细作品分析</li>
+                    <li>• 给出专业改进建议</li>
+                    <li>• 评估技法和构图</li>
                   </ul>
                 </div>
               </div>
