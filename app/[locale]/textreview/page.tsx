@@ -101,6 +101,9 @@ export default function TextReviewPage() {
   const [noWait, setNoWait] = useState(true)
   const [processingRequests, setProcessingRequests] = useState<Set<string>>(new Set())
   const locale = useLocale()
+  const [lastSubmittedImageIds, setLastSubmittedImageIds] = useState<string[]>([])
+  const [lastSubmittedMergeOption, setLastSubmittedMergeOption] = useState<boolean>(false)
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -210,9 +213,39 @@ export default function TextReviewPage() {
     }
   }
 
+  const hasImagesChanged = () => {
+    // 获取当前图片ID列表
+    const currentImageIds = images.map((img) => img.id)
+
+    // 检查数量是否变化
+    if (currentImageIds.length !== lastSubmittedImageIds.length) return true
+
+    // 检查顺序是否变化
+    for (let i = 0; i < currentImageIds.length; i++) {
+      if (currentImageIds[i] !== lastSubmittedImageIds[i]) return true
+    }
+
+    // 检查处理选项是否变化
+    if (mergeImages !== lastSubmittedMergeOption) return true
+
+    return false // 没有变化
+  }
+
   const processWithOpenAI = async () => {
     if (images.length === 0) return
 
+    // 检查是否为首次使用或内容是否有变化
+    if (lastSubmittedImageIds.length > 0 && !hasImagesChanged()) {
+      // 内容没有变化，显示确认对话框
+      setShowDuplicateDialog(true)
+      return
+    }
+
+    // 继续执行原有的处理逻辑
+    await executeProcessing()
+  }
+
+  const executeProcessing = async () => {
     // 生成唯一的请求ID
     const requestId = `request-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
@@ -226,6 +259,11 @@ export default function TextReviewPage() {
 
     setError(null)
 
+    // 更新上次提交的状态
+    setLastSubmittedImageIds(images.map((img) => img.id))
+    setLastSubmittedMergeOption(mergeImages)
+
+    // 继续原有的处理逻辑...
     try {
       // Check total file size before sending
       const totalSize = images.reduce((sum, img) => sum + img.file.size, 0)
@@ -347,6 +385,15 @@ export default function TextReviewPage() {
         setIsProcessing(false)
       }
     }
+  }
+
+  const handleConfirmDuplicate = () => {
+    setShowDuplicateDialog(false)
+    executeProcessing()
+  }
+
+  const handleCancelDuplicate = () => {
+    setShowDuplicateDialog(false)
   }
 
   const formatFileSize = (bytes: number) => {
@@ -882,6 +929,23 @@ export default function TextReviewPage() {
             </Link>
           </CardContent>
         </Card>
+        {/* 重复内容确认对话框 */}
+        {showDuplicateDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+              <h3 className="text-lg font-semibold mb-4">确认处理</h3>
+              <p className="text-gray-600 mb-6">相同内容，是否再次处理？</p>
+              <div className="flex gap-4 justify-end">
+                <Button variant="outline" onClick={handleCancelDuplicate}>
+                  否，取消
+                </Button>
+                <Button onClick={handleConfirmDuplicate} className="bg-purple-600 hover:bg-purple-700">
+                  是，继续处理
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
