@@ -595,7 +595,7 @@ export default function TextReviewPage() {
                         处理中...
                       </>
                     ) : (
-                      "调用OpenAI"
+                      "开始AI处理"
                     )}
                   </Button>
                 </div>
@@ -880,7 +880,7 @@ export default function TextReviewPage() {
                     <li>
                       • <strong>合并处理</strong>：将所有图片文字合并为一篇文章
                     </li>
-                    <li>• 点击"调用OpenAI"开始处理</li>
+                    <li>• 点击"开始AI处理"开始处理</li>
                     <li>• 等待AI分析和文字提取完成</li>
                   </ul>
                 </div>
