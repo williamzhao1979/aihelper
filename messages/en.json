@@ -1,48 +1,7 @@
 {
-  "common": {
-    "loading": "Loading...",
-    "error": "Error",
-    "submit": "Submit",
-    "cancel": "Cancel",
-    "success": "Success",
-    "failed": "Failed"
-  },
-  "header": {
-    "title": "One AI Assistant to Enjoy Smart Services Across Multiple Platforms!",
-    "subtitle": "Ask once, get answers from multiple AI platforms",
-    "language": "Language"
-  },
-  "form": {
-    "inputLabel": "Enter your question or prompt",
-    "inputPlaceholder": "Please enter your question, supports multiple lines...",
-    "submitButton": "Submit Query",
-    "submitting": "Querying...",
-    "selectServices": "Select AI Platforms",
-    "completed": "Completed",
-    "noServiceSelected": "Please select at least one AI platform",
-    "streamingMode": "Streaming Response",
-    "streamingDescription": "Get real-time AI responses",
-    "standardMode": "Standard Mode",
-    "standardDescription": "Wait for complete response",
-    "proFeature": "Pro Feature"
-  },
-  "services": {
-    "chatgpt": "ChatGPT",
-    "deepseek": "DeepSeek",
-    "github": "GitHub Copilot",
-    "microsoft": "Microsoft Copilot"
-  },
-  "results": {
-    "title": "AI Response Results",
-    "errorPrefix": "Error:",
-    "noResponse": "No response received",
-    "streaming": "Receiving response...",
-    "streamComplete": "Response complete"
-  },
-  "errors": {
-    "networkError": "Network connection error, please check your internet connection",
-    "apiError": "API call failed, please try again later",
-    "invalidInput": "Please enter a valid question",
-    "serverError": "Server error, please try again later"
+  "settings": {
+    "title": "Settings",
+    "version": "Version Selection",
+    "language": "Language Settings"
   }
 }
