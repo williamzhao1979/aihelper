@@ -90,7 +90,7 @@ export default function MultiPlatformAIV2() {
   const [isMounted, setIsMounted] = useState(false)
   const [checkingSubscription, setCheckingSubscription] = useState(false)
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
-  const [responseMode, setResponseMode] = useState<ResponseMode>("standard")
+  const [responseMode, setResponseMode] = useState<ResponseMode>("async")
 
   // 重复检测相关状态
   const [lastSubmittedPrompt, setLastSubmittedPrompt] = useState<string>("")
@@ -896,17 +896,15 @@ export default function MultiPlatformAIV2() {
         <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="font-chinese">相同内容检测</DialogTitle>
-              <DialogDescription className="font-chinese">
-                检测到您提交的问题和选择的AI服务与上次相同，是否再次处理？
-              </DialogDescription>
+              <DialogTitle className="font-chinese">相同问题检测</DialogTitle>
+              <DialogDescription className="font-chinese">相同问题，是否再次提问？</DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex gap-2">
               <Button variant="outline" onClick={() => setShowDuplicateDialog(false)} className="font-chinese">
                 取消
               </Button>
               <Button onClick={handleDuplicateConfirm} className="bg-indigo-600 hover:bg-indigo-700 font-chinese">
-                继续处理
+                是
               </Button>
             </DialogFooter>
           </DialogContent>
