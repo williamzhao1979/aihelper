@@ -7,7 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
-import { Check, Sparkles, Send, AlertCircle, Loader2, Zap, Crown, Lock, Star } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Check, Sparkles, Send, AlertCircle, Loader2, Zap, Crown, Lock, Star, Clock } from "lucide-react"
 import LanguageSwitcher from "./language-switcher"
 import SubscriptionDialog from "./subscription-dialog"
 import Link from "next/link"
@@ -35,6 +43,15 @@ interface ApiResponse {
   error?: string
 }
 
+interface ChatResult {
+  id: string
+  prompt: string
+  selectedServices: SelectedServices
+  responses: AIResponse[]
+  timestamp: number
+  mode: ResponseMode
+}
+
 // Define the service keys type
 type ServiceKey = "chatgpt" | "deepseek" | "github" | "microsoft"
 
@@ -51,6 +68,8 @@ interface Service {
   color: string
 }
 
+type ResponseMode = "standard" | "async" | "streaming"
+
 export default function MultiPlatformAIV2() {
   const t = useTranslations()
   const { data: session, status } = useSession()
@@ -64,16 +83,25 @@ export default function MultiPlatformAIV2() {
     microsoft: false,
   })
   const [isLoading, setIsLoading] = useState(false)
-  const [responses, setResponses] = useState<AIResponse[]>([])
+  const [chatResults, setChatResults] = useState<ChatResult[]>([])
   const [streamingResponses, setStreamingResponses] = useState<Map<string, string>>(new Map())
   const [error, setError] = useState<string | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const [isMounted, setIsMounted] = useState(false)
   const [checkingSubscription, setCheckingSubscription] = useState(false)
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
+  const [responseMode, setResponseMode] = useState<ResponseMode>("standard")
 
-  type ResponseMode = "standard" | "async" | "streaming"
-  const [responseMode, setResponseMode] = useState<ResponseMode>("async")
+  // 重复检测相关状态
+  const [lastSubmittedPrompt, setLastSubmittedPrompt] = useState<string>("")
+  const [lastSubmittedServices, setLastSubmittedServices] = useState<SelectedServices>({
+    chatgpt: false,
+    deepseek: false,
+    github: false,
+    microsoft: false,
+  })
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
+  const [processingRequests, setProcessingRequests] = useState<Set<string>>(new Set())
 
   const services: Service[] = [
     { key: "chatgpt", name: "ChatGPT", color: "from-green-400 to-green-600" },
@@ -127,6 +155,22 @@ export default function MultiPlatformAIV2() {
     setResponseMode(mode)
   }
 
+  // 检查是否为重复提交
+  const isDuplicateSubmission = () => {
+    if (!lastSubmittedPrompt) return false
+
+    const servicesChanged = Object.keys(selectedServices).some(
+      (key) => selectedServices[key as ServiceKey] !== lastSubmittedServices[key as ServiceKey],
+    )
+
+    return lastSubmittedPrompt === prompt.trim() && !servicesChanged
+  }
+
+  // 生成唯一ID
+  const generateId = () => {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2)
+  }
+
   const handleStreamingSubmit = async () => {
     if (!prompt.trim()) return
 
@@ -139,7 +183,6 @@ export default function MultiPlatformAIV2() {
     setIsLoading(true)
     setError(null)
     setStreamingResponses(new Map())
-    setResponses([])
 
     abortControllerRef.current = new AbortController()
 
@@ -169,6 +212,7 @@ export default function MultiPlatformAIV2() {
 
       let buffer = ""
       const completedServices = new Set<string>()
+      const streamingResults: AIResponse[] = []
 
       while (true) {
         const { done, value } = await reader.read()
@@ -182,6 +226,18 @@ export default function MultiPlatformAIV2() {
           if (line.startsWith("data: ")) {
             const data = line.slice(6)
             if (data === "[DONE]") {
+              // 保存流式响应结果到历史记录
+              const newResult: ChatResult = {
+                id: generateId(),
+                prompt: prompt.trim(),
+                selectedServices: { ...selectedServices },
+                responses: streamingResults,
+                timestamp: Date.now(),
+                mode: "streaming",
+              }
+              setChatResults((prev) => [newResult, ...prev])
+              setLastSubmittedPrompt(prompt.trim())
+              setLastSubmittedServices({ ...selectedServices })
               setIsLoading(false)
               return
             }
@@ -195,8 +251,20 @@ export default function MultiPlatformAIV2() {
                   newMap.set(streamData.service, `Error: ${streamData.error}`)
                   return newMap
                 })
+                streamingResults.push({
+                  service: streamData.service,
+                  response: "",
+                  error: streamData.error,
+                  timestamp: streamData.timestamp,
+                })
                 completedServices.add(streamData.service)
               } else if (streamData.done) {
+                const finalContent = streamingResponses.get(streamData.service) || ""
+                streamingResults.push({
+                  service: streamData.service,
+                  response: finalContent,
+                  timestamp: streamData.timestamp,
+                })
                 completedServices.add(streamData.service)
               } else if (streamData.content) {
                 setStreamingResponses((prev) => {
@@ -236,7 +304,6 @@ export default function MultiPlatformAIV2() {
 
     setIsLoading(true)
     setError(null)
-    setResponses([])
     setStreamingResponses(new Map())
 
     try {
@@ -258,7 +325,17 @@ export default function MultiPlatformAIV2() {
       }
 
       if (data.success) {
-        setResponses(data.results)
+        const newResult: ChatResult = {
+          id: generateId(),
+          prompt: prompt.trim(),
+          selectedServices: { ...selectedServices },
+          responses: data.results,
+          timestamp: Date.now(),
+          mode: "standard",
+        }
+        setChatResults((prev) => [newResult, ...prev])
+        setLastSubmittedPrompt(prompt.trim())
+        setLastSubmittedServices({ ...selectedServices })
       } else {
         throw new Error(data.error || "服务器错误")
       }
@@ -273,7 +350,7 @@ export default function MultiPlatformAIV2() {
     }
   }
 
-  const handleAsyncSubmit = async () => {
+  const handleAsyncSubmit = async (forceSubmit = false) => {
     if (!prompt.trim()) return
 
     const selectedCount = Object.values(selectedServices).filter(Boolean).length
@@ -282,10 +359,15 @@ export default function MultiPlatformAIV2() {
       return
     }
 
-    setIsLoading(true)
+    // 检查重复提交
+    if (!forceSubmit && isDuplicateSubmission()) {
+      setShowDuplicateDialog(true)
+      return
+    }
+
+    const requestId = generateId()
+    setProcessingRequests((prev) => new Set([...prev, requestId]))
     setError(null)
-    setResponses([])
-    setStreamingResponses(new Map())
 
     try {
       const response = await fetch("/api/chat", {
@@ -296,7 +378,7 @@ export default function MultiPlatformAIV2() {
         body: JSON.stringify({
           prompt: prompt.trim(),
           selectedServices,
-          async: true, // 标识为异步模式
+          async: true,
         }),
       })
 
@@ -307,7 +389,17 @@ export default function MultiPlatformAIV2() {
       }
 
       if (data.success) {
-        setResponses(data.results)
+        const newResult: ChatResult = {
+          id: requestId,
+          prompt: prompt.trim(),
+          selectedServices: { ...selectedServices },
+          responses: data.results,
+          timestamp: Date.now(),
+          mode: "async",
+        }
+        setChatResults((prev) => [newResult, ...prev])
+        setLastSubmittedPrompt(prompt.trim())
+        setLastSubmittedServices({ ...selectedServices })
       } else {
         throw new Error(data.error || "服务器错误")
       }
@@ -318,7 +410,11 @@ export default function MultiPlatformAIV2() {
         setError(err instanceof Error ? err.message : "服务器错误")
       }
     } finally {
-      setIsLoading(false)
+      setProcessingRequests((prev) => {
+        const newSet = new Set(prev)
+        newSet.delete(requestId)
+        return newSet
+      })
     }
   }
 
@@ -336,9 +432,26 @@ export default function MultiPlatformAIV2() {
     }
   }
 
+  const handleDuplicateConfirm = () => {
+    setShowDuplicateDialog(false)
+    handleAsyncSubmit(true)
+  }
+
   const selectedCount = Object.values(selectedServices).filter(Boolean).length
-  const completedCount = responseMode === "streaming" ? streamingResponses.size : responses.length
+  const completedCount = responseMode === "streaming" ? streamingResponses.size : 0
   const canUseStreaming = session && hasActiveSubscription
+
+  // 格式化时间
+  const formatTime = (timestamp: number) => {
+    return new Date(timestamp).toLocaleString("zh-CN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
+  }
 
   // Don't render until mounted to avoid hydration issues
   if (!isMounted) {
@@ -440,7 +553,7 @@ export default function MultiPlatformAIV2() {
                         {responseMode === "streaming"
                           ? "实时显示AI回答过程"
                           : responseMode === "async"
-                            ? "无需等待，AI并行处理"
+                            ? "无需等待，AI并行处理，支持重复检测"
                             : "等待所有AI完成后显示结果"}
                       </p>
                     </div>
@@ -526,27 +639,19 @@ export default function MultiPlatformAIV2() {
                   {isLoading ? "提交中..." : "提交问题"}
                 </Button>
 
-                {isLoading && (
+                {/* 异步处理状态显示 */}
+                {processingRequests.size > 0 && (
+                  <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 px-3 py-1 rounded-full bg-indigo-50 font-chinese">
+                    <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                    处理中: {processingRequests.size}
+                  </div>
+                )}
+
+                {isLoading && responseMode === "streaming" && (
                   <div className="flex items-center gap-4 flex-1">
                     <Progress value={(completedCount / selectedCount) * 100} className="flex-1 h-3 bg-gray-200" />
-                    <div
-                      className={`flex items-center gap-2 text-sm font-medium text-gray-600 px-3 py-1 rounded-full font-chinese ${
-                        responseMode === "streaming"
-                          ? "bg-purple-50"
-                          : responseMode === "async"
-                            ? "bg-indigo-50"
-                            : "bg-blue-50"
-                      }`}
-                    >
-                      <div
-                        className={`w-2 h-2 rounded-full animate-pulse ${
-                          responseMode === "streaming"
-                            ? "bg-purple-500"
-                            : responseMode === "async"
-                              ? "bg-indigo-500"
-                              : "bg-blue-500"
-                        }`}
-                      ></div>
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-600 px-3 py-1 rounded-full font-chinese bg-purple-50">
+                      <div className="w-2 h-2 rounded-full animate-pulse bg-purple-500"></div>
                       {completedCount}/{selectedCount} 已完成
                     </div>
                   </div>
@@ -605,93 +710,141 @@ export default function MultiPlatformAIV2() {
           </div>
         </div>
 
-        {/* Response Cards */}
-        {(responses.length > 0 || streamingResponses.size > 0) && (
-          <div className="space-y-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-6 font-chinese">AI回答结果</h3>
+        {/* AI回答结果 - 永久显示 */}
+        <div className="space-y-6">
+          <h3 className="text-xl font-bold text-gray-800 mb-6 font-chinese">AI回答结果</h3>
 
-            {/* Standard Responses */}
-            {responses.map((aiResponse, index) => {
-              const service = services.find((s) => s.name === aiResponse.service)
-              return (
-                <Card
-                  key={`${aiResponse.service}-${index}`}
-                  className="border-0 shadow-xl bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 group"
-                >
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-3 h-3 rounded-full bg-gradient-to-r ${service?.color || "from-gray-400 to-gray-600"}`}
-                      />
-                      <CardTitle className="text-xl font-bold text-gray-800 group-hover:text-gray-900 transition-colors">
-                        {aiResponse.service}
-                      </CardTitle>
-                      <div className="ml-auto">
-                        {aiResponse.error ? (
-                          <AlertCircle className="w-5 h-5 text-red-500" />
-                        ) : (
-                          <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="min-h-[200px] pt-0">
-                    <div className="bg-gradient-to-br from-gray-50 to-purple-50 rounded-xl p-6 border border-purple-100">
-                      {aiResponse.error ? (
-                        <div className="flex items-center gap-2 text-red-600">
-                          <AlertCircle className="w-4 h-4" />
-                          <span className="font-chinese">错误: {aiResponse.error}</span>
+          {/* 当前流式响应 */}
+          {responseMode === "streaming" && streamingResponses.size > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Zap className="w-5 h-5 text-purple-500" />
+                <span className="text-lg font-semibold text-gray-700 font-chinese">实时流式响应</span>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+              </div>
+              {Array.from(streamingResponses.entries()).map(([serviceName, content]) => {
+                const service = services.find((s) => s.name === serviceName)
+                return (
+                  <Card
+                    key={`streaming-${serviceName}`}
+                    className="border-0 shadow-xl bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 group"
+                  >
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-3 h-3 rounded-full bg-gradient-to-r ${service?.color || "from-gray-400 to-gray-600"}`}
+                        />
+                        <CardTitle className="text-xl font-bold text-gray-800 group-hover:text-gray-900 transition-colors">
+                          {serviceName}
+                        </CardTitle>
+                        <div className="ml-auto flex items-center gap-2">
+                          <Zap className="w-4 h-4 text-purple-500" />
+                          {isLoading ? (
+                            <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+                          ) : (
+                            <div className="w-2 h-2 bg-green-500 rounded-full" />
+                          )}
                         </div>
-                      ) : (
+                      </div>
+                    </CardHeader>
+                    <CardContent className="min-h-[200px] pt-0">
+                      <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
                         <div className="text-gray-700 leading-relaxed text-base font-chinese whitespace-pre-wrap">
-                          {aiResponse.response || "暂无回答"}
+                          {content || "正在流式回答中..."}
+                          {isLoading && <span className="animate-pulse">|</span>}
                         </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          )}
 
-            {/* Streaming Responses */}
-            {Array.from(streamingResponses.entries()).map(([serviceName, content]) => {
-              const service = services.find((s) => s.name === serviceName)
-              return (
-                <Card
-                  key={`streaming-${serviceName}`}
-                  className="border-0 shadow-xl bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 group"
-                >
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-3 h-3 rounded-full bg-gradient-to-r ${service?.color || "from-gray-400 to-gray-600"}`}
-                      />
-                      <CardTitle className="text-xl font-bold text-gray-800 group-hover:text-gray-900 transition-colors">
-                        {serviceName}
-                      </CardTitle>
-                      <div className="ml-auto flex items-center gap-2">
-                        <Zap className="w-4 h-4 text-purple-500" />
-                        {isLoading ? (
-                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
-                        ) : (
-                          <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        )}
-                      </div>
+          {/* 历史结果 */}
+          {chatResults.length > 0 && (
+            <div className="space-y-6">
+              {chatResults.map((result, resultIndex) => (
+                <div key={result.id} className="space-y-4">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-2">
+                      {result.mode === "streaming" ? (
+                        <Zap className="w-5 h-5 text-purple-500" />
+                      ) : result.mode === "async" ? (
+                        <Sparkles className="w-5 h-5 text-indigo-500" />
+                      ) : (
+                        <Send className="w-5 h-5 text-blue-500" />
+                      )}
+                      <span className="text-lg font-semibold text-gray-700 font-chinese">
+                        {result.mode === "streaming" ? "流式响应" : result.mode === "async" ? "异步并行" : "标准响应"}
+                      </span>
                     </div>
-                  </CardHeader>
-                  <CardContent className="min-h-[200px] pt-0">
-                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
-                      <div className="text-gray-700 leading-relaxed text-base font-chinese whitespace-pre-wrap">
-                        {content || "正在流式回答中..."}
-                        {isLoading && <span className="animate-pulse">|</span>}
-                      </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Clock className="w-4 h-4" />
+                      <span>{formatTime(result.timestamp)}</span>
                     </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        )}
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                    <div className="text-sm text-gray-600 mb-2 font-chinese">提问内容：</div>
+                    <div className="text-gray-800 font-chinese">{result.prompt}</div>
+                  </div>
+
+                  <div className="grid gap-4">
+                    {result.responses.map((aiResponse, index) => {
+                      const service = services.find((s) => s.name === aiResponse.service)
+                      return (
+                        <Card
+                          key={`${result.id}-${aiResponse.service}-${index}`}
+                          className="border-0 shadow-xl bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 group"
+                        >
+                          <CardHeader className="pb-4">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`w-3 h-3 rounded-full bg-gradient-to-r ${service?.color || "from-gray-400 to-gray-600"}`}
+                              />
+                              <CardTitle className="text-xl font-bold text-gray-800 group-hover:text-gray-900 transition-colors">
+                                {aiResponse.service}
+                              </CardTitle>
+                              <div className="ml-auto">
+                                {aiResponse.error ? (
+                                  <AlertCircle className="w-5 h-5 text-red-500" />
+                                ) : (
+                                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                                )}
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="min-h-[200px] pt-0">
+                            <div className="bg-gradient-to-br from-gray-50 to-purple-50 rounded-xl p-6 border border-purple-100">
+                              {aiResponse.error ? (
+                                <div className="flex items-center gap-2 text-red-600">
+                                  <AlertCircle className="w-4 h-4" />
+                                  <span className="font-chinese">错误: {aiResponse.error}</span>
+                                </div>
+                              ) : (
+                                <div className="text-gray-700 leading-relaxed text-base font-chinese whitespace-pre-wrap">
+                                  {aiResponse.response || "暂无回答"}
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {chatResults.length === 0 && streamingResponses.size === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-chinese">还没有AI回答结果，请提交问题开始对话</p>
+            </div>
+          )}
+        </div>
 
         {/* Link to Text Review Page */}
         <Card className="mt-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm">
@@ -738,6 +891,26 @@ export default function MultiPlatformAIV2() {
             </CardContent>
           </Card>
         ) : null}
+
+        {/* 重复提交确认对话框 */}
+        <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="font-chinese">相同内容检测</DialogTitle>
+              <DialogDescription className="font-chinese">
+                检测到您提交的问题和选择的AI服务与上次相同，是否再次处理？
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowDuplicateDialog(false)} className="font-chinese">
+                取消
+              </Button>
+              <Button onClick={handleDuplicateConfirm} className="bg-indigo-600 hover:bg-indigo-700 font-chinese">
+                继续处理
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
