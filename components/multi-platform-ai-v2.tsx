@@ -104,10 +104,10 @@ export default function MultiPlatformAIV2() {
   const [processingRequests, setProcessingRequests] = useState<Set<string>>(new Set())
 
   const services: Service[] = [
-    { key: "chatgpt", name: "ChatGPT", color: "from-green-400 to-green-600" },
-    { key: "deepseek", name: "DeepSeek", color: "from-purple-400 to-purple-600" },
-    { key: "github", name: "GitHub Copilot", color: "from-gray-600 to-gray-800" },
-    { key: "microsoft", name: "Microsoft Copilot", color: "from-blue-400 to-blue-600" },
+    { key: "chatgpt", name: t("services.chatgpt"), color: "from-green-400 to-green-600" },
+    { key: "deepseek", name: t("services.deepseek"), color: "from-purple-400 to-purple-600" },
+    { key: "github", name: t("services.github"), color: "from-gray-600 to-gray-800" },
+    { key: "microsoft", name: t("services.microsoft"), color: "from-blue-400 to-blue-600" },
   ]
 
   // Check subscription status when user is authenticated
@@ -179,7 +179,7 @@ export default function MultiPlatformAIV2() {
 
     const selectedCount = Object.values(selectedServices).filter(Boolean).length
     if (selectedCount === 0) {
-      setError("请至少选择一个AI服务")
+      setError(t("chat.noServiceSelected"))
       return
     }
 
@@ -287,9 +287,9 @@ export default function MultiPlatformAIV2() {
       if (err instanceof Error && err.name === "AbortError") {
         setError("Request cancelled")
       } else if (err instanceof TypeError && err.message.includes("fetch")) {
-        setError("网络错误，请检查网络连接")
+        setError(t("chat.networkError"))
       } else {
-        setError(err instanceof Error ? err.message : "服务器错误")
+        setError(err instanceof Error ? err.message : t("chat.serverError"))
       }
     } finally {
       setIsLoading(false)
@@ -301,7 +301,7 @@ export default function MultiPlatformAIV2() {
 
     const selectedCount = Object.values(selectedServices).filter(Boolean).length
     if (selectedCount === 0) {
-      setError("请至少选择一个AI服务")
+      setError(t("chat.noServiceSelected"))
       return
     }
 
@@ -324,7 +324,7 @@ export default function MultiPlatformAIV2() {
       const data: ApiResponse = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "API错误")
+        throw new Error(data.error || t("chat.apiError"))
       }
 
       if (data.success) {
@@ -340,13 +340,13 @@ export default function MultiPlatformAIV2() {
         setLastSubmittedPrompt(prompt.trim())
         setLastSubmittedServices({ ...selectedServices })
       } else {
-        throw new Error(data.error || "服务器错误")
+        throw new Error(data.error || t("chat.serverError"))
       }
     } catch (err) {
       if (err instanceof TypeError && err.message.includes("fetch")) {
-        setError("网络错误，请检查网络连接")
+        setError(t("chat.networkError"))
       } else {
-        setError(err instanceof Error ? err.message : "服务器错误")
+        setError(err instanceof Error ? err.message : t("chat.serverError"))
       }
     } finally {
       setIsLoading(false)
@@ -358,7 +358,7 @@ export default function MultiPlatformAIV2() {
 
     const selectedCount = Object.values(selectedServices).filter(Boolean).length
     if (selectedCount === 0) {
-      setError("请至少选择一个AI服务")
+      setError(t("chat.noServiceSelected"))
       return
     }
 
@@ -392,7 +392,7 @@ export default function MultiPlatformAIV2() {
       const data: ApiResponse = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "API错误")
+        throw new Error(data.error || t("chat.apiError"))
       }
 
       if (data.success) {
@@ -406,13 +406,13 @@ export default function MultiPlatformAIV2() {
         }
         setChatResults((prev) => [newResult, ...prev])
       } else {
-        throw new Error(data.error || "服务器错误")
+        throw new Error(data.error || t("chat.serverError"))
       }
     } catch (err) {
       if (err instanceof TypeError && err.message.includes("fetch")) {
-        setError("网络错误，请检查网络连接")
+        setError(t("chat.networkError"))
       } else {
-        setError(err instanceof Error ? err.message : "服务器错误")
+        setError(err instanceof Error ? err.message : t("chat.serverError"))
       }
     } finally {
       setProcessingRequests((prev) => {
@@ -451,7 +451,7 @@ export default function MultiPlatformAIV2() {
 
   // 格式化时间
   const formatTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleString("zh-CN", {
+    return new Date(timestamp).toLocaleString(locale === "zh" ? "zh-CN" : locale === "ja" ? "ja-JP" : "en-US", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -467,7 +467,7 @@ export default function MultiPlatformAIV2() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <Loader2 className="w-6 h-6 animate-spin" />
-          <span>加载中...</span>
+          <span>{t("common.loading")}</span>
         </div>
       </div>
     )
@@ -485,13 +485,13 @@ export default function MultiPlatformAIV2() {
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
               <div className="flex flex-col items-center">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent font-chinese">
-                  多平台 AI
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  {t("header.title")}
                 </h1>
                 <div className="flex items-center gap-1 mt-1">
                   <span className="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full font-semibold flex items-center gap-1">
                     <Star className="w-3 h-3" />
-                    增强版 v2
+                    {t("chat.enhancedVersion")}
                   </span>
                 </div>
               </div>
@@ -500,7 +500,7 @@ export default function MultiPlatformAIV2() {
               <LanguageSwitcher />
             </div>
           </div>
-          <p className="text-gray-600 text-lg font-medium font-chinese">一次提问，多个AI平台同时回答 - 增强体验版</p>
+          <p className="text-gray-600 text-lg font-medium">{t("header.subtitle")}</p>
         </div>
 
         {/* Input Section */}
@@ -508,13 +508,13 @@ export default function MultiPlatformAIV2() {
           <CardContent className="p-8">
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3 font-chinese">输入您的问题</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">{t("chat.inputLabel")}</label>
                 <Textarea
-                  placeholder="请输入您想要询问的问题..."
+                  placeholder={t("chat.inputPlaceholder")}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   disabled={isLoading}
-                  className="min-h-[140px] border-2 border-gray-200 focus:border-purple-400 focus:ring-purple-400/20 focus:ring-4 resize-none text-gray-700 placeholder:text-gray-400 rounded-xl text-base leading-relaxed transition-all duration-200 font-chinese disabled:opacity-50"
+                  className="min-h-[140px] border-2 border-gray-200 focus:border-purple-400 focus:ring-purple-400/20 focus:ring-4 resize-none text-gray-700 placeholder:text-gray-400 rounded-xl text-base leading-relaxed transition-all duration-200 disabled:opacity-50"
                 />
               </div>
 
@@ -531,38 +531,38 @@ export default function MultiPlatformAIV2() {
                     )}
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-800 font-chinese">
+                        <span className="font-semibold text-gray-800">
                           {responseMode === "streaming"
-                            ? "流式响应"
+                            ? t("chat.streamingMode")
                             : responseMode === "async"
-                              ? "异步并行"
-                              : "标准响应"}
+                              ? t("chat.asyncMode")
+                              : t("chat.standardMode")}
                         </span>
                         {responseMode === "streaming" && (
                           <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
                             <Crown className="w-3 h-3" />
-                            <span>专业功能</span>
+                            <span>{t("chat.professionalFeature")}</span>
                           </div>
                         )}
                         {responseMode === "async" && (
                           <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold rounded-full">
                             <Sparkles className="w-3 h-3" />
-                            <span>推荐</span>
+                            <span>{t("chat.recommended")}</span>
                           </div>
                         )}
                         {!canUseStreaming && responseMode === "streaming" && (
                           <div className="flex items-center gap-1 px-2 py-1 bg-gray-200 text-gray-600 text-xs font-bold rounded-full">
                             <Lock className="w-3 h-3" />
-                            <span>需要订阅</span>
+                            <span>{t("chat.needSubscription")}</span>
                           </div>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 font-chinese">
+                      <p className="text-sm text-gray-600">
                         {responseMode === "streaming"
-                          ? "实时显示AI回答过程"
+                          ? t("chat.streamingDescription")
                           : responseMode === "async"
-                            ? "无需等待，AI并行处理，支持重复检测"
-                            : "等待所有AI完成后显示结果"}
+                            ? t("chat.asyncDescription")
+                            : t("chat.standardDescription")}
                       </p>
                     </div>
                   </div>
@@ -575,7 +575,7 @@ export default function MultiPlatformAIV2() {
                         className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
                       >
                         <Crown className="w-4 h-4 mr-1" />
-                        升级
+                        {t("chat.upgrade")}
                       </Button>
                     </SubscriptionDialog>
                   )}
@@ -595,7 +595,7 @@ export default function MultiPlatformAIV2() {
                         : "text-gray-600 hover:bg-gray-100"
                     }`}
                   >
-                    标准
+                    {t("chat.standardMode")}
                   </button>
                   <button
                     onClick={() => handleResponseModeChange("async")}
@@ -606,7 +606,7 @@ export default function MultiPlatformAIV2() {
                         : "text-gray-600 hover:bg-gray-100"
                     }`}
                   >
-                    异步并行
+                    {t("chat.asyncMode")}
                   </button>
                   <button
                     onClick={() => handleResponseModeChange("streaming")}
@@ -619,7 +619,7 @@ export default function MultiPlatformAIV2() {
                           : "text-gray-400 cursor-not-allowed"
                     }`}
                   >
-                    流式响应
+                    {t("chat.streamingMode")}
                     {!canUseStreaming && <Lock className="w-3 h-3 ml-1 inline" />}
                   </button>
                 </div>
@@ -627,7 +627,7 @@ export default function MultiPlatformAIV2() {
                 <Button
                   onClick={handleSubmit}
                   disabled={!prompt.trim() || isLoading || selectedCount === 0}
-                  className={`px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-chinese ${
+                  className={`px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
                     responseMode === "streaming"
                       ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                       : responseMode === "async"
@@ -644,23 +644,23 @@ export default function MultiPlatformAIV2() {
                   ) : (
                     <Send className="w-4 h-4" />
                   )}
-                  {isLoading ? "提交中..." : "提交问题"}
+                  {isLoading ? t("chat.submitting") : t("chat.submitButton")}
                 </Button>
 
                 {/* 异步处理状态显示 */}
                 {processingRequests.size > 0 && (
-                  <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 px-3 py-1 rounded-full bg-indigo-50 font-chinese">
+                  <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 px-3 py-1 rounded-full bg-indigo-50">
                     <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                    处理中: {processingRequests.size}
+                    {t("chat.processing")}: {processingRequests.size}
                   </div>
                 )}
 
                 {isLoading && responseMode === "streaming" && (
                   <div className="flex items-center gap-4 flex-1">
                     <Progress value={(completedCount / selectedCount) * 100} className="flex-1 h-3 bg-gray-200" />
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-600 px-3 py-1 rounded-full font-chinese bg-purple-50">
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-600 px-3 py-1 rounded-full bg-purple-50">
                       <div className="w-2 h-2 rounded-full animate-pulse bg-purple-500"></div>
-                      {completedCount}/{selectedCount} 已完成
+                      {completedCount}/{selectedCount} {t("chat.completed")}
                     </div>
                   </div>
                 )}
@@ -670,7 +670,7 @@ export default function MultiPlatformAIV2() {
               {error && (
                 <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
                   <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-chinese">{error}</span>
+                  <span>{error}</span>
                 </div>
               )}
             </div>
@@ -679,7 +679,7 @@ export default function MultiPlatformAIV2() {
 
         {/* Service Selection */}
         <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4 font-chinese">选择AI服务</h3>
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">{t("chat.selectServices")}</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {services.map((service) => (
               <button
@@ -720,14 +720,14 @@ export default function MultiPlatformAIV2() {
 
         {/* AI回答结果 - 永久显示 */}
         <div className="space-y-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-6 font-chinese">AI回答结果</h3>
+          <h3 className="text-xl font-bold text-gray-800 mb-6">{t("chat.resultsTitle")}</h3>
 
           {/* 当前流式响应 */}
           {responseMode === "streaming" && streamingResponses.size > 0 && (
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <Zap className="w-5 h-5 text-purple-500" />
-                <span className="text-lg font-semibold text-gray-700 font-chinese">实时流式响应</span>
+                <span className="text-lg font-semibold text-gray-700">{t("chat.realtimeStreaming")}</span>
                 <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
               </div>
               {Array.from(streamingResponses.entries()).map(([serviceName, content]) => {
@@ -757,8 +757,8 @@ export default function MultiPlatformAIV2() {
                     </CardHeader>
                     <CardContent className="min-h-[200px] pt-0">
                       <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
-                        <div className="text-gray-700 leading-relaxed text-base font-chinese whitespace-pre-wrap">
-                          {content || "正在流式回答中..."}
+                        <div className="text-gray-700 leading-relaxed text-base whitespace-pre-wrap">
+                          {content || t("results.streaming")}
                           {isLoading && <span className="animate-pulse">|</span>}
                         </div>
                       </div>
@@ -783,8 +783,12 @@ export default function MultiPlatformAIV2() {
                       ) : (
                         <Send className="w-5 h-5 text-blue-500" />
                       )}
-                      <span className="text-lg font-semibold text-gray-700 font-chinese">
-                        {result.mode === "streaming" ? "流式响应" : result.mode === "async" ? "异步并行" : "标准响应"}
+                      <span className="text-lg font-semibold text-gray-700">
+                        {result.mode === "streaming"
+                          ? t("chat.streamingMode")
+                          : result.mode === "async"
+                            ? t("chat.asyncMode")
+                            : t("chat.standardMode")}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -794,8 +798,8 @@ export default function MultiPlatformAIV2() {
                   </div>
 
                   <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                    <div className="text-sm text-gray-600 mb-2 font-chinese">提问内容：</div>
-                    <div className="text-gray-800 font-chinese">{result.prompt}</div>
+                    <div className="text-sm text-gray-600 mb-2">{t("chat.questionContent")}</div>
+                    <div className="text-gray-800">{result.prompt}</div>
                   </div>
 
                   <div className="grid gap-4">
@@ -828,11 +832,14 @@ export default function MultiPlatformAIV2() {
                               {aiResponse.error ? (
                                 <div className="flex items-center gap-2 text-red-600">
                                   <AlertCircle className="w-4 h-4" />
-                                  <span className="font-chinese">错误: {aiResponse.error}</span>
+                                  <span>
+                                    {t("chat.errorPrefix")}
+                                    {aiResponse.error}
+                                  </span>
                                 </div>
                               ) : (
-                                <div className="text-gray-700 leading-relaxed text-base font-chinese whitespace-pre-wrap">
-                                  {aiResponse.response || "暂无回答"}
+                                <div className="text-gray-700 leading-relaxed text-base whitespace-pre-wrap">
+                                  {aiResponse.response || t("chat.noResponse")}
                                 </div>
                               )}
                             </div>
@@ -849,7 +856,7 @@ export default function MultiPlatformAIV2() {
           {chatResults.length === 0 && streamingResponses.size === 0 && (
             <div className="text-center py-12 text-gray-500">
               <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p className="text-lg font-chinese">还没有AI回答结果，请提交问题开始对话</p>
+              <p className="text-lg">{t("chat.noResults")}</p>
             </div>
           )}
         </div>
@@ -859,18 +866,18 @@ export default function MultiPlatformAIV2() {
           <CardContent className="p-6 text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Sparkles className="w-5 h-5 text-blue-500" />
-              <span className="text-lg font-semibold font-chinese">更多功能</span>
+              <span className="text-lg font-semibold">{t("chat.moreFeatures")}</span>
             </div>
-            <p className="text-gray-600 mb-4 font-chinese">图像文字识别和修改建议</p>
+            <p className="text-gray-600 mb-4">{t("chat.imageTextRecognition")}</p>
             <div className="flex gap-4 justify-center">
               <Link href={`/${locale}/textreview`}>
-                <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-chinese">
-                  前往AI文章助手
+                <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white">
+                  {t("chat.goToTextReview")}
                 </Button>
               </Link>
               <Link href={`/${locale}/artreview`}>
-                <Button className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-chinese">
-                  前往AI绘画评价
+                <Button className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white">
+                  {t("chat.goToArtReview")}
                 </Button>
               </Link>
             </div>
@@ -882,7 +889,7 @@ export default function MultiPlatformAIV2() {
           <Card className="mt-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm">
             <CardContent className="flex items-center justify-center p-6">
               <Loader2 className="w-6 h-6 animate-spin mr-2" />
-              <span>检查登录状态...</span>
+              <span>{t("chat.checkingLoginStatus")}</span>
             </CardContent>
           </Card>
         ) : !session ? (
@@ -890,11 +897,11 @@ export default function MultiPlatformAIV2() {
             <CardContent className="p-6 text-center">
               <div className="flex items-center justify-center gap-2 mb-4">
                 <Lock className="w-5 h-5 text-gray-500" />
-                <span className="text-lg font-semibold">登录以使用完整功能</span>
+                <span className="text-lg font-semibold">{t("chat.loginForFullFeatures")}</span>
               </div>
-              <p className="text-gray-600 mb-4">登录后可使用流式响应等专业功能</p>
+              <p className="text-gray-600 mb-4">{t("chat.loginDescription")}</p>
               <Button onClick={() => signIn()} className="bg-blue-600 hover:bg-blue-700">
-                立即登录
+                {t("chat.loginNow")}
               </Button>
             </CardContent>
           </Card>
@@ -904,15 +911,15 @@ export default function MultiPlatformAIV2() {
         <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="font-chinese">相同问题检测</DialogTitle>
-              <DialogDescription className="font-chinese">相同问题，是否再次提问？</DialogDescription>
+              <DialogTitle>{t("chat.duplicateDetection")}</DialogTitle>
+              <DialogDescription>{t("chat.duplicateMessage")}</DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowDuplicateDialog(false)} className="font-chinese">
-                取消
+              <Button variant="outline" onClick={() => setShowDuplicateDialog(false)}>
+                {t("common.cancel")}
               </Button>
-              <Button onClick={handleDuplicateConfirm} className="bg-indigo-600 hover:bg-indigo-700 font-chinese">
-                是
+              <Button onClick={handleDuplicateConfirm} className="bg-indigo-600 hover:bg-indigo-700">
+                {t("chat.yes")}
               </Button>
             </DialogFooter>
           </DialogContent>
