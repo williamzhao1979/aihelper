@@ -671,9 +671,10 @@ export default function MultiPlatformAIV2({ version, onVersionChange }: MultiPla
               </div>
 
               {/* Submit Button and Progress */}
-              <div className="flex items-center gap-4">
+              {/* <div className="flex items-center gap-4"> */}
+              <div className="flex flex-col gap-4">
                 {/* Response Mode Selection */}
-                <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border">
+                <div className="w-fit flex items-center gap-2 p-2 bg-gray-50 rounded-lg border">
                   <button
                     onClick={() => handleResponseModeChange("standard")}
                     disabled={isLoading}
@@ -715,7 +716,7 @@ export default function MultiPlatformAIV2({ version, onVersionChange }: MultiPla
                 <Button
                   onClick={handleSubmit}
                   disabled={!prompt.trim() || isLoading || selectedCount === 0}
-                  className={`px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
+                  className={`w-fit px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
                     responseMode === "streaming"
                       ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                       : responseMode === "async"
