@@ -765,47 +765,6 @@ export default function MultiPlatformAIV2({ version, onVersionChange }: MultiPla
           </CardContent>
         </Card>
 
-        {/* Service Selection */}
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">{t("chat.selectServices")}</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {services.map((service) => (
-              <button
-                key={service.key}
-                onClick={() => toggleService(service.key)}
-                disabled={isLoading}
-                className={`relative p-4 rounded-2xl border-2 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed ${
-                  selectedServices[service.key]
-                    ? "border-transparent shadow-lg scale-105"
-                    : "border-gray-200 hover:border-gray-300 hover:shadow-md"
-                }`}
-              >
-                <div
-                  className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${service.color} opacity-0 transition-opacity duration-200 ${
-                    selectedServices[service.key] ? "opacity-100" : "group-hover:opacity-10"
-                  }`}
-                />
-                <div className="relative flex items-center justify-center gap-3">
-                  <div
-                    className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all duration-200 ${
-                      selectedServices[service.key] ? "border-white bg-white/20" : "border-gray-400"
-                    }`}
-                  >
-                    {selectedServices[service.key] && <Check className="w-3 h-3 text-white font-bold" />}
-                  </div>
-                  <span
-                    className={`font-semibold transition-colors duration-200 ${
-                      selectedServices[service.key] ? "text-white" : "text-gray-700"
-                    }`}
-                  >
-                    {service.name}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* AI回答结果 - 永久显示 */}
         <div className="space-y-6">
           <h3 className="text-xl font-bold text-gray-800 mb-6">{t("chat.resultsTitle")}</h3>
@@ -971,6 +930,46 @@ export default function MultiPlatformAIV2({ version, onVersionChange }: MultiPla
             </div>
           </CardContent>
         </Card>
+        {/* Service Selection */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">{t("chat.selectServices")}</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {services.map((service) => (
+              <button
+                key={service.key}
+                onClick={() => toggleService(service.key)}
+                disabled={isLoading}
+                className={`relative p-4 rounded-2xl border-2 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed ${
+                  selectedServices[service.key]
+                    ? "border-transparent shadow-lg scale-105"
+                    : "border-gray-200 hover:border-gray-300 hover:shadow-md"
+                }`}
+              >
+                <div
+                  className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${service.color} opacity-0 transition-opacity duration-200 ${
+                    selectedServices[service.key] ? "opacity-100" : "group-hover:opacity-10"
+                  }`}
+                />
+                <div className="relative flex items-center justify-center gap-3">
+                  <div
+                    className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all duration-200 ${
+                      selectedServices[service.key] ? "border-white bg-white/20" : "border-gray-400"
+                    }`}
+                  >
+                    {selectedServices[service.key] && <Check className="w-3 h-3 text-white font-bold" />}
+                  </div>
+                  <span
+                    className={`font-semibold transition-colors duration-200 ${
+                      selectedServices[service.key] ? "text-white" : "text-gray-700"
+                    }`}
+                  >
+                    {service.name}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Authentication Status */}
         {status === "loading" ? (
