@@ -29,6 +29,7 @@ import {
   Settings,
   Languages,
   RotateCcw,
+  X,
 } from "lucide-react"
 import LanguageSwitcher from "./language-switcher"
 import VersionSelector from "./version-selector"
@@ -146,7 +147,12 @@ export default function MultiPlatformAIV2({ version, onVersionChange }: MultiPla
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element
-      if (showSettings && !target.closest(".settings-card") && !target.closest(".settings-button")) {
+      if (
+        showSettings &&
+        !target.closest(".settings-card") &&
+        !target.closest(".settings-button") &&
+        !target.closest("[data-radix-popper-content-wrapper]")
+      ) {
         setShowSettings(false)
       }
     }
@@ -544,9 +550,17 @@ export default function MultiPlatformAIV2({ version, onVersionChange }: MultiPla
                 <div className="settings-card absolute top-12 right-0 w-80 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl shadow-xl z-50 p-6">
                   <div className="space-y-6">
                     {/* Settings Header */}
-                    <div className="flex items-center gap-2 pb-3 border-b border-gray-200">
-                      <Settings className="w-5 h-5 text-gray-600" />
-                      <h3 className="font-semibold text-gray-800">{t("settings.title")}</h3>
+                    <div className="flex items-center justify-between pb-3 border-b border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <Settings className="w-5 h-5 text-gray-600" />
+                        <h3 className="font-semibold text-gray-800">{t("settings.title")}</h3>
+                      </div>
+                      <button
+                        onClick={() => setShowSettings(false)}
+                        className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+                      >
+                        <X className="w-4 h-4 text-gray-500" />
+                      </button>
                     </div>
 
                     {/* Version Selection */}
@@ -574,7 +588,7 @@ export default function MultiPlatformAIV2({ version, onVersionChange }: MultiPla
               )}
             </div>
           </div>
-          <p className="text-gray-600 text-lg font-medium">{t("header.subtitle")}</p>
+          <p className="text-gray-600 text-lg font-medium">{t("chat.subtitle")}</p>
         </div>
 
         {/* Input Section */}
