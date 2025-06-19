@@ -159,11 +159,14 @@ export default function MultiPlatformAIV2() {
   const isDuplicateSubmission = () => {
     if (!lastSubmittedPrompt) return false
 
-    const servicesChanged = Object.keys(selectedServices).some(
-      (key) => selectedServices[key as ServiceKey] !== lastSubmittedServices[key as ServiceKey],
-    )
+    const currentPrompt = prompt.trim()
+    const promptSame = lastSubmittedPrompt === currentPrompt
 
-    return lastSubmittedPrompt === prompt.trim() && !servicesChanged
+    // 检查服务选择是否完全相同
+    const servicesKeys: ServiceKey[] = ["chatgpt", "deepseek", "github", "microsoft"]
+    const servicesSame = servicesKeys.every((key) => selectedServices[key] === lastSubmittedServices[key])
+
+    return promptSame && servicesSame
   }
 
   // 生成唯一ID
@@ -369,6 +372,10 @@ export default function MultiPlatformAIV2() {
     setProcessingRequests((prev) => new Set([...prev, requestId]))
     setError(null)
 
+    // 立即更新最后提交的内容，防止快速重复点击
+    setLastSubmittedPrompt(prompt.trim())
+    setLastSubmittedServices({ ...selectedServices })
+
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -398,8 +405,6 @@ export default function MultiPlatformAIV2() {
           mode: "async",
         }
         setChatResults((prev) => [newResult, ...prev])
-        setLastSubmittedPrompt(prompt.trim())
-        setLastSubmittedServices({ ...selectedServices })
       } else {
         throw new Error(data.error || "服务器错误")
       }
@@ -440,6 +445,9 @@ export default function MultiPlatformAIV2() {
   const selectedCount = Object.values(selectedServices).filter(Boolean).length
   const completedCount = responseMode === "streaming" ? streamingResponses.size : 0
   const canUseStreaming = session && hasActiveSubscription
+
+  // 检查是否正在处理请求
+  const isProcessing = isLoading || processingRequests.size > 0
 
   // 格式化时间
   const formatTime = (timestamp: number) => {
@@ -505,7 +513,7 @@ export default function MultiPlatformAIV2() {
                   placeholder="请输入您想要询问的问题..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isProcessing}
                   className="min-h-[140px] border-2 border-gray-200 focus:border-purple-400 focus:ring-purple-400/20 focus:ring-4 resize-none text-gray-700 placeholder:text-gray-400 rounded-xl text-base leading-relaxed transition-all duration-200 font-chinese disabled:opacity-50"
                 />
               </div>
@@ -580,7 +588,7 @@ export default function MultiPlatformAIV2() {
                 <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border">
                   <button
                     onClick={() => handleResponseModeChange("standard")}
-                    disabled={isLoading}
+                    disabled={isProcessing}
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                       responseMode === "standard"
                         ? "bg-blue-500 text-white shadow-md"
@@ -591,7 +599,7 @@ export default function MultiPlatformAIV2() {
                   </button>
                   <button
                     onClick={() => handleResponseModeChange("async")}
-                    disabled={isLoading}
+                    disabled={isProcessing}
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                       responseMode === "async"
                         ? "bg-indigo-500 text-white shadow-md"
@@ -602,7 +610,7 @@ export default function MultiPlatformAIV2() {
                   </button>
                   <button
                     onClick={() => handleResponseModeChange("streaming")}
-                    disabled={isLoading || !canUseStreaming}
+                    disabled={isProcessing || !canUseStreaming}
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                       responseMode === "streaming"
                         ? "bg-purple-500 text-white shadow-md"
@@ -618,7 +626,7 @@ export default function MultiPlatformAIV2() {
 
                 <Button
                   onClick={handleSubmit}
-                  disabled={!prompt.trim() || isLoading || selectedCount === 0}
+                  disabled={!prompt.trim() || isProcessing || selectedCount === 0}
                   className={`px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-chinese ${
                     responseMode === "streaming"
                       ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
@@ -627,7 +635,7 @@ export default function MultiPlatformAIV2() {
                         : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                   } text-white`}
                 >
-                  {isLoading ? (
+                  {isProcessing ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : responseMode === "streaming" ? (
                     <Zap className="w-4 h-4" />
@@ -636,7 +644,7 @@ export default function MultiPlatformAIV2() {
                   ) : (
                     <Send className="w-4 h-4" />
                   )}
-                  {isLoading ? "提交中..." : "提交问题"}
+                  {isProcessing ? "处理中..." : "提交问题"}
                 </Button>
 
                 {/* 异步处理状态显示 */}
@@ -677,7 +685,7 @@ export default function MultiPlatformAIV2() {
               <button
                 key={service.key}
                 onClick={() => toggleService(service.key)}
-                disabled={isLoading}
+                disabled={isProcessing}
                 className={`relative p-4 rounded-2xl border-2 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed ${
                   selectedServices[service.key]
                     ? "border-transparent shadow-lg scale-105"
