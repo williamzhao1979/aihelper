@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
-import { Switch } from "@/components/ui/switch"
 import { Check, Sparkles, Send, AlertCircle, Loader2, Zap, Crown, Lock, Star } from "lucide-react"
 import LanguageSwitcher from "./language-switcher"
 import SubscriptionDialog from "./subscription-dialog"
@@ -68,11 +67,13 @@ export default function MultiPlatformAIV2() {
   const [responses, setResponses] = useState<AIResponse[]>([])
   const [streamingResponses, setStreamingResponses] = useState<Map<string, string>>(new Map())
   const [error, setError] = useState<string | null>(null)
-  const [isStreaming, setIsStreaming] = useState(false)
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
-  const [checkingSubscription, setCheckingSubscription] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
   const [isMounted, setIsMounted] = useState(false)
+  const [checkingSubscription, setCheckingSubscription] = useState(false)
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
+
+  type ResponseMode = "standard" | "async" | "streaming"
+  const [responseMode, setResponseMode] = useState<ResponseMode>("async")
 
   const services: Service[] = [
     { key: "chatgpt", name: "ChatGPT", color: "from-green-400 to-green-600" },
@@ -112,18 +113,18 @@ export default function MultiPlatformAIV2() {
     }))
   }
 
-  const handleStreamingToggle = (checked: boolean) => {
-    if (checked && !session) {
+  const handleResponseModeChange = (mode: ResponseMode) => {
+    if (mode === "streaming" && !session) {
       signIn()
       return
     }
 
-    if (checked && !hasActiveSubscription) {
-      // Don't toggle, let the subscription dialog handle it
+    if (mode === "streaming" && !hasActiveSubscription) {
+      // Don't change mode, let the subscription dialog handle it
       return
     }
 
-    setIsStreaming(checked)
+    setResponseMode(mode)
   }
 
   const handleStreamingSubmit = async () => {
@@ -272,17 +273,71 @@ export default function MultiPlatformAIV2() {
     }
   }
 
+  const handleAsyncSubmit = async () => {
+    if (!prompt.trim()) return
+
+    const selectedCount = Object.values(selectedServices).filter(Boolean).length
+    if (selectedCount === 0) {
+      setError("请至少选择一个AI服务")
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+    setResponses([])
+    setStreamingResponses(new Map())
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          selectedServices,
+          async: true, // 标识为异步模式
+        }),
+      })
+
+      const data: ApiResponse = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "API错误")
+      }
+
+      if (data.success) {
+        setResponses(data.results)
+      } else {
+        throw new Error(data.error || "服务器错误")
+      }
+    } catch (err) {
+      if (err instanceof TypeError && err.message.includes("fetch")) {
+        setError("网络错误，请检查网络连接")
+      } else {
+        setError(err instanceof Error ? err.message : "服务器错误")
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleSubmit = () => {
-    if (isStreaming) {
-      handleStreamingSubmit()
-    } else {
-      handleStandardSubmit()
+    switch (responseMode) {
+      case "standard":
+        handleStandardSubmit()
+        break
+      case "async":
+        handleAsyncSubmit()
+        break
+      case "streaming":
+        handleStreamingSubmit()
+        break
     }
   }
 
   const selectedCount = Object.values(selectedServices).filter(Boolean).length
-  const completedCount = isStreaming ? streamingResponses.size : responses.length
-
+  const completedCount = responseMode === "streaming" ? streamingResponses.size : responses.length
   const canUseStreaming = session && hasActiveSubscription
 
   // Don't render until mounted to avoid hydration issues
@@ -342,27 +397,39 @@ export default function MultiPlatformAIV2() {
                 />
               </div>
 
-              {/* Response Mode Toggle */}
+              {/* Response Mode Selection */}
               <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
-                    {isStreaming ? (
+                    {responseMode === "streaming" ? (
                       <Zap className="w-5 h-5 text-purple-600" />
+                    ) : responseMode === "async" ? (
+                      <Sparkles className="w-5 h-5 text-indigo-600" />
                     ) : (
                       <Send className="w-5 h-5 text-blue-600" />
                     )}
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-gray-800 font-chinese">
-                          {isStreaming ? "流式响应" : "标准响应"}
+                          {responseMode === "streaming"
+                            ? "流式响应"
+                            : responseMode === "async"
+                              ? "异步并行"
+                              : "标准响应"}
                         </span>
-                        {isStreaming && (
+                        {responseMode === "streaming" && (
                           <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
                             <Crown className="w-3 h-3" />
                             <span>专业功能</span>
                           </div>
                         )}
-                        {!canUseStreaming && (
+                        {responseMode === "async" && (
+                          <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold rounded-full">
+                            <Sparkles className="w-3 h-3" />
+                            <span>推荐</span>
+                          </div>
+                        )}
+                        {!canUseStreaming && responseMode === "streaming" && (
                           <div className="flex items-center gap-1 px-2 py-1 bg-gray-200 text-gray-600 text-xs font-bold rounded-full">
                             <Lock className="w-3 h-3" />
                             <span>需要订阅</span>
@@ -370,13 +437,17 @@ export default function MultiPlatformAIV2() {
                         )}
                       </div>
                       <p className="text-sm text-gray-600 font-chinese">
-                        {isStreaming ? "实时显示AI回答过程" : "等待所有AI完成后显示结果"}
+                        {responseMode === "streaming"
+                          ? "实时显示AI回答过程"
+                          : responseMode === "async"
+                            ? "无需等待，AI并行处理"
+                            : "等待所有AI完成后显示结果"}
                       </p>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {!canUseStreaming && isStreaming && (
+                  {!canUseStreaming && responseMode === "streaming" && (
                     <SubscriptionDialog>
                       <Button
                         size="sm"
@@ -387,46 +458,93 @@ export default function MultiPlatformAIV2() {
                       </Button>
                     </SubscriptionDialog>
                   )}
-                  <Switch
-                    checked={isStreaming}
-                    onCheckedChange={handleStreamingToggle}
-                    disabled={isLoading || checkingSubscription}
-                    className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-purple-500 data-[state=checked]:to-pink-500"
-                  />
                 </div>
               </div>
 
               {/* Submit Button and Progress */}
               <div className="flex items-center gap-4">
+                {/* Response Mode Selection */}
+                <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border">
+                  <button
+                    onClick={() => handleResponseModeChange("standard")}
+                    disabled={isLoading}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      responseMode === "standard"
+                        ? "bg-blue-500 text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    标准
+                  </button>
+                  <button
+                    onClick={() => handleResponseModeChange("async")}
+                    disabled={isLoading}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      responseMode === "async"
+                        ? "bg-indigo-500 text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    异步并行
+                  </button>
+                  <button
+                    onClick={() => handleResponseModeChange("streaming")}
+                    disabled={isLoading || !canUseStreaming}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      responseMode === "streaming"
+                        ? "bg-purple-500 text-white shadow-md"
+                        : canUseStreaming
+                          ? "text-gray-600 hover:bg-gray-100"
+                          : "text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    流式响应
+                    {!canUseStreaming && <Lock className="w-3 h-3 ml-1 inline" />}
+                  </button>
+                </div>
+
                 <Button
                   onClick={handleSubmit}
                   disabled={!prompt.trim() || isLoading || selectedCount === 0}
                   className={`px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-chinese ${
-                    isStreaming
+                    responseMode === "streaming"
                       ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                      : responseMode === "async"
+                        ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                        : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                   } text-white`}
                 >
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : isStreaming ? (
+                  ) : responseMode === "streaming" ? (
                     <Zap className="w-4 h-4" />
+                  ) : responseMode === "async" ? (
+                    <Sparkles className="w-4 h-4" />
                   ) : (
                     <Send className="w-4 h-4" />
                   )}
                   {isLoading ? "提交中..." : "提交问题"}
                 </Button>
+
                 {isLoading && (
                   <div className="flex items-center gap-4 flex-1">
                     <Progress value={(completedCount / selectedCount) * 100} className="flex-1 h-3 bg-gray-200" />
                     <div
                       className={`flex items-center gap-2 text-sm font-medium text-gray-600 px-3 py-1 rounded-full font-chinese ${
-                        isStreaming ? "bg-purple-50" : "bg-blue-50"
+                        responseMode === "streaming"
+                          ? "bg-purple-50"
+                          : responseMode === "async"
+                            ? "bg-indigo-50"
+                            : "bg-blue-50"
                       }`}
                     >
                       <div
                         className={`w-2 h-2 rounded-full animate-pulse ${
-                          isStreaming ? "bg-purple-500" : "bg-blue-500"
+                          responseMode === "streaming"
+                            ? "bg-purple-500"
+                            : responseMode === "async"
+                              ? "bg-indigo-500"
+                              : "bg-blue-500"
                         }`}
                       ></div>
                       {completedCount}/{selectedCount} 已完成
