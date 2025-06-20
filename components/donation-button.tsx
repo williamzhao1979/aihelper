@@ -9,7 +9,7 @@ interface DonationButtonProps {
   className?: string
 }
 
-export function DonationButton({ position = "bottom-right", size = "md", className = "" }: DonationButtonProps) {
+export function DonationButton({ position = "bottom-right", size = "sm", className = "" }: DonationButtonProps) {
   const { openModal } = useDonation()
   const t = useTranslations("donation")
 
@@ -48,7 +48,7 @@ export function DonationButton({ position = "bottom-right", size = "md", classNa
             transition-all duration-300 ease-out
             hover:scale-110 hover:-translate-y-2 hover:shadow-xl hover:shadow-red-500/60
             active:scale-95
-            animate-pulse
+            animate-pulse-slow
             group-hover:animate-none
             relative overflow-hidden
           `}
@@ -104,6 +104,23 @@ export function DonationButton({ position = "bottom-right", size = "md", classNa
         }
         .steam-3 {
           animation-delay: 0.6s;
+        }
+
+        @keyframes pulse-slow {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+            50% {
+                opacity: 0.9;
+                transform: scale(1.02);
+                box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+            }
+        }
+
+        .animate-pulse-slow {
+            animation: pulse-slow 6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
       `}</style>
     </div>

@@ -10,6 +10,9 @@ import { Upload, X, Languages, CheckCircle, AlertCircle, ChevronUp, ChevronDown,
 import Link from "next/link"
 import { useLocale } from "next-intl"
 import FeatureMenu from "@/components/feature-menu"
+import { DonationProvider } from "@/components/donation-provider"
+import { DonationButton } from "@/components/donation-button"
+import { DonationModal } from "@/components/donation-modal"
 
 interface UploadedImage {
   id: string
@@ -406,6 +409,7 @@ export default function TextReviewPage() {
   }
 
   return (
+    <DonationProvider>
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
@@ -915,10 +919,6 @@ export default function TextReviewPage() {
           </CardContent>
         </Card>
 
-        {/* Feature Menu */}
-        <FeatureMenu
-        />
-
         {/* 重复内容确认对话框 */}
         {showDuplicateDialog && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -936,7 +936,20 @@ export default function TextReviewPage() {
             </div>
           </div>
         )}
+
+
+        {/* Feature Menu */}
+        <FeatureMenu
+        />
+
+        {/* 悬浮打赏按钮 */}
+        <DonationButton position="bottom-right" size="sm" />
+
+        {/* 打赏弹窗 */}
+        <DonationModal />
+
       </div>
     </div>
+</DonationProvider>
   )
 }

@@ -927,6 +927,7 @@ export default function ArtReviewPage() {
           </div>
         )}
       </div>
+
     </div>
   )
 }
