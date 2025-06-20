@@ -92,5 +92,28 @@
     "apiError": "API call failed, please try again later",
     "invalidInput": "Please enter a valid question",
     "serverError": "Server error, please try again later"
+  },
+  "donation": {
+    "buttonLabel": "Buy me a coffee ☕",
+    "title": "Thank you for your support!",
+    "message": "Buy me a coffee to keep me going, thanks!",
+    "subMessage": "I'd be very happy if any AI assistant feature helped you.",
+    "qrLabel": "Scan WeChat QR Code to Donate",
+    "qrAlt": "WeChat Payment QR Code",
+    "thankYou": "Every support is my motivation to continue creating",
+    "pageTitle": "Donation Button UI Design",
+    "pageSubtitle": "Eye-catching interactive donation button to increase user engagement",
+    "intro": "This is a carefully designed donation button UI with the following features:",
+    "feature1Title": "Pulsing Animation Effect",
+    "feature1Desc": "The button continuously emits a soft pulsing glow to attract user attention",
+    "feature2Title": "Hover Interactive Feedback",
+    "feature2Desc": "When users hover over the button, it slightly floats up and enlarges while showing tooltip text",
+    "feature3Title": "Coffee Steam Animation",
+    "feature3Desc": "Steam emerges from the coffee cup on hover, adding fun and visual appeal",
+    "feature4Title": "Elegant Popup Design",
+    "feature4Desc": "Clicking the button opens a beautiful donation window displaying the payment QR code",
+    "feature5Title": "Emotional Copywriting",
+    "feature5Desc": "Uses warm and friendly language to inspire users' willingness to donate",
+    "callToAction": "Please check the donation button in the bottom right corner to experience the full effect! This design is perfect for content creators, developers, and digital products."
   }
 }
