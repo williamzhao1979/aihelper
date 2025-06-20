@@ -5,12 +5,12 @@
     "language": "语言设置"
   },
   "common": {
-  "loading": "加载中...",
-  "error": "错误",
-  "submit": "提交",
-  "cancel": "取消",
-  "success": "成功",
-  "failed": "失败"
+    "loading": "加载中...",
+    "error": "错误",
+    "submit": "提交",
+    "cancel": "取消",
+    "success": "成功",
+    "failed": "失败"
   },
   "header": {
     "title": "一个 AI 助手，畅享多平台 AI 智能服务！",
@@ -92,5 +92,28 @@
     "apiError": "API调用失败，请稍后重试",
     "invalidInput": "请输入有效的问题",
     "serverError": "服务器错误，请稍后重试"
+  },
+  "donation": {
+    "buttonLabel": "买杯咖啡帮我续命 ☕",
+    "title": "感谢支持！",
+    "message": "买杯咖啡帮我续命，多谢了先。",
+    "subMessage": "AI助手哪个功能帮上你的忙，我会非常开心。",
+    "qrLabel": "微信扫一扫打赏",
+    "qrAlt": "微信收款码",
+    "thankYou": "每一份支持都是我继续创作的动力",
+    "pageTitle": "打赏按钮UI设计",
+    "pageSubtitle": "引人注目的交互式打赏按钮，提高用户参与度",
+    "intro": "这是一个精心设计的打赏按钮UI，具有以下特点：",
+    "feature1Title": "脉动动画效果",
+    "feature1Desc": "按钮会持续发出柔和的脉动光晕，吸引用户注意",
+    "feature2Title": "悬停交互反馈",
+    "feature2Desc": "当用户悬停在按钮上时，按钮会轻微上浮并放大，同时显示提示文字",
+    "feature3Title": "咖啡蒸汽动画",
+    "feature3Desc": "悬停时从咖啡杯冒出蒸汽，增加趣味性和视觉吸引力",
+    "feature4Title": "精致弹窗设计",
+    "feature4Desc": "点击按钮后弹出美观的打赏窗口，展示收款二维码",
+    "feature5Title": "情感化文案",
+    "feature5Desc": "使用温馨友好的语言，激发用户打赏意愿",
+    "callToAction": "请查看右下角的打赏按钮体验完整效果！这个设计非常适合内容创作者、开发者和数字产品使用。"
   }
 }
