@@ -660,6 +660,7 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Main Content */}
       <div className="container mx-auto px-4 py-8 max-w-6xl pb-96">
         {/* Header */}
         <div className="text-center mb-12">
@@ -956,178 +957,179 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
         <FeatureMenu />
       </div>
 
-      {/* 浮动输入卡片 - 固定在页面底部 */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-2xl">
+      {/* 浮动输入区域 - 固定在底部 */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-2xl z-40">
         <div className="container mx-auto px-4 py-6 max-w-6xl">
-          <div className="space-y-4">
-            {/* 输入框 */}
-            <div>
-              <Textarea
-                placeholder={t("chat.inputPlaceholder")}
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                disabled={isLoading}
-                className="min-h-[100px] border-2 border-gray-200 focus:border-purple-400 focus:ring-purple-400/20 focus:ring-4 resize-none text-gray-700 placeholder:text-gray-400 rounded-xl text-base leading-relaxed transition-all duration-200 disabled:opacity-50 bg-white"
-              />
-            </div>
-
-            {/* 控制按钮区域 */}
-            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-              {/* 服务选择 */}
-              <div className="flex flex-wrap gap-2">
-                {services.map((service) => (
-                  <button
-                    key={service.key}
-                    onClick={() => toggleService(service.key)}
+          <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                {/* 输入框 */}
+                <div>
+                  <Textarea
+                    placeholder={t("chat.inputPlaceholder")}
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
                     disabled={isLoading}
-                    className={`relative px-3 py-2 rounded-lg border transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed text-sm ${
-                      selectedServices[service.key]
-                        ? "border-transparent shadow-md scale-105"
-                        : "border-gray-200 hover:border-gray-300 hover:shadow-sm"
-                    }`}
-                  >
-                    <div
-                      className={`absolute inset-0 rounded-lg bg-gradient-to-r ${service.color} opacity-0 transition-opacity duration-200 ${
-                        selectedServices[service.key] ? "opacity-100" : "group-hover:opacity-10"
+                    className="min-h-[100px] border-2 border-gray-200 focus:border-purple-400 focus:ring-purple-400/20 focus:ring-4 resize-none text-gray-700 placeholder:text-gray-400 rounded-xl text-base leading-relaxed transition-all duration-200 disabled:opacity-50"
+                  />
+                </div>
+
+                {/* 控制按钮区域 */}
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                  {/* 响应模式选择 */}
+                  <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg border">
+                    <button
+                      onClick={() => handleResponseModeChange("standard")}
+                      disabled={isLoading}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        responseMode === "standard"
+                          ? "bg-blue-500 text-white shadow-md"
+                          : "text-gray-600 hover:bg-gray-100"
                       }`}
-                    />
-                    <div className="relative flex items-center gap-2">
-                      <div
-                        className={`w-3 h-3 rounded border flex items-center justify-center transition-all duration-200 ${
-                          selectedServices[service.key] ? "border-white bg-white/20" : "border-gray-400"
-                        }`}
-                      >
-                        {selectedServices[service.key] && <Check className="w-2 h-2 text-white font-bold" />}
-                      </div>
-                      <span
-                        className={`font-medium transition-colors duration-200 ${
-                          selectedServices[service.key] ? "text-white" : "text-gray-700"
-                        }`}
-                      >
-                        {service.icon} {service.name}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              {/* 模式选择和发送按钮 */}
-              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                {/* 响应模式选择 */}
-                <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg border">
-                  <button
-                    onClick={() => handleResponseModeChange("standard")}
-                    disabled={isLoading}
-                    className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-                      responseMode === "standard"
-                        ? "bg-blue-500 text-white shadow-sm"
-                        : "text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    标准
-                  </button>
-                  <button
-                    onClick={() => handleResponseModeChange("async")}
-                    disabled={isLoading}
-                    className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-                      responseMode === "async"
-                        ? "bg-indigo-500 text-white shadow-sm"
-                        : "text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    异步
-                  </button>
-                  <button
-                    onClick={() => handleResponseModeChange("streaming")}
-                    disabled={isLoading || !canUseAdvanced}
-                    className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-                      responseMode === "streaming"
-                        ? "bg-purple-500 text-white shadow-sm"
-                        : canUseAdvanced
-                          ? "text-gray-600 hover:bg-gray-200"
-                          : "text-gray-400 cursor-not-allowed"
-                    }`}
-                  >
-                    流式
-                    {!canUseAdvanced && <Lock className="w-2 h-2 ml-1 inline" />}
-                  </button>
-                  <button
-                    onClick={() => handleResponseModeChange("turbo")}
-                    disabled={isLoading || !canUseAdvanced}
-                    className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
-                      responseMode === "turbo"
-                        ? "bg-gradient-to-r from-pink-500 to-red-500 text-white shadow-sm"
-                        : canUseAdvanced
-                          ? "text-gray-600 hover:bg-gray-200"
-                          : "text-gray-400 cursor-not-allowed"
-                    }`}
-                  >
-                    <Rocket className="w-2 h-2 mr-1 inline" />
-                    极速
-                    {!canUseAdvanced && <Lock className="w-2 h-2 ml-1 inline" />}
-                  </button>
-                </div>
-
-                {/* 发送按钮 */}
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!prompt.trim() || isLoading || selectedCount === 0}
-                  className={`px-6 py-2 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
-                    responseMode === "turbo"
-                      ? "bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700"
-                      : responseMode === "streaming"
-                        ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                        : responseMode === "async"
-                          ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                          : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                  } text-white`}
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : responseMode === "turbo" ? (
-                    <Rocket className="w-4 h-4" />
-                  ) : responseMode === "streaming" ? (
-                    <Zap className="w-4 h-4" />
-                  ) : responseMode === "async" ? (
-                    <Sparkles className="w-4 h-4" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                  {isLoading ? t("chat.submitting") : t("chat.submitButton")}
-                </Button>
-              </div>
-            </div>
-
-            {/* 状态显示 */}
-            <div className="flex flex-wrap gap-3 items-center">
-              {/* 异步处理状态显示 */}
-              {processingRequests.size > 0 && (
-                <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 px-3 py-1 rounded-full bg-indigo-50">
-                  <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                  {t("chat.processing")}: {processingRequests.size}
-                </div>
-              )}
-
-              {/* 流式进度显示 */}
-              {isLoading && responseMode === "streaming" && (
-                <div className="flex items-center gap-3 flex-1">
-                  <Progress value={(completedCount / selectedCount) * 100} className="flex-1 h-2 bg-gray-200" />
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-600 px-3 py-1 rounded-full bg-purple-50">
-                    <div className="w-2 h-2 rounded-full animate-pulse bg-purple-500"></div>
-                    {completedCount}/{selectedCount} {t("chat.completed")}
+                    >
+                      {t("chat.standardMode")}
+                    </button>
+                    <button
+                      onClick={() => handleResponseModeChange("async")}
+                      disabled={isLoading}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        responseMode === "async"
+                          ? "bg-indigo-500 text-white shadow-md"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      {t("chat.asyncMode")}
+                    </button>
+                    <button
+                      onClick={() => handleResponseModeChange("streaming")}
+                      disabled={isLoading || !canUseAdvanced}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        responseMode === "streaming"
+                          ? "bg-purple-500 text-white shadow-md"
+                          : canUseAdvanced
+                            ? "text-gray-600 hover:bg-gray-100"
+                            : "text-gray-400 cursor-not-allowed"
+                      }`}
+                    >
+                      {t("chat.streamingMode")}
+                      {!canUseAdvanced && <Lock className="w-3 h-3 ml-1 inline" />}
+                    </button>
+                    <button
+                      onClick={() => handleResponseModeChange("turbo")}
+                      disabled={isLoading || !canUseAdvanced}
+                      className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                        responseMode === "turbo"
+                          ? "bg-gradient-to-r from-pink-500 to-red-500 text-white shadow-md"
+                          : canUseAdvanced
+                            ? "text-gray-600 hover:bg-gray-100"
+                            : "text-gray-400 cursor-not-allowed"
+                      }`}
+                    >
+                      <Rocket className="w-3 h-3 mr-1 inline" />
+                      极速模式
+                      {!canUseAdvanced && <Lock className="w-3 h-3 ml-1 inline" />}
+                    </button>
                   </div>
-                </div>
-              )}
 
-              {/* 错误显示 */}
-              {error && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>{error}</span>
+                  {/* 提交按钮 */}
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={!prompt.trim() || isLoading || selectedCount === 0}
+                    className={`px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
+                      responseMode === "turbo"
+                        ? "bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700"
+                        : responseMode === "streaming"
+                          ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                          : responseMode === "async"
+                            ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                            : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    } text-white`}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : responseMode === "turbo" ? (
+                      <Rocket className="w-4 h-4" />
+                    ) : responseMode === "streaming" ? (
+                      <Zap className="w-4 h-4" />
+                    ) : responseMode === "async" ? (
+                      <Sparkles className="w-4 h-4" />
+                    ) : (
+                      <Send className="w-4 h-4" />
+                    )}
+                    {isLoading ? t("chat.submitting") : t("chat.submitButton")}
+                  </Button>
                 </div>
-              )}
-            </div>
-          </div>
+
+                {/* 服务选择 */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {services.map((service) => (
+                    <button
+                      key={service.key}
+                      onClick={() => toggleService(service.key)}
+                      disabled={isLoading}
+                      className={`relative p-3 rounded-xl border-2 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed ${
+                        selectedServices[service.key]
+                          ? "border-transparent shadow-lg scale-105"
+                          : "border-gray-200 hover:border-gray-300 hover:shadow-md"
+                      }`}
+                    >
+                      <div
+                        className={`absolute inset-0 rounded-xl bg-gradient-to-r ${service.color} opacity-0 transition-opacity duration-200 ${
+                          selectedServices[service.key] ? "opacity-100" : "group-hover:opacity-10"
+                        }`}
+                      />
+                      <div className="relative flex items-center justify-center gap-2">
+                        <div
+                          className={`w-4 h-4 rounded-lg border-2 flex items-center justify-center transition-all duration-200 ${
+                            selectedServices[service.key] ? "border-white bg-white/20" : "border-gray-400"
+                          }`}
+                        >
+                          {selectedServices[service.key] && <Check className="w-2.5 h-2.5 text-white font-bold" />}
+                        </div>
+                        <span
+                          className={`text-sm font-semibold transition-colors duration-200 ${
+                            selectedServices[service.key] ? "text-white" : "text-gray-700"
+                          }`}
+                        >
+                          {service.icon} {service.name}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {/* 状态显示 */}
+                <div className="flex flex-wrap items-center gap-4">
+                  {/* 异步处理状态显示 */}
+                  {processingRequests.size > 0 && (
+                    <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 px-3 py-1 rounded-full bg-indigo-50">
+                      <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                      {t("chat.processing")}: {processingRequests.size}
+                    </div>
+                  )}
+
+                  {/* 流式响应进度 */}
+                  {isLoading && responseMode === "streaming" && (
+                    <div className="flex items-center gap-4 flex-1">
+                      <Progress value={(completedCount / selectedCount) * 100} className="flex-1 h-2 bg-gray-200" />
+                      <div className="flex items-center gap-2 text-sm font-medium text-gray-600 px-3 py-1 rounded-full bg-purple-50">
+                        <div className="w-2 h-2 rounded-full animate-pulse bg-purple-500"></div>
+                        {completedCount}/{selectedCount} {t("chat.completed")}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Error Display */}
+                {error && (
+                  <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-sm">{error}</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
