@@ -662,7 +662,7 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8 max-w-6xl pb-96">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="hidden text-center mb-12">
           <div className="flex items-center justify-between mb-6">
             <div className="flex-1" />
             <div className="flex items-center justify-center gap-3">
@@ -1117,7 +1117,7 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
                 </div>
 
                 {/* 服务选择 */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="hidden grid grid-cols-2 md:grid-cols-4 gap-3">
                   {services.map((service) => (
                     <button
                       key={service.key}
