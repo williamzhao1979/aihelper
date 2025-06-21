@@ -1,8 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 
 interface ChatRequest {
-  prompt: string
-  selectedServices: {
+  prompt?: string
+  message?: string
+  provider?: "deepseek" | "openai" | "all"
+  version?: string
+  selectedServices?: {
     chatgpt: boolean
     deepseek: boolean
     github: boolean
@@ -168,45 +171,59 @@ async function callMicrosoftCopilot(prompt: string): Promise<string> {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const body: ChatRequest = await request.json()
+    const { prompt, message, selectedServices, provider, version } = body
 
-    // V4 版本的单独处理逻辑
-    if (body.version === "v4" && body.provider && body.message) {
-      const { provider, message } = body
-
-      try {
-        let response: string
-
-        if (provider === "deepseek") {
-          response = await callDeepSeek(message)
-        } else if (provider === "openai") {
-          response = await callOpenAI(message)
-        } else {
-          return NextResponse.json({ error: "Unsupported provider" }, { status: 400 })
+    // V4 版本的单独处理
+    if (version === "v4" && provider && message) {
+      if (provider === "deepseek") {
+        try {
+          const response = await callDeepSeek(message)
+          return NextResponse.json({
+            success: true,
+            message: response,
+            provider: "deepseek",
+            timestamp: Date.now(),
+          })
+        } catch (error) {
+          console.error("DeepSeek API Error:", error)
+          return NextResponse.json({
+            success: false,
+            message: "DeepSeek 服务暂时不可用，请稍后再试。",
+            error: error instanceof Error ? error.message : "Unknown error",
+            provider: "deepseek",
+            timestamp: Date.now(),
+          })
         }
-
-        return NextResponse.json({
-          success: true,
-          message: response,
-          provider,
-          timestamp: Date.now(),
-        })
-      } catch (error) {
-        console.error(`V4 ${provider} API Error:`, error)
-        return NextResponse.json({
-          success: false,
-          message: `${provider} 服务暂时不可用，请稍后再试。`,
-          error: error instanceof Error ? error.message : "Unknown error",
-          provider,
-          timestamp: Date.now(),
-        })
       }
+
+      if (provider === "openai") {
+        try {
+          const response = await callOpenAI(message)
+          return NextResponse.json({
+            success: true,
+            message: response,
+            provider: "openai",
+            timestamp: Date.now(),
+          })
+        } catch (error) {
+          console.error("OpenAI API Error:", error)
+          return NextResponse.json({
+            success: false,
+            message: "OpenAI 服务暂时不可用，请稍后再试。",
+            error: error instanceof Error ? error.message : "Unknown error",
+            provider: "openai",
+            timestamp: Date.now(),
+          })
+        }
+      }
+
+      return NextResponse.json({ error: "Invalid provider for V4" }, { status: 400 })
     }
 
-    // 原有的逻辑继续处理其他版本
-    const { prompt, selectedServices } = body
-
-    if (!prompt || prompt.trim().length === 0) {
+    // 原有的逻辑保持不变
+    const inputText = prompt || message
+    if (!inputText || inputText.trim().length === 0) {
       return NextResponse.json({ error: "Prompt is required" }, { status: 400 })
     }
 
@@ -215,7 +232,7 @@ export async function POST(request: NextRequest) {
     // Create promises for selected services
     if (selectedServices.chatgpt) {
       promises.push(
-        callOpenAI(prompt)
+        callOpenAI(inputText)
           .then((response) => ({
             service: "ChatGPT",
             response,
@@ -232,7 +249,7 @@ export async function POST(request: NextRequest) {
 
     if (selectedServices.deepseek) {
       promises.push(
-        callDeepSeek(prompt)
+        callDeepSeek(inputText)
           .then((response) => ({
             service: "DeepSeek",
             response,
@@ -249,7 +266,7 @@ export async function POST(request: NextRequest) {
 
     if (selectedServices.github) {
       promises.push(
-        callGitHubCopilot(prompt)
+        callGitHubCopilot(inputText)
           .then((response) => ({
             service: "GitHub Copilot",
             response,
@@ -266,7 +283,7 @@ export async function POST(request: NextRequest) {
 
     if (selectedServices.microsoft) {
       promises.push(
-        callMicrosoftCopilot(prompt)
+        callMicrosoftCopilot(inputText)
           .then((response) => ({
             service: "Microsoft Copilot",
             response,

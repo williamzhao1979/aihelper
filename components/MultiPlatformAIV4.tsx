@@ -122,7 +122,7 @@ export default function MultiPlatformAIV4({ currentVersion, onVersionChange }: M
   }
 
   const callAI = async (provider: "deepseek" | "openai", message: string): Promise<string> => {
-    const response = await fetch("/api/chat", {
+    const response = await fetch("/api/chat/v4", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -130,15 +130,20 @@ export default function MultiPlatformAIV4({ currentVersion, onVersionChange }: M
       body: JSON.stringify({
         message,
         provider,
-        version: "v4",
       }),
     })
 
     if (!response.ok) {
-      throw new Error(`Failed to call ${provider}`)
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || `${provider} 服务调用失败`)
     }
 
     const data = await response.json()
+
+    if (!data.success) {
+      throw new Error(data.error || data.message || `${provider} 返回错误`)
+    }
+
     return data.message
   }
 
