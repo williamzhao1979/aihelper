@@ -413,7 +413,7 @@ export default function TextReviewPage() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
-        <div className="text-center">
+        <div className="hidden text-center">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
             AI文章修改，支持多图片上传，<span className="text-red-500">OCR文本提取</span>
           </h1>
@@ -462,6 +462,7 @@ export default function TextReviewPage() {
                   onChange={handleFileSelect}
                   className="hidden"
                 />
+                <p className="text-lg font-medium text-gray-700 mb-2">上传多张包含文本的图片，调整顺序后提交，AI将自动识别文字并返回修改建议</p>
                 <Upload
                   className={`w-16 h-16 mx-auto mb-4 transition-colors ${
                     dragOver ? "text-purple-600" : "text-purple-500"
