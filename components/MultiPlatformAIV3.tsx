@@ -954,7 +954,6 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
           )}
         </div>
 
-        <FeatureMenu />
       </div>
 
       {/* 浮动输入区域 - 固定在底部 */}
@@ -1030,7 +1029,36 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
                       {!canUseAdvanced && <Lock className="w-3 h-3 ml-1 inline" />}
                     </button>
                   </div>
+                {/* 状态显示 */}
+                <div className="flex flex-wrap items-center gap-4">
+                  {/* 异步处理状态显示 */}
+                  {processingRequests.size > 0 && (
+                    <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 px-3 py-1 rounded-full bg-indigo-50">
+                      <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                      {t("chat.processing")}: {processingRequests.size}
+                    </div>
+                  )}
 
+                  {/* 流式响应进度 */}
+                  {isLoading && responseMode === "streaming" && (
+                    <div className="flex items-center gap-4 flex-1">
+                      <Progress value={(completedCount / selectedCount) * 100} className="flex-1 h-2 bg-gray-200" />
+                      <div className="flex items-center gap-2 text-sm font-medium text-gray-600 px-3 py-1 rounded-full bg-purple-50">
+                        <div className="w-2 h-2 rounded-full animate-pulse bg-purple-500"></div>
+                        {completedCount}/{selectedCount} {t("chat.completed")}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Error Display */}
+                {error && (
+                  <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-sm">{error}</span>
+                  </div>
+                )}
+                
                   {/* 提交按钮 */}
                   <Button
                     onClick={handleSubmit}
@@ -1098,35 +1126,6 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
                   ))}
                 </div>
 
-                {/* 状态显示 */}
-                <div className="flex flex-wrap items-center gap-4">
-                  {/* 异步处理状态显示 */}
-                  {processingRequests.size > 0 && (
-                    <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 px-3 py-1 rounded-full bg-indigo-50">
-                      <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                      {t("chat.processing")}: {processingRequests.size}
-                    </div>
-                  )}
-
-                  {/* 流式响应进度 */}
-                  {isLoading && responseMode === "streaming" && (
-                    <div className="flex items-center gap-4 flex-1">
-                      <Progress value={(completedCount / selectedCount) * 100} className="flex-1 h-2 bg-gray-200" />
-                      <div className="flex items-center gap-2 text-sm font-medium text-gray-600 px-3 py-1 rounded-full bg-purple-50">
-                        <div className="w-2 h-2 rounded-full animate-pulse bg-purple-500"></div>
-                        {completedCount}/{selectedCount} {t("chat.completed")}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Error Display */}
-                {error && (
-                  <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm">{error}</span>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
