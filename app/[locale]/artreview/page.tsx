@@ -10,6 +10,8 @@ import { Upload, X, Languages, CheckCircle, AlertCircle, ChevronUp, ChevronDown,
 import Link from "next/link"
 import { useLocale } from "next-intl"
 import FeatureMenu from "@/components/feature-menu"
+import LanguageSwitcher from "@/components/language-switcher"
+import { DonationProvider } from "@/components/donation-provider"
 
 interface UploadedImage {
   id: string
@@ -400,6 +402,13 @@ export default function ArtReviewPage() {
   }
 
   return (
+    <DonationProvider>
+        {/* 右上角固定容器 */}
+        <div className="flex justify-end top-4 right-4 z-50 flex items-center gap-4">
+          {/* Language Selection */}
+          <LanguageSwitcher />
+        </div>
+
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
@@ -815,96 +824,6 @@ export default function ArtReviewPage() {
           </Card>
         )}
 
-        {/* Tutorial Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Languages className="w-5 h-5" />
-              使用教程
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="text-center mb-6">
-              <p className="text-gray-600">以下是详细的使用步骤，帮助您更好地使用AI绘画评价功能</p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-8">
-              {/* Tutorial Step 1 */}
-              <div className="space-y-4">
-                <div className="text-center">
-                  <Badge variant="outline" className="mb-3 px-4 py-2 text-lg font-semibold">
-                    步骤 1: 上传绘画作品
-                  </Badge>
-                </div>
-                <div className="border rounded-lg overflow-hidden bg-gray-50">
-                  <img src="/textreview-step1.png" alt="教程步骤1 - 上传作品" className="w-full h-full object-cover" />
-                </div>
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <h3 className="font-semibold text-blue-900 mb-2">上传和排序作品</h3>
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• 拖拽绘画作品到上传区域或点击选择</li>
-                    <li>• 支持JPG、PNG格式，最大10MB</li>
-                    <li>• 使用上下箭头调整作品顺序</li>
-                    <li>• 可以删除不需要的作品</li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Tutorial Step 2 */}
-              <div className="space-y-4">
-                <div className="text-center">
-                  <Badge variant="outline" className="mb-3 px-4 py-2 text-lg font-semibold">
-                    步骤 2: 评价选项
-                  </Badge>
-                </div>
-                <div className="border rounded-lg overflow-hidden bg-gray-50">
-                  <img src="/textreview-step2.png" alt="教程步骤2 - 评价选项" className="w-full h-full object-cover" />
-                </div>
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <h3 className="font-semibold text-green-900 mb-2">选择评价方式</h3>
-                  <ul className="text-sm text-green-800 space-y-1">
-                    <li>
-                      • <strong>单独评价</strong>：每幅作品独立分析评价
-                    </li>
-                    <li>
-                      • <strong>整体评价</strong>：将所有作品作为系列进行综合评价
-                    </li>
-                    <li>• 点击"开始AI评价"开始分析</li>
-                    <li>• 等待AI艺术分析和评价完成</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h3 className="font-semibold text-yellow-900 mb-3 flex items-center gap-2">
-                <AlertCircle className="w-5 h-5" />
-                使用提示
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-yellow-800">
-                <div>
-                  <h4 className="font-medium mb-2">作品质量建议：</h4>
-                  <ul className="space-y-1">
-                    <li>• 确保作品图像清晰</li>
-                    <li>• 避免反光或阴影遮挡</li>
-                    <li>• 光线充足，色彩还原度好</li>
-                    <li>• 尽量包含完整作品</li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">评价结果：</h4>
-                  <ul className="space-y-1">
-                    <li>• 自动识别艺术风格</li>
-                    <li>• 提供详细作品分析</li>
-                    <li>• 给出专业改进建议</li>
-                    <li>• 评估技法和构图</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Feature Menu */}
         <FeatureMenu
         />
@@ -929,5 +848,6 @@ export default function ArtReviewPage() {
       </div>
 
     </div>
+</DonationProvider>
   )
 }
