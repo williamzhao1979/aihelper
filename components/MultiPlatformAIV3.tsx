@@ -38,7 +38,6 @@ import {
 import LanguageSwitcher from "./language-switcher"
 import VersionSelector from "./version-selector"
 import { useLocale } from "next-intl"
-import FeatureMenu from "./feature-menu"
 
 interface AIResponse {
   service: string
@@ -787,7 +786,21 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
 
         {/* AI回答结果 - 永久显示 */}
         <div className="space-y-6">
-          <h3 className="text-xl font-bold text-gray-800 mb-6">{t("chat.resultsTitle")}</h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-800">{t("chat.resultsTitle")}</h3>
+            {chatResults.length > 0 && (
+              <button
+                onClick={() => {
+                  const element = document.querySelector("[data-latest-result]")
+                  element?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }}
+                className="flex items-center gap-2 px-3 py-1 text-sm bg-green-50 text-green-700 rounded-full hover:bg-green-100 transition-colors"
+              >
+                <Sparkles className="w-4 h-4" />
+                查看最新结果
+              </button>
+            )}
+          </div>
 
           {/* 当前流式响应 */}
           {responseMode === "streaming" && streamingResponses.size > 0 && (
@@ -839,110 +852,126 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
           {/* 历史结果 */}
           {chatResults.length > 0 && (
             <div className="space-y-6">
-              {chatResults.map((result, resultIndex) => (
-                <div key={result.id} className="space-y-4">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="flex items-center gap-2">
-                      {result.mode === "turbo" ? (
-                        <Rocket className="w-5 h-5 text-pink-500" />
-                      ) : result.mode === "streaming" ? (
-                        <Zap className="w-5 h-5 text-purple-500" />
-                      ) : result.mode === "async" ? (
-                        <Sparkles className="w-5 h-5 text-indigo-500" />
-                      ) : (
-                        <Send className="w-5 h-5 text-blue-500" />
-                      )}
-                      <span className="text-lg font-semibold text-gray-700">
-                        {result.mode === "turbo"
-                          ? "极速模式"
-                          : result.mode === "streaming"
-                            ? t("chat.streamingMode")
-                            : result.mode === "async"
-                              ? t("chat.asyncMode")
-                              : t("chat.standardMode")}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Clock className="w-4 h-4" />
-                      <span>{formatTime(result.timestamp)}</span>
-                    </div>
-                    <div className="ml-auto flex items-center gap-2">
-                      <button
-                        onClick={() => toggleFavorite(result.id)}
-                        className={`p-1 rounded-md transition-colors ${
-                          result.favorite ? "text-yellow-500" : "text-gray-400 hover:text-yellow-500"
-                        }`}
-                      >
-                        <Bookmark className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => exportResults(result)}
-                        className="p-1 rounded-md text-gray-400 hover:text-blue-500 transition-colors"
-                      >
-                        <Download className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                    <div className="text-sm text-gray-600 mb-2">{t("chat.questionContent")}</div>
-                    <div className="text-gray-800">{result.prompt}</div>
-                  </div>
-
-                  <div className={`grid gap-4 ${comparisonMode ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
-                    {result.responses.map((aiResponse, index) => {
-                      const service = services.find((s) => s.name === aiResponse.service)
-                      return (
-                        <Card
-                          key={`${result.id}-${aiResponse.service}-${index}`}
-                          className="border-0 shadow-xl bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 group"
+              {chatResults
+                .slice()
+                .reverse() // 反转数组，让最新的结果显示在最前面
+                .map((result, resultIndex) => (
+                  <div
+                    key={result.id}
+                    className="space-y-4"
+                    {...(resultIndex === 0 ? { "data-latest-result": true } : {})}
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="flex items-center gap-2">
+                        {result.mode === "turbo" ? (
+                          <Rocket className="w-5 h-5 text-pink-500" />
+                        ) : result.mode === "streaming" ? (
+                          <Zap className="w-5 h-5 text-purple-500" />
+                        ) : result.mode === "async" ? (
+                          <Sparkles className="w-5 h-5 text-indigo-500" />
+                        ) : (
+                          <Send className="w-5 h-5 text-blue-500" />
+                        )}
+                        <span className="text-lg font-semibold text-gray-700">
+                          {result.mode === "turbo"
+                            ? "极速模式"
+                            : result.mode === "streaming"
+                              ? t("chat.streamingMode")
+                              : result.mode === "async"
+                                ? t("chat.asyncMode")
+                                : t("chat.standardMode")}
+                        </span>
+                        {/* 添加"最新"标识给第一个结果 */}
+                        {resultIndex === 0 && (
+                          <span className="text-xs bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2 py-1 rounded-full font-semibold flex items-center gap-1 animate-pulse">
+                            <Sparkles className="w-3 h-3" />
+                            最新
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Clock className="w-4 h-4" />
+                        <span>{formatTime(result.timestamp)}</span>
+                      </div>
+                      <div className="ml-auto flex items-center gap-2">
+                        <button
+                          onClick={() => toggleFavorite(result.id)}
+                          className={`p-1 rounded-md transition-colors ${
+                            result.favorite ? "text-yellow-500" : "text-gray-400 hover:text-yellow-500"
+                          }`}
                         >
-                          <CardHeader className="pb-4">
-                            <div className="flex items-center gap-3">
-                              <div
-                                className={`w-3 h-3 rounded-full bg-gradient-to-r ${service?.color || "from-gray-400 to-gray-600"}`}
-                              />
-                              <CardTitle className="text-xl font-bold text-gray-800 group-hover:text-gray-900 transition-colors">
-                                {service?.icon} {aiResponse.service}
-                              </CardTitle>
-                              <div className="ml-auto flex items-center gap-2">
-                                <button
-                                  onClick={() => copyResponse(aiResponse.response)}
-                                  className="p-1 rounded-md text-gray-400 hover:text-blue-500 transition-colors"
-                                >
-                                  <Copy className="w-4 h-4" />
-                                </button>
+                          <Bookmark className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => exportResults(result)}
+                          className="p-1 rounded-md text-gray-400 hover:text-blue-500 transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                      <div className="text-sm text-gray-600 mb-2">{t("chat.questionContent")}</div>
+                      <div className="text-gray-800">{result.prompt}</div>
+                    </div>
+
+                    <div className={`grid gap-4 ${comparisonMode ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
+                      {result.responses.map((aiResponse, index) => {
+                        const service = services.find((s) => s.name === aiResponse.service)
+                        return (
+                          <Card
+                            key={`${result.id}-${aiResponse.service}-${index}`}
+                            className={`border-0 shadow-xl bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 group ${
+                              resultIndex === 0 ? "ring-2 ring-green-200 ring-opacity-50" : ""
+                            }`}
+                          >
+                            <CardHeader className="pb-4">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-3 h-3 rounded-full bg-gradient-to-r ${service?.color || "from-gray-400 to-gray-600"}`}
+                                />
+                                <CardTitle className="text-xl font-bold text-gray-800 group-hover:text-gray-900 transition-colors">
+                                  {service?.icon} {aiResponse.service}
+                                </CardTitle>
+                                <div className="ml-auto flex items-center gap-2">
+                                  <button
+                                    onClick={() => copyResponse(aiResponse.response)}
+                                    className="p-1 rounded-md text-gray-400 hover:text-blue-500 transition-colors"
+                                  >
+                                    <Copy className="w-4 h-4" />
+                                  </button>
+                                  {aiResponse.error ? (
+                                    <AlertCircle className="w-5 h-5 text-red-500" />
+                                  ) : (
+                                    <div className="w-2 h-2 bg-green-500 rounded-full" />
+                                  )}
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="min-h-[200px] pt-0">
+                              <div className="bg-gradient-to-br from-gray-50 to-purple-50 rounded-xl p-6 border border-purple-100">
                                 {aiResponse.error ? (
-                                  <AlertCircle className="w-5 h-5 text-red-500" />
+                                  <div className="flex items-center gap-2 text-red-600">
+                                    <AlertCircle className="w-4 h-4" />
+                                    <span>
+                                      {t("chat.errorPrefix")}
+                                      {aiResponse.error}
+                                    </span>
+                                  </div>
                                 ) : (
-                                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                                  <div className="text-gray-700 leading-relaxed text-base whitespace-pre-wrap">
+                                    {aiResponse.response || t("chat.noResponse")}
+                                  </div>
                                 )}
                               </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="min-h-[200px] pt-0">
-                            <div className="bg-gradient-to-br from-gray-50 to-purple-50 rounded-xl p-6 border border-purple-100">
-                              {aiResponse.error ? (
-                                <div className="flex items-center gap-2 text-red-600">
-                                  <AlertCircle className="w-4 h-4" />
-                                  <span>
-                                    {t("chat.errorPrefix")}
-                                    {aiResponse.error}
-                                  </span>
-                                </div>
-                              ) : (
-                                <div className="text-gray-700 leading-relaxed text-base whitespace-pre-wrap">
-                                  {aiResponse.response || t("chat.noResponse")}
-                                </div>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
+                            </CardContent>
+                          </Card>
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           )}
 
@@ -953,7 +982,6 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
             </div>
           )}
         </div>
-
       </div>
 
       {/* 浮动输入区域 - 固定在底部 */}
@@ -1029,36 +1057,36 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
                       {!canUseAdvanced && <Lock className="w-3 h-3 ml-1 inline" />}
                     </button>
                   </div>
-                {/* 状态显示 */}
-                <div className="flex flex-wrap items-center gap-4">
-                  {/* 异步处理状态显示 */}
-                  {processingRequests.size > 0 && (
-                    <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 px-3 py-1 rounded-full bg-indigo-50">
-                      <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                      {t("chat.processing")}: {processingRequests.size}
-                    </div>
-                  )}
-
-                  {/* 流式响应进度 */}
-                  {isLoading && responseMode === "streaming" && (
-                    <div className="flex items-center gap-4 flex-1">
-                      <Progress value={(completedCount / selectedCount) * 100} className="flex-1 h-2 bg-gray-200" />
-                      <div className="flex items-center gap-2 text-sm font-medium text-gray-600 px-3 py-1 rounded-full bg-purple-50">
-                        <div className="w-2 h-2 rounded-full animate-pulse bg-purple-500"></div>
-                        {completedCount}/{selectedCount} {t("chat.completed")}
+                  {/* 状态显示 */}
+                  <div className="flex flex-wrap items-center gap-4">
+                    {/* 异步处理状态显示 */}
+                    {processingRequests.size > 0 && (
+                      <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 px-3 py-1 rounded-full bg-indigo-50">
+                        <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                        {t("chat.processing")}: {processingRequests.size}
                       </div>
+                    )}
+
+                    {/* 流式响应进度 */}
+                    {isLoading && responseMode === "streaming" && (
+                      <div className="flex items-center gap-4 flex-1">
+                        <Progress value={(completedCount / selectedCount) * 100} className="flex-1 h-2 bg-gray-200" />
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-600 px-3 py-1 rounded-full bg-purple-50">
+                          <div className="w-2 h-2 rounded-full animate-pulse bg-purple-500"></div>
+                          {completedCount}/{selectedCount} {t("chat.completed")}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Error Display */}
+                  {error && (
+                    <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                      <span className="text-sm">{error}</span>
                     </div>
                   )}
-                </div>
 
-                {/* Error Display */}
-                {error && (
-                  <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700">
-                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm">{error}</span>
-                  </div>
-                )}
-                
                   {/* 提交按钮 */}
                   <Button
                     onClick={handleSubmit}
@@ -1125,7 +1153,6 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
                     </button>
                   ))}
                 </div>
-
               </div>
             </CardContent>
           </Card>
