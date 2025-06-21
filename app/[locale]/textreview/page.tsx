@@ -13,6 +13,8 @@ import FeatureMenu from "@/components/feature-menu"
 import { DonationProvider } from "@/components/donation-provider"
 import { DonationButton } from "@/components/donation-button"
 import { DonationModal } from "@/components/donation-modal"
+import LanguageSwitcher from "@/components/language-switcher"
+import DeviceSwitcher from "@/components/device-switcher"
 
 interface UploadedImage {
   id: string
@@ -411,6 +413,14 @@ export default function TextReviewPage() {
 
   return (
     <DonationProvider>
+      {/* 右上角固定容器 */}
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-4">
+        {/* Language Selection */}
+        <LanguageSwitcher />
+        {/* 设备切换器 */}
+        <DeviceSwitcher currentDevice="desktop" />
+      </div>
+
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
         <div className="max-w-6xl mx-auto space-y-8">
           {/* Header */}
@@ -529,7 +539,7 @@ export default function TextReviewPage() {
               </CollapsibleContent>
             </Card>
           </Collapsible>
-          
+
           {/* Error Display */}
           {error && (
             <Card className="border-red-200 bg-red-50">
