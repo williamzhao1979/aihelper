@@ -1,13 +1,24 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef, useId } from "react"
+import { useState, useRef, useId, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Upload, X, Languages, CheckCircle, AlertCircle, ChevronUp, ChevronDown } from "lucide-react"
+import {
+  Upload,
+  X,
+  Languages,
+  CheckCircle,
+  AlertCircle,
+  ChevronUp,
+  ChevronDown,
+  Loader2,
+  Smartphone,
+  Monitor,
+} from "lucide-react"
 import { useLocale } from "next-intl"
 import FeatureMenu from "@/components/feature-menu"
 import { DonationProvider } from "@/components/donation-provider"
@@ -16,6 +27,7 @@ import { DonationModal } from "@/components/donation-modal"
 import LanguageSwitcher from "@/components/language-switcher"
 import DeviceSwitcher from "@/components/device-switcher"
 import { useTranslations } from "next-intl"
+import { useRouter } from "@/i18n/routing"
 
 interface UploadedImage {
   id: string
@@ -95,9 +107,30 @@ const compressImage = (file: File, maxWidth = 1024, quality = 0.8): Promise<File
   })
 }
 
+// 客户端设备检测函数
+function detectClientDevice(): "mobile" | "desktop" {
+  if (typeof window === "undefined") return "desktop"
+
+  const userAgent = navigator.userAgent
+  const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
+  const screenWidth = window.innerWidth
+
+  console.log("Client device detection:", {
+    userAgent,
+    isMobile,
+    screenWidth,
+    result: isMobile || screenWidth < 768 ? "mobile" : "desktop",
+  })
+
+  // 综合判断：用户代理 + 屏幕宽度
+  return isMobile || screenWidth < 768 ? "mobile" : "desktop"
+}
+
 export default function TextReviewPage() {
   const t = useTranslations()
-
+  const router = useRouter()
+  const [detectedDevice, setDetectedDevice] = useState<"mobile" | "desktop" | null>(null)
+  const [isRedirecting, setIsRedirecting] = useState(true)
   const [images, setImages] = useState<UploadedImage[]>([])
   const [results, setResults] = useState<OCRResult[]>([])
   const [mergedResult, setMergedResult] = useState<MergedOCRResult | null>(null)
@@ -114,6 +147,34 @@ export default function TextReviewPage() {
   const [lastSubmittedMergeOption, setLastSubmittedMergeOption] = useState<boolean>(false)
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
+
+  useEffect(() => {
+    // 检查 URL 参数中是否有强制设备类型
+    const urlParams = new URLSearchParams(window.location.search)
+    const forceParam = urlParams.get("force")
+
+    let targetDevice: "mobile" | "desktop"
+
+    if (forceParam === "mobile" || forceParam === "desktop") {
+      targetDevice = forceParam
+    } else {
+      targetDevice = detectClientDevice()
+    }
+
+    setDetectedDevice(targetDevice)
+
+    // 延迟重定向，让用户看到检测结果
+    const timer = setTimeout(() => {
+      router.replace(`/textreview/${targetDevice}`)
+    }, 1500)
+
+    return () => clearTimeout(timer)
+  }, [router])
+
+  const manualRedirect = (device: "mobile" | "desktop") => {
+    setIsRedirecting(true)
+    router.replace(`/textreview/${device}`)
+  }
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -414,6 +475,58 @@ export default function TextReviewPage() {
     return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
   }
 
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
+        <div className="text-center max-w-md mx-auto p-6">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-6 text-purple-600" />
+
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Detecting Your Device</h2>
+
+          {detectedDevice && (
+            <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                {detectedDevice === "mobile" ? (
+                  <Smartphone className="h-5 w-5 text-purple-600" />
+                ) : (
+                  <Monitor className="h-5 w-5 text-purple-600" />
+                )}
+                <span className="font-medium text-gray-900">
+                  {detectedDevice === "mobile" ? "Mobile Device" : "Desktop Device"}
+                </span>
+              </div>
+              <p className="text-sm text-gray-600">Redirecting to {detectedDevice} version...</p>
+            </div>
+          )}
+
+          <p className="text-gray-600 mb-6">We're preparing the optimal text review experience for your device</p>
+
+          {/* 手动选择选项 */}
+          <div className="flex gap-3 justify-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => manualRedirect("desktop")}
+              className="flex items-center gap-2"
+            >
+              <Monitor className="h-4 w-4" />
+              Desktop
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => manualRedirect("mobile")}
+              className="flex items-center gap-2"
+            >
+              <Smartphone className="h-4 w-4" />
+              Mobile
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <DonationProvider>
       {/* 右上角固定容器 */}
@@ -421,7 +534,7 @@ export default function TextReviewPage() {
         {/* Language Selection */}
         <LanguageSwitcher />
         {/* 设备切换器 */}
-        <DeviceSwitcher currentDevice="desktop" />
+        <DeviceSwitcher currentDevice={detectedDevice} />
       </div>
 
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
