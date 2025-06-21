@@ -1,11 +1,9 @@
 "use client"
-
-import { Switch } from "@/components/ui/switch"
-import { Star } from "lucide-react"
+import { Star, Rocket } from "lucide-react"
 
 interface VersionSelectorProps {
-  currentVersion: "v1" | "v2"
-  onVersionChange: (version: "v1" | "v2") => void
+  currentVersion: "v1" | "v2" | "v3"
+  onVersionChange: (version: "v1" | "v2" | "v3") => void
 }
 
 export default function VersionSelector({ currentVersion, onVersionChange }: VersionSelectorProps) {
@@ -15,23 +13,35 @@ export default function VersionSelector({ currentVersion, onVersionChange }: Ver
 
   return (
     <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <span
-          className={`text-sm font-medium transition-colors ${currentVersion === "v1" ? "text-blue-600" : "text-gray-400"}`}
+      <div className="flex items-center gap-2 p-1 bg-gray-100 rounded-lg">
+        <button
+          onClick={() => onVersionChange("v1")}
+          className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
+            currentVersion === "v1" ? "bg-blue-500 text-white shadow-sm" : "text-gray-600 hover:bg-gray-200"
+          }`}
         >
           经典版
-        </span>
-        <Switch
-          checked={currentVersion === "v2"}
-          onCheckedChange={handleToggle}
-          className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-purple-500 data-[state=checked]:to-pink-500"
-        />
-        <span
-          className={`text-sm font-medium transition-colors flex items-center gap-1 ${currentVersion === "v2" ? "text-purple-600" : "text-gray-400"}`}
+        </button>
+        <button
+          onClick={() => onVersionChange("v2")}
+          className={`px-3 py-1 rounded-md text-sm font-medium transition-all flex items-center gap-1 ${
+            currentVersion === "v2" ? "bg-purple-500 text-white shadow-sm" : "text-gray-600 hover:bg-gray-200"
+          }`}
         >
           <Star className="w-3 h-3" />
           增强版
-        </span>
+        </button>
+        <button
+          onClick={() => onVersionChange("v3")}
+          className={`px-3 py-1 rounded-md text-sm font-medium transition-all flex items-center gap-1 ${
+            currentVersion === "v3"
+              ? "bg-gradient-to-r from-pink-500 to-red-500 text-white shadow-sm"
+              : "text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          <Rocket className="w-3 h-3" />
+          极速版
+        </button>
       </div>
     </div>
   )

@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 
-type ChatVersion = "v1" | "v2"
+type ChatVersion = "v1" | "v2" | "v3"
 
 export function useVersion() {
-  const [version, setVersion] = useState<ChatVersion>("v2") // 默认 v2
+  const [version, setVersion] = useState<ChatVersion>("v3") // 默认 v3
   const [isLoading, setIsLoading] = useState(true)
   const { data: session } = useSession()
 
@@ -17,7 +17,7 @@ export function useVersion() {
         // 首先检查 localStorage
         const localVersion = localStorage.getItem("chat-version") as ChatVersion
 
-        if (localVersion && (localVersion === "v1" || localVersion === "v2")) {
+        if (localVersion && (localVersion === "v1" || localVersion === "v2" || localVersion === "v3")) {
           setVersion(localVersion)
         }
 
