@@ -767,15 +767,6 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
                         onVersionChange={onVersionChange || (() => {})}
                       />
                     </div>
-
-                    {/* Language Selection */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Languages className="w-4 h-4 text-gray-600" />
-                        <span className="font-medium text-gray-700">{t("settings.language")}</span>
-                      </div>
-                      <LanguageSwitcher />
-                    </div>
                   </div>
                 </div>
               )}

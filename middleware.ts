@@ -44,5 +44,5 @@ export default function middleware(request: NextRequest) {
 
 export const config = {
   // 更精确的匹配模式
-  matcher: ["/", "/(zh|en|ja)/:path*", "/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$).*)"],
+  matcher: ["/",  "/(zh|en|ja)/:path*", "/((?!api|_next/static|_next/image|favicon.ico|.*\\.png|.*\\.[a-z]+$).*)"],
 }

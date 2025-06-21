@@ -6,6 +6,22 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { useDonation } from "./donation-provider"
 import { useTranslations } from "next-intl"
 import Image from "next/image"
+import {
+  Check,
+  Sparkles,
+  Send,
+  AlertCircle,
+  Loader2,
+  Zap,
+  Crown,
+  Lock,
+  Star,
+  Clock,
+  Settings,
+  Languages,
+  RotateCcw,
+} from "lucide-react"
+import LanguageSwitcher from "./language-switcher"
 
 export function DonationModal() {
   const { isModalOpen, closeModal } = useDonation()
@@ -28,12 +44,12 @@ export function DonationModal() {
       <DialogContent className="max-w-md p-0 bg-gradient-to-br from-slate-800 via-blue-900 to-slate-800 border-0 overflow-hidden">
         <div className="relative p-8">
           {/* 关闭按钮 */}
-          <button
+          {/* <button
             onClick={closeModal}
             className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all duration-300 hover:rotate-90"
           >
             <X className="w-5 h-5" />
-          </button>
+          </button> */}
 
           {/* 标题 */}
           <div className="text-center mb-6">

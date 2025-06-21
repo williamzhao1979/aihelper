@@ -50,7 +50,7 @@ export default function DeviceSwitcher({ currentDevice }: DeviceSwitcherProps) {
           disabled={currentDevice === "desktop"}
         >
           <Monitor className="h-4 w-4" />
-          <span>Desktop Version</span>
+          <span>Desktop</span>
           {currentDevice === "desktop" && <span className="ml-auto text-xs text-green-600">Current</span>}
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -59,7 +59,7 @@ export default function DeviceSwitcher({ currentDevice }: DeviceSwitcherProps) {
           disabled={currentDevice === "mobile"}
         >
           <Smartphone className="h-4 w-4" />
-          <span>Mobile Version</span>
+          <span>Mobile</span>
           {currentDevice === "mobile" && <span className="ml-auto text-xs text-green-600">Current</span>}
         </DropdownMenuItem>
       </DropdownMenuContent>
