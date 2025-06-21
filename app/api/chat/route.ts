@@ -168,7 +168,42 @@ async function callMicrosoftCopilot(prompt: string): Promise<string> {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: ChatRequest = await request.json()
+    const body = await request.json()
+
+    // V4 版本的单独处理逻辑
+    if (body.version === "v4" && body.provider && body.message) {
+      const { provider, message } = body
+
+      try {
+        let response: string
+
+        if (provider === "deepseek") {
+          response = await callDeepSeek(message)
+        } else if (provider === "openai") {
+          response = await callOpenAI(message)
+        } else {
+          return NextResponse.json({ error: "Unsupported provider" }, { status: 400 })
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: response,
+          provider,
+          timestamp: Date.now(),
+        })
+      } catch (error) {
+        console.error(`V4 ${provider} API Error:`, error)
+        return NextResponse.json({
+          success: false,
+          message: `${provider} 服务暂时不可用，请稍后再试。`,
+          error: error instanceof Error ? error.message : "Unknown error",
+          provider,
+          timestamp: Date.now(),
+        })
+      }
+    }
+
+    // 原有的逻辑继续处理其他版本
     const { prompt, selectedServices } = body
 
     if (!prompt || prompt.trim().length === 0) {
