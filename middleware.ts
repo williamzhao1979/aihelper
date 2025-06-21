@@ -12,8 +12,10 @@ export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const userAgent = request.headers.get("user-agent") || ""
 
-  // 处理 chat 路由的设备检测和重定向
-  if (pathname.includes("/chat") && !pathname.includes("/chat/desktop") && !pathname.includes("/chat/mobile")) {
+  // 精确匹配 chat 路由，避免匹配到 chat/desktop 或 chat/mobile
+  const chatRouteRegex = /^\/(zh|en|ja)\/chat$/
+
+  if (chatRouteRegex.test(pathname)) {
     const device = detectDevice(userAgent)
     const locale = pathname.split("/")[1] // 获取语言前缀
 
@@ -21,8 +23,19 @@ export default function middleware(request: NextRequest) {
     const forceParam = request.nextUrl.searchParams.get("force")
     const targetDevice = forceParam === "desktop" || forceParam === "mobile" ? forceParam : device
 
+    console.log(`Device detected: ${device}, Target: ${targetDevice}, UserAgent: ${userAgent}`)
+
     const newPath = `/${locale}/chat/${targetDevice}`
-    return NextResponse.redirect(new URL(newPath, request.url))
+    const newUrl = new URL(newPath, request.url)
+
+    // 保留查询参数
+    request.nextUrl.searchParams.forEach((value, key) => {
+      if (key !== "force") {
+        newUrl.searchParams.set(key, value)
+      }
+    })
+
+    return NextResponse.redirect(newUrl)
   }
 
   // 继续执行国际化中间件
@@ -30,6 +43,6 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // 匹配所有国际化路径和 chat 路径
-  matcher: ["/", "/(zh|en|ja)/:path*"],
+  // 更精确的匹配模式
+  matcher: ["/", "/(zh|en|ja)/:path*", "/((?!api|_next/static|_next/image|favicon.ico).*)"],
 }

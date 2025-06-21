@@ -1,46 +1,66 @@
 "use client"
+
+import { useState } from "react"
+import { useRouter, usePathname } from "@/i18n/routing"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Monitor, Smartphone, Settings } from "lucide-react"
-import { useRouter, usePathname } from "next/navigation"
 
-export default function DeviceSwitcher() {
+interface DeviceSwitcherProps {
+  currentDevice: "mobile" | "desktop"
+}
+
+export default function DeviceSwitcher({ currentDevice }: DeviceSwitcherProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const [isOpen, setIsOpen] = useState(false)
 
-  const currentDevice = pathname.includes("/desktop") ? "desktop" : "mobile"
+  const switchToDevice = (device: "mobile" | "desktop") => {
+    const basePath = pathname.replace(/\/(mobile|desktop)$/, "")
+    const newPath = `${basePath}/${device}`
+    router.push(newPath)
+    setIsOpen(false)
+  }
 
-  const switchDevice = (device: "desktop" | "mobile") => {
-    const basePath = pathname.replace(/\/(desktop|mobile)$/, "")
-    router.push(`${basePath}/${device}`)
+  const getCurrentIcon = () => {
+    return currentDevice === "mobile" ? <Smartphone className="h-4 w-4" /> : <Monitor className="h-4 w-4" />
+  }
+
+  const getCurrentLabel = () => {
+    return currentDevice === "mobile" ? "Mobile" : "Desktop"
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          {currentDevice === "desktop" ? (
-            <>
-              <Monitor className="h-4 w-4" />
-              Desktop
-            </>
-          ) : (
-            <>
-              <Smartphone className="h-4 w-4" />
-              Mobile
-            </>
-          )}
-          <Settings className="h-4 w-4" />
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2 bg-white/80 backdrop-blur-sm border-gray-200 hover:bg-white/90"
+        >
+          {getCurrentIcon()}
+          <span className="hidden sm:inline">{getCurrentLabel()}</span>
+          <Settings className="h-3 w-3 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => switchDevice("desktop")} className="gap-2">
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem
+          onClick={() => switchToDevice("desktop")}
+          className="flex items-center gap-2"
+          disabled={currentDevice === "desktop"}
+        >
           <Monitor className="h-4 w-4" />
-          Desktop Version
+          <span>Desktop Version</span>
+          {currentDevice === "desktop" && <span className="ml-auto text-xs text-green-600">Current</span>}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => switchDevice("mobile")} className="gap-2">
+        <DropdownMenuItem
+          onClick={() => switchToDevice("mobile")}
+          className="flex items-center gap-2"
+          disabled={currentDevice === "mobile"}
+        >
           <Smartphone className="h-4 w-4" />
-          Mobile Version
+          <span>Mobile Version</span>
+          {currentDevice === "mobile" && <span className="ml-auto text-xs text-green-600">Current</span>}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
