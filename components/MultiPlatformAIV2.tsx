@@ -518,7 +518,7 @@ export default function MultiPlatformAIV2({ version, onVersionChange }: MultiPla
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="hidden text-center mb-12">
           <div className="flex items-center justify-between mb-6">
             <div className="flex-1" />
             <div className="flex items-center justify-center gap-3">
@@ -539,12 +539,12 @@ export default function MultiPlatformAIV2({ version, onVersionChange }: MultiPla
             </div>
             <div className="flex-1 flex justify-end relative">
               {/* Settings Button */}
-              <button
+              {/* <button
                 onClick={() => setShowSettings(!showSettings)}
                 className="settings-button p-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-lg hover:bg-white/90 transition-all duration-200 shadow-sm"
               >
                 <Settings className="w-5 h-5 text-gray-600" />
-              </button>
+              </button> */}
 
               {/* Settings Card */}
               {showSettings && (
@@ -597,7 +597,6 @@ export default function MultiPlatformAIV2({ version, onVersionChange }: MultiPla
           <CardContent className="p-8">
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">{t("chat.inputLabel")}</label>
                 <Textarea
                   placeholder={t("chat.inputPlaceholder")}
                   value={prompt}
@@ -608,7 +607,7 @@ export default function MultiPlatformAIV2({ version, onVersionChange }: MultiPla
               </div>
 
               {/* Response Mode Selection */}
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+              <div className="hidden flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
                     {responseMode === "streaming" ? (
