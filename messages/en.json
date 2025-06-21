@@ -122,7 +122,7 @@
     "callToAction": "Please check the donation button in the bottom right corner to experience the full effect! This design is perfect for content creators, developers, and digital products."
   },
 "textreview": {
-  "tutorial": "Article Review Assistant - Usage Guide",
+  "tutorial": "Article Review Assistant",
   "description": "Upload multiple text-containing images, adjust their sequence, and submit. The AI will automatically recognize the text and provide editing suggestions",
   "misc": "Professional Feature"
   }

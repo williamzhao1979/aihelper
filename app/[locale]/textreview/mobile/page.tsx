@@ -373,7 +373,7 @@ export default function TextReviewMobilePage() {
     <DonationProvider>
       <div className="min-h-screen bg-gray-50">
         {/* 右上角固定容器 */}
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-4">
+        <div className="flex justify-end top-4 right-4 z-50 flex items-center gap-4">
           {/* Language Selection */}
           <LanguageSwitcher />
           {/* 设备切换器 */}
