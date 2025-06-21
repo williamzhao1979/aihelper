@@ -118,7 +118,7 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
   const [isMounted, setIsMounted] = useState(false)
   const [checkingSubscription, setCheckingSubscription] = useState(false)
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
-  const [responseMode, setResponseMode] = useState<ResponseMode>("turbo")
+  const [responseMode, setResponseMode] = useState<ResponseMode>("async")
   const [showSettings, setShowSettings] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
 
