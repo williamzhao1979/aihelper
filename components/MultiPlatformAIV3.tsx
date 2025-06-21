@@ -671,7 +671,7 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
               <div className="p-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl shadow-lg animate-pulse">
                 <Rocket className="w-8 h-8 text-white" />
               </div>
-              <div className="flex flex-col items-center">
+              <div className="flex items-center">
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                   {t("header.title")}
                 </h1>
@@ -785,211 +785,6 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
           </div>
           <p className="text-gray-600 text-lg font-medium">{t("chat.subtitle")} - 极速智能版</p>
         </div>
-
-        {/* Input Section */}
-        <Card className="mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm">
-          <CardContent className="p-8">
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">{t("chat.inputLabel")}</label>
-                <Textarea
-                  placeholder={t("chat.inputPlaceholder")}
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  disabled={isLoading}
-                  className="min-h-[140px] border-2 border-gray-200 focus:border-purple-400 focus:ring-purple-400/20 focus:ring-4 resize-none text-gray-700 placeholder:text-gray-400 rounded-xl text-base leading-relaxed transition-all duration-200 disabled:opacity-50"
-                />
-              </div>
-
-              {/* Response Mode Selection */}
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 rounded-xl border border-purple-200">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    {responseMode === "turbo" ? (
-                      <Rocket className="w-5 h-5 text-pink-600" />
-                    ) : responseMode === "streaming" ? (
-                      <Zap className="w-5 h-5 text-purple-600" />
-                    ) : responseMode === "async" ? (
-                      <Sparkles className="w-5 h-5 text-indigo-600" />
-                    ) : (
-                      <Send className="w-5 h-5 text-blue-600" />
-                    )}
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-800">
-                          {responseMode === "turbo"
-                            ? "极速模式"
-                            : responseMode === "streaming"
-                              ? t("chat.streamingMode")
-                              : responseMode === "async"
-                                ? t("chat.asyncMode")
-                                : t("chat.standardMode")}
-                        </span>
-                        {responseMode === "turbo" && (
-                          <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-pink-500 to-red-500 text-white text-xs font-bold rounded-full">
-                            <Rocket className="w-3 h-3" />
-                            <span>V3专属</span>
-                          </div>
-                        )}
-                        {responseMode === "streaming" && (
-                          <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
-                            <Crown className="w-3 h-3" />
-                            <span>{t("chat.professionalFeature")}</span>
-                          </div>
-                        )}
-                        {responseMode === "async" && (
-                          <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold rounded-full">
-                            <Sparkles className="w-3 h-3" />
-                            <span>{t("chat.recommended")}</span>
-                          </div>
-                        )}
-                        {!canUseAdvanced && (responseMode === "streaming" || responseMode === "turbo") && (
-                          <div className="flex items-center gap-1 px-2 py-1 bg-gray-200 text-gray-600 text-xs font-bold rounded-full">
-                            <Lock className="w-3 h-3" />
-                            <span>{t("chat.needSubscription")}</span>
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600">
-                        {responseMode === "turbo"
-                          ? "AI极速响应，毫秒级处理"
-                          : responseMode === "streaming"
-                            ? t("chat.streamingDescription")
-                            : responseMode === "async"
-                              ? t("chat.asyncDescription")
-                              : t("chat.standardDescription")}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {!canUseAdvanced && (responseMode === "streaming" || responseMode === "turbo") && (
-                    <SubscriptionDialog>
-                      <Button
-                        size="sm"
-                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-                      >
-                        <Crown className="w-4 h-4 mr-1" />
-                        {t("chat.upgrade")}
-                      </Button>
-                    </SubscriptionDialog>
-                  )}
-                </div>
-              </div>
-
-              {/* Submit Button and Progress */}
-              <div className="flex flex-col gap-4">
-                {/* Response Mode Selection */}
-                <div className="w-fit flex items-center gap-2 p-2 bg-gray-50 rounded-lg border">
-                  <button
-                    onClick={() => handleResponseModeChange("standard")}
-                    disabled={isLoading}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                      responseMode === "standard"
-                        ? "bg-blue-500 text-white shadow-md"
-                        : "text-gray-600 hover:bg-gray-100"
-                    }`}
-                  >
-                    {t("chat.standardMode")}
-                  </button>
-                  <button
-                    onClick={() => handleResponseModeChange("async")}
-                    disabled={isLoading}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                      responseMode === "async"
-                        ? "bg-indigo-500 text-white shadow-md"
-                        : "text-gray-600 hover:bg-gray-100"
-                    }`}
-                  >
-                    {t("chat.asyncMode")}
-                  </button>
-                  <button
-                    onClick={() => handleResponseModeChange("streaming")}
-                    disabled={isLoading || !canUseAdvanced}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                      responseMode === "streaming"
-                        ? "bg-purple-500 text-white shadow-md"
-                        : canUseAdvanced
-                          ? "text-gray-600 hover:bg-gray-100"
-                          : "text-gray-400 cursor-not-allowed"
-                    }`}
-                  >
-                    {t("chat.streamingMode")}
-                    {!canUseAdvanced && <Lock className="w-3 h-3 ml-1 inline" />}
-                  </button>
-                  <button
-                    onClick={() => handleResponseModeChange("turbo")}
-                    disabled={isLoading || !canUseAdvanced}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                      responseMode === "turbo"
-                        ? "bg-gradient-to-r from-pink-500 to-red-500 text-white shadow-md"
-                        : canUseAdvanced
-                          ? "text-gray-600 hover:bg-gray-100"
-                          : "text-gray-400 cursor-not-allowed"
-                    }`}
-                  >
-                    <Rocket className="w-3 h-3 mr-1 inline" />
-                    极速模式
-                    {!canUseAdvanced && <Lock className="w-3 h-3 ml-1 inline" />}
-                  </button>
-                </div>
-
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!prompt.trim() || isLoading || selectedCount === 0}
-                  className={`w-fit px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
-                    responseMode === "turbo"
-                      ? "bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700"
-                      : responseMode === "streaming"
-                        ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                        : responseMode === "async"
-                          ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                          : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                  } text-white`}
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : responseMode === "turbo" ? (
-                    <Rocket className="w-4 h-4" />
-                  ) : responseMode === "streaming" ? (
-                    <Zap className="w-4 h-4" />
-                  ) : responseMode === "async" ? (
-                    <Sparkles className="w-4 h-4" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                  {isLoading ? t("chat.submitting") : t("chat.submitButton")}
-                </Button>
-
-                {/* 异步处理状态显示 */}
-                {processingRequests.size > 0 && (
-                  <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 px-3 py-1 rounded-full bg-indigo-50">
-                    <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                    {t("chat.processing")}: {processingRequests.size}
-                  </div>
-                )}
-
-                {isLoading && responseMode === "streaming" && (
-                  <div className="flex items-center gap-4 flex-1">
-                    <Progress value={(completedCount / selectedCount) * 100} className="flex-1 h-3 bg-gray-200" />
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-600 px-3 py-1 rounded-full bg-purple-50">
-                      <div className="w-2 h-2 rounded-full animate-pulse bg-purple-500"></div>
-                      {completedCount}/{selectedCount} {t("chat.completed")}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Error Display */}
-              {error && (
-                <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
-                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
         {/* AI回答结果 - 永久显示 */}
         <div className="space-y-6">
@@ -1160,6 +955,155 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
           )}
         </div>
 
+        {/* Input Section */}
+        <Card className="mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+          <CardContent className="p-8">
+            <div className="space-y-6">
+              <div>
+                <Textarea
+                  placeholder={t("chat.inputPlaceholder")}
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  disabled={isLoading}
+                  className="min-h-[140px] border-2 border-gray-200 focus:border-purple-400 focus:ring-purple-400/20 focus:ring-4 resize-none text-gray-700 placeholder:text-gray-400 rounded-xl text-base leading-relaxed transition-all duration-200 disabled:opacity-50"
+                />
+              </div>
+              <div>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!prompt.trim() || isLoading || selectedCount === 0}
+                  className={`w-fit px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
+                    responseMode === "turbo"
+                      ? "bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700"
+                      : responseMode === "streaming"
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                        : responseMode === "async"
+                          ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                          : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  } text-white`}
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : responseMode === "turbo" ? (
+                    <Rocket className="w-4 h-4" />
+                  ) : responseMode === "streaming" ? (
+                    <Zap className="w-4 h-4" />
+                  ) : responseMode === "async" ? (
+                    <Sparkles className="w-4 h-4" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                  {isLoading ? t("chat.submitting") : t("chat.submitButton")}
+                </Button>
+
+                {/* 异步处理状态显示 */}
+                {processingRequests.size > 0 && (
+                  <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 px-3 py-1 rounded-full bg-indigo-50">
+                    <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                    {t("chat.processing")}: {processingRequests.size}
+                  </div>
+                )}
+
+                {isLoading && responseMode === "streaming" && (
+                  <div className="flex items-center gap-4 flex-1">
+                    <Progress value={(completedCount / selectedCount) * 100} className="flex-1 h-3 bg-gray-200" />
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-600 px-3 py-1 rounded-full bg-purple-50">
+                      <div className="w-2 h-2 rounded-full animate-pulse bg-purple-500"></div>
+                      {completedCount}/{selectedCount} {t("chat.completed")}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Error Display */}
+              {error && (
+                <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+            </div>
+            
+              {/* Response Mode Selection */}
+              <div className="hidden flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 rounded-xl border border-purple-200">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    {responseMode === "turbo" ? (
+                      <Rocket className="w-5 h-5 text-pink-600" />
+                    ) : responseMode === "streaming" ? (
+                      <Zap className="w-5 h-5 text-purple-600" />
+                    ) : responseMode === "async" ? (
+                      <Sparkles className="w-5 h-5 text-indigo-600" />
+                    ) : (
+                      <Send className="w-5 h-5 text-blue-600" />
+                    )}
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-800">
+                          {responseMode === "turbo"
+                            ? "极速模式"
+                            : responseMode === "streaming"
+                              ? t("chat.streamingMode")
+                              : responseMode === "async"
+                                ? t("chat.asyncMode")
+                                : t("chat.standardMode")}
+                        </span>
+                        {responseMode === "turbo" && (
+                          <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-pink-500 to-red-500 text-white text-xs font-bold rounded-full">
+                            <Rocket className="w-3 h-3" />
+                            <span>V3专属</span>
+                          </div>
+                        )}
+                        {responseMode === "streaming" && (
+                          <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
+                            <Crown className="w-3 h-3" />
+                            <span>{t("chat.professionalFeature")}</span>
+                          </div>
+                        )}
+                        {responseMode === "async" && (
+                          <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold rounded-full">
+                            <Sparkles className="w-3 h-3" />
+                            <span>{t("chat.recommended")}</span>
+                          </div>
+                        )}
+                        {!canUseAdvanced && (responseMode === "streaming" || responseMode === "turbo") && (
+                          <div className="flex items-center gap-1 px-2 py-1 bg-gray-200 text-gray-600 text-xs font-bold rounded-full">
+                            <Lock className="w-3 h-3" />
+                            <span>{t("chat.needSubscription")}</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {responseMode === "turbo"
+                          ? "AI极速响应，毫秒级处理"
+                          : responseMode === "streaming"
+                            ? t("chat.streamingDescription")
+                            : responseMode === "async"
+                              ? t("chat.asyncDescription")
+                              : t("chat.standardDescription")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!canUseAdvanced && (responseMode === "streaming" || responseMode === "turbo") && (
+                    <SubscriptionDialog>
+                      <Button
+                        size="sm"
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                      >
+                        <Crown className="w-4 h-4 mr-1" />
+                        {t("chat.upgrade")}
+                      </Button>
+                    </SubscriptionDialog>
+                  )}
+                </div>
+              </div>
+
+
+          </CardContent>
+        </Card>
+
         {/* Service Selection */}
         <div className="mb-8">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">{t("chat.selectServices")}</h3>
@@ -1199,6 +1143,64 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
               </button>
             ))}
           </div>
+        
+              {/* Submit Button and Progress */}
+              <div className="flex flex-col gap-4">
+                {/* Response Mode Selection */}
+                <div className="w-fit flex items-center gap-2 p-2 bg-gray-50 rounded-lg border">
+                  <button
+                    onClick={() => handleResponseModeChange("standard")}
+                    disabled={isLoading}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      responseMode === "standard"
+                        ? "bg-blue-500 text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    {t("chat.standardMode")}
+                  </button>
+                  <button
+                    onClick={() => handleResponseModeChange("async")}
+                    disabled={isLoading}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      responseMode === "async"
+                        ? "bg-indigo-500 text-white shadow-md"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    {t("chat.asyncMode")}
+                  </button>
+                  <button
+                    onClick={() => handleResponseModeChange("streaming")}
+                    disabled={isLoading || !canUseAdvanced}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      responseMode === "streaming"
+                        ? "bg-purple-500 text-white shadow-md"
+                        : canUseAdvanced
+                          ? "text-gray-600 hover:bg-gray-100"
+                          : "text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    {t("chat.streamingMode")}
+                    {!canUseAdvanced && <Lock className="w-3 h-3 ml-1 inline" />}
+                  </button>
+                  <button
+                    onClick={() => handleResponseModeChange("turbo")}
+                    disabled={isLoading || !canUseAdvanced}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                      responseMode === "turbo"
+                        ? "bg-gradient-to-r from-pink-500 to-red-500 text-white shadow-md"
+                        : canUseAdvanced
+                          ? "text-gray-600 hover:bg-gray-100"
+                          : "text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    <Rocket className="w-3 h-3 mr-1 inline" />
+                    极速模式
+                    {!canUseAdvanced && <Lock className="w-3 h-3 ml-1 inline" />}
+                  </button>
+                </div>
+            </div>
         </div>
 
         <FeatureMenu />
