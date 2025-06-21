@@ -22,7 +22,6 @@ import {
   AlertCircle,
   Loader2,
   Zap,
-  Crown,
   Lock,
   Clock,
   Settings,
@@ -38,7 +37,6 @@ import {
 } from "lucide-react"
 import LanguageSwitcher from "./language-switcher"
 import VersionSelector from "./version-selector"
-import SubscriptionDialog from "./subscription-dialog"
 import { useLocale } from "next-intl"
 import FeatureMenu from "./feature-menu"
 
@@ -662,7 +660,7 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-4 py-8 max-w-6xl pb-96">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-between mb-6">
@@ -955,24 +953,126 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
           )}
         </div>
 
-        {/* Input Section */}
-        <Card className="mb-8 border-0 shadow-xl bg-white/80 backdrop-blur-sm">
-          <CardContent className="p-8">
-            <div className="space-y-6">
-              <div>
-                <Textarea
-                  placeholder={t("chat.inputPlaceholder")}
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  disabled={isLoading}
-                  className="min-h-[140px] border-2 border-gray-200 focus:border-purple-400 focus:ring-purple-400/20 focus:ring-4 resize-none text-gray-700 placeholder:text-gray-400 rounded-xl text-base leading-relaxed transition-all duration-200 disabled:opacity-50"
-                />
+        <FeatureMenu />
+      </div>
+
+      {/* 浮动输入卡片 - 固定在页面底部 */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-2xl">
+        <div className="container mx-auto px-4 py-6 max-w-6xl">
+          <div className="space-y-4">
+            {/* 输入框 */}
+            <div>
+              <Textarea
+                placeholder={t("chat.inputPlaceholder")}
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                disabled={isLoading}
+                className="min-h-[100px] border-2 border-gray-200 focus:border-purple-400 focus:ring-purple-400/20 focus:ring-4 resize-none text-gray-700 placeholder:text-gray-400 rounded-xl text-base leading-relaxed transition-all duration-200 disabled:opacity-50 bg-white"
+              />
+            </div>
+
+            {/* 控制按钮区域 */}
+            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+              {/* 服务选择 */}
+              <div className="flex flex-wrap gap-2">
+                {services.map((service) => (
+                  <button
+                    key={service.key}
+                    onClick={() => toggleService(service.key)}
+                    disabled={isLoading}
+                    className={`relative px-3 py-2 rounded-lg border transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed text-sm ${
+                      selectedServices[service.key]
+                        ? "border-transparent shadow-md scale-105"
+                        : "border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                    }`}
+                  >
+                    <div
+                      className={`absolute inset-0 rounded-lg bg-gradient-to-r ${service.color} opacity-0 transition-opacity duration-200 ${
+                        selectedServices[service.key] ? "opacity-100" : "group-hover:opacity-10"
+                      }`}
+                    />
+                    <div className="relative flex items-center gap-2">
+                      <div
+                        className={`w-3 h-3 rounded border flex items-center justify-center transition-all duration-200 ${
+                          selectedServices[service.key] ? "border-white bg-white/20" : "border-gray-400"
+                        }`}
+                      >
+                        {selectedServices[service.key] && <Check className="w-2 h-2 text-white font-bold" />}
+                      </div>
+                      <span
+                        className={`font-medium transition-colors duration-200 ${
+                          selectedServices[service.key] ? "text-white" : "text-gray-700"
+                        }`}
+                      >
+                        {service.icon} {service.name}
+                      </span>
+                    </div>
+                  </button>
+                ))}
               </div>
-              <div>
+
+              {/* 模式选择和发送按钮 */}
+              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+                {/* 响应模式选择 */}
+                <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-lg border">
+                  <button
+                    onClick={() => handleResponseModeChange("standard")}
+                    disabled={isLoading}
+                    className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                      responseMode === "standard"
+                        ? "bg-blue-500 text-white shadow-sm"
+                        : "text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    标准
+                  </button>
+                  <button
+                    onClick={() => handleResponseModeChange("async")}
+                    disabled={isLoading}
+                    className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                      responseMode === "async"
+                        ? "bg-indigo-500 text-white shadow-sm"
+                        : "text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    异步
+                  </button>
+                  <button
+                    onClick={() => handleResponseModeChange("streaming")}
+                    disabled={isLoading || !canUseAdvanced}
+                    className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                      responseMode === "streaming"
+                        ? "bg-purple-500 text-white shadow-sm"
+                        : canUseAdvanced
+                          ? "text-gray-600 hover:bg-gray-200"
+                          : "text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    流式
+                    {!canUseAdvanced && <Lock className="w-2 h-2 ml-1 inline" />}
+                  </button>
+                  <button
+                    onClick={() => handleResponseModeChange("turbo")}
+                    disabled={isLoading || !canUseAdvanced}
+                    className={`px-2 py-1 rounded-md text-xs font-medium transition-all duration-200 ${
+                      responseMode === "turbo"
+                        ? "bg-gradient-to-r from-pink-500 to-red-500 text-white shadow-sm"
+                        : canUseAdvanced
+                          ? "text-gray-600 hover:bg-gray-200"
+                          : "text-gray-400 cursor-not-allowed"
+                    }`}
+                  >
+                    <Rocket className="w-2 h-2 mr-1 inline" />
+                    极速
+                    {!canUseAdvanced && <Lock className="w-2 h-2 ml-1 inline" />}
+                  </button>
+                </div>
+
+                {/* 发送按钮 */}
                 <Button
                   onClick={handleSubmit}
                   disabled={!prompt.trim() || isLoading || selectedCount === 0}
-                  className={`w-fit px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
+                  className={`px-6 py-2 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
                     responseMode === "turbo"
                       ? "bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700"
                       : responseMode === "streaming"
@@ -995,228 +1095,59 @@ export default function MultiPlatformAIV3({ version, onVersionChange }: MultiPla
                   )}
                   {isLoading ? t("chat.submitting") : t("chat.submitButton")}
                 </Button>
-
-                {/* 异步处理状态显示 */}
-                {processingRequests.size > 0 && (
-                  <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 px-3 py-1 rounded-full bg-indigo-50">
-                    <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                    {t("chat.processing")}: {processingRequests.size}
-                  </div>
-                )}
-
-                {isLoading && responseMode === "streaming" && (
-                  <div className="flex items-center gap-4 flex-1">
-                    <Progress value={(completedCount / selectedCount) * 100} className="flex-1 h-3 bg-gray-200" />
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-600 px-3 py-1 rounded-full bg-purple-50">
-                      <div className="w-2 h-2 rounded-full animate-pulse bg-purple-500"></div>
-                      {completedCount}/{selectedCount} {t("chat.completed")}
-                    </div>
-                  </div>
-                )}
               </div>
+            </div>
 
-              {/* Error Display */}
+            {/* 状态显示 */}
+            <div className="flex flex-wrap gap-3 items-center">
+              {/* 异步处理状态显示 */}
+              {processingRequests.size > 0 && (
+                <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 px-3 py-1 rounded-full bg-indigo-50">
+                  <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                  {t("chat.processing")}: {processingRequests.size}
+                </div>
+              )}
+
+              {/* 流式进度显示 */}
+              {isLoading && responseMode === "streaming" && (
+                <div className="flex items-center gap-3 flex-1">
+                  <Progress value={(completedCount / selectedCount) * 100} className="flex-1 h-2 bg-gray-200" />
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-600 px-3 py-1 rounded-full bg-purple-50">
+                    <div className="w-2 h-2 rounded-full animate-pulse bg-purple-500"></div>
+                    {completedCount}/{selectedCount} {t("chat.completed")}
+                  </div>
+                </div>
+              )}
+
+              {/* 错误显示 */}
               {error && (
-                <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
-                  <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
             </div>
-
-            {/* Response Mode Selection */}
-            <div className="hidden flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50 rounded-xl border border-purple-200">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  {responseMode === "turbo" ? (
-                    <Rocket className="w-5 h-5 text-pink-600" />
-                  ) : responseMode === "streaming" ? (
-                    <Zap className="w-5 h-5 text-purple-600" />
-                  ) : responseMode === "async" ? (
-                    <Sparkles className="w-5 h-5 text-indigo-600" />
-                  ) : (
-                    <Send className="w-5 h-5 text-blue-600" />
-                  )}
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-800">
-                        {responseMode === "turbo"
-                          ? "极速模式"
-                          : responseMode === "streaming"
-                            ? t("chat.streamingMode")
-                            : responseMode === "async"
-                              ? t("chat.asyncMode")
-                              : t("chat.standardMode")}
-                      </span>
-                      {responseMode === "turbo" && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-pink-500 to-red-500 text-white text-xs font-bold rounded-full">
-                          <Rocket className="w-3 h-3" />
-                          <span>V3专属</span>
-                        </div>
-                      )}
-                      {responseMode === "streaming" && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
-                          <Crown className="w-3 h-3" />
-                          <span>{t("chat.professionalFeature")}</span>
-                        </div>
-                      )}
-                      {responseMode === "async" && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold rounded-full">
-                          <Sparkles className="w-3 h-3" />
-                          <span>{t("chat.recommended")}</span>
-                        </div>
-                      )}
-                      {!canUseAdvanced && (responseMode === "streaming" || responseMode === "turbo") && (
-                        <div className="flex items-center gap-1 px-2 py-1 bg-gray-200 text-gray-600 text-xs font-bold rounded-full">
-                          <Lock className="w-3 h-3" />
-                          <span>{t("chat.needSubscription")}</span>
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      {responseMode === "turbo"
-                        ? "AI极速响应，毫秒级处理"
-                        : responseMode === "streaming"
-                          ? t("chat.streamingDescription")
-                          : responseMode === "async"
-                            ? t("chat.asyncDescription")
-                            : t("chat.standardDescription")}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {!canUseAdvanced && (responseMode === "streaming" || responseMode === "turbo") && (
-                  <SubscriptionDialog>
-                    <Button
-                      size="sm"
-                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
-                    >
-                      <Crown className="w-4 h-4 mr-1" />
-                      {t("chat.upgrade")}
-                    </Button>
-                  </SubscriptionDialog>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Service Selection */}
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">{t("chat.selectServices")}</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {services.map((service) => (
-              <button
-                key={service.key}
-                onClick={() => toggleService(service.key)}
-                disabled={isLoading}
-                className={`relative p-4 rounded-2xl border-2 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed ${
-                  selectedServices[service.key]
-                    ? "border-transparent shadow-lg scale-105"
-                    : "border-gray-200 hover:border-gray-300 hover:shadow-md"
-                }`}
-              >
-                <div
-                  className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${service.color} opacity-0 transition-opacity duration-200 ${
-                    selectedServices[service.key] ? "opacity-100" : "group-hover:opacity-10"
-                  }`}
-                />
-                <div className="relative flex items-center justify-center gap-3">
-                  <div
-                    className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all duration-200 ${
-                      selectedServices[service.key] ? "border-white bg-white/20" : "border-gray-400"
-                    }`}
-                  >
-                    {selectedServices[service.key] && <Check className="w-3 h-3 text-white font-bold" />}
-                  </div>
-                  <span
-                    className={`font-semibold transition-colors duration-200 ${
-                      selectedServices[service.key] ? "text-white" : "text-gray-700"
-                    }`}
-                  >
-                    {service.icon} {service.name}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* Submit Button and Progress */}
-          <div className="flex flex-col gap-4">
-            {/* Response Mode Selection */}
-            <div className="w-fit flex items-center gap-2 p-2 bg-gray-50 rounded-lg border">
-              <button
-                onClick={() => handleResponseModeChange("standard")}
-                disabled={isLoading}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  responseMode === "standard" ? "bg-blue-500 text-white shadow-md" : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                {t("chat.standardMode")}
-              </button>
-              <button
-                onClick={() => handleResponseModeChange("async")}
-                disabled={isLoading}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  responseMode === "async" ? "bg-indigo-500 text-white shadow-md" : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                {t("chat.asyncMode")}
-              </button>
-              <button
-                onClick={() => handleResponseModeChange("streaming")}
-                disabled={isLoading || !canUseAdvanced}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  responseMode === "streaming"
-                    ? "bg-purple-500 text-white shadow-md"
-                    : canUseAdvanced
-                      ? "text-gray-600 hover:bg-gray-100"
-                      : "text-gray-400 cursor-not-allowed"
-                }`}
-              >
-                {t("chat.streamingMode")}
-                {!canUseAdvanced && <Lock className="w-3 h-3 ml-1 inline" />}
-              </button>
-              <button
-                onClick={() => handleResponseModeChange("turbo")}
-                disabled={isLoading || !canUseAdvanced}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                  responseMode === "turbo"
-                    ? "bg-gradient-to-r from-pink-500 to-red-500 text-white shadow-md"
-                    : canUseAdvanced
-                      ? "text-gray-600 hover:bg-gray-100"
-                      : "text-gray-400 cursor-not-allowed"
-                }`}
-              >
-                <Rocket className="w-3 h-3 mr-1 inline" />
-                极速模式
-                {!canUseAdvanced && <Lock className="w-3 h-3 ml-1 inline" />}
-              </button>
-            </div>
           </div>
         </div>
-
-        <FeatureMenu />
-
-        {/* 重复提交确认对话框 */}
-        <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{t("chat.duplicateDetection")}</DialogTitle>
-              <DialogDescription>{t("chat.duplicateMessage")}</DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowDuplicateDialog(false)}>
-                {t("common.cancel")}
-              </Button>
-              <Button onClick={handleDuplicateConfirm} className="bg-indigo-600 hover:bg-indigo-700">
-                {t("chat.yes")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
+
+      {/* 重复提交确认对话框 */}
+      <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("chat.duplicateDetection")}</DialogTitle>
+            <DialogDescription>{t("chat.duplicateMessage")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowDuplicateDialog(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button onClick={handleDuplicateConfirm} className="bg-indigo-600 hover:bg-indigo-700">
+              {t("chat.yes")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
