@@ -10,7 +10,12 @@
     "submit": "Submit",
     "cancel": "Cancel",
     "success": "Success",
-    "failed": "Failed"
+    "failed": "Failed",
+    "drag": "拖放图片到此处",
+    "selectPicture": "选择图片",
+    "imgLimit": "支持格式：JPG, PNG (最大10MB)",
+    "imgZip": "提示：大文件将自动压缩以提高处理速度",
+    "endof": "endof"
   },
   "header": {
     "title": "One AI Assistant to Enjoy Smart Services Across Multiple Platforms!",
@@ -115,5 +120,10 @@
     "feature5Title": "Emotional Copywriting",
     "feature5Desc": "Uses warm and friendly language to inspire users' willingness to donate",
     "callToAction": "Please check the donation button in the bottom right corner to experience the full effect! This design is perfect for content creators, developers, and digital products."
+  },
+"textreview": {
+  "tutorial": "Article Review Assistant - Usage Guide",
+  "description": "Upload multiple text-containing images, adjust their sequence, and submit. The AI will automatically recognize the text and provide editing suggestions",
+  "misc": "Professional Feature"
   }
 }

@@ -15,6 +15,7 @@ import { DonationButton } from "@/components/donation-button"
 import { DonationModal } from "@/components/donation-modal"
 import LanguageSwitcher from "@/components/language-switcher"
 import DeviceSwitcher from "@/components/device-switcher"
+import { useTranslations } from "next-intl"
 
 interface UploadedImage {
   id: string
@@ -95,6 +96,8 @@ const compressImage = (file: File, maxWidth = 1024, quality = 0.8): Promise<File
 }
 
 export default function TextReviewPage() {
+  const t = useTranslations()
+
   const [images, setImages] = useState<UploadedImage[]>([])
   const [results, setResults] = useState<OCRResult[]>([])
   const [mergedResult, setMergedResult] = useState<MergedOCRResult | null>(null)
@@ -414,7 +417,7 @@ export default function TextReviewPage() {
   return (
     <DonationProvider>
       {/* 右上角固定容器 */}
-      <div className="fixed top-4 right-4 z-50 flex items-center gap-4">
+      <div className="flex justify-end top-4 right-4 z-50 flex items-center gap-4">
         {/* Language Selection */}
         <LanguageSwitcher />
         {/* 设备切换器 */}
@@ -441,7 +444,7 @@ export default function TextReviewPage() {
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Languages className="w-5 h-5" />
-                      使用教程
+                      {t("textreview.tutorial")}
                     </div>
                     <div className="flex items-center gap-2">
                       {showTutorial ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -540,22 +543,6 @@ export default function TextReviewPage() {
             </Card>
           </Collapsible>
 
-          {/* Error Display */}
-          {error && (
-            <Card className="border-red-200 bg-red-50">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 text-red-700">
-                  <AlertCircle className="w-5 h-5" />
-                  <p className="font-medium">处理错误</p>
-                </div>
-                <p className="text-red-600 mt-2">{error}</p>
-                <Button variant="outline" size="sm" onClick={() => setError(null)} className="mt-2">
-                  关闭
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Upload Section */}
           <div className="space-y-6">
             {/* Upload Area */}
@@ -580,8 +567,8 @@ export default function TextReviewPage() {
                     onChange={handleFileSelect}
                     className="hidden"
                   />
-                  <p className="text-lg font-medium text-gray-700 mb-2">
-                    上传多张包含文本的图片，调整顺序后提交，AI将自动识别文字并返回修改建议
+                  <p className="text-lg font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-500 px-4 py-3 rounded-lg shadow-md mb-4">
+                    {t("textreview.description")}
                   </p>
                   <Upload
                     className={`w-16 h-16 mx-auto mb-4 transition-colors ${
@@ -599,10 +586,10 @@ export default function TextReviewPage() {
                       handleButtonClick()
                     }}
                   >
-                    选择图片
+                    {t("common.selectPicture")}
                   </Button>
-                  <p className="text-sm text-gray-500">支持格式：JPG, PNG (最大10MB)</p>
-                  <p className="text-xs text-orange-600 mt-1">提示：大文件将自动压缩以提高处理速度</p>
+                  <p className="text-sm text-gray-500">{t("common.imgLimit")}</p>
+                  <p className="text-xs text-orange-600 mt-1">{t("common.imgZip")}</p>
                 </div>
               </CardContent>
             </Card>
@@ -948,6 +935,22 @@ export default function TextReviewPage() {
                       )}
                     </div>
                   ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Error Display */}
+          {error && (
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 text-red-700">
+                  <AlertCircle className="w-5 h-5" />
+                  <p className="font-medium">处理错误</p>
+                </div>
+                <p className="text-red-600 mt-2">{error}</p>
+                <Button variant="outline" size="sm" onClick={() => setError(null)} className="mt-2">
+                  关闭
+                </Button>
               </CardContent>
             </Card>
           )}
