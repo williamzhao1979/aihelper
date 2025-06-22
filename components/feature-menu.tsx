@@ -34,6 +34,11 @@ export default function FeatureMenu() {
                   {t("chat.goToChat")}
                 </Button>
               </Link>
+              <Link href="/lianzuicounter.html">
+                <Button className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white">
+                  练嘴皮子
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

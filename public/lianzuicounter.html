@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tongue Twister Counter</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+      padding: 35px;
+      max-width: 600px;
+      width: 90%;
+      margin: 20px auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #4a00e0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      color: white;
+      transition: all 0.3s ease;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
+    .btn-primary {
+      background: linear-gradient(to right, #4a00e0, #8e2de2);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(to right, #3a00b0, #6e1dc2);
+    }
+    .btn-secondary {
+      background: linear-gradient(to right, #6c757d, #5a6268);
+    }
+    .btn-secondary:hover {
+      background: linear-gradient(to right, #5a6268, #495057);
+    }
+    .btn-success {
+      background: linear-gradient(to right, #28a745, #20c997);
+    }
+    .btn-success:hover {
+      background: linear-gradient(to right, #218838, #199d76);
+    }
+    label {
+      display: block;
+      margin-bottom: 12px;
+      font-weight: bold;
+      color: #444;
+      font-size: 16px;
+    }
+    .input-group {
+      margin-bottom: 18px;
+    }
+    input[type=number], input[type=text] {
+      width: 100%;
+      padding: 12px 15px;
+      border-radius: 10px;
+      border: 2px solid #e0e0ff;
+      margin-bottom: 5px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+      box-sizing: border-box;
+    }
+    input[type=number]:focus, input[type=text]:focus {
+      outline: none;
+      border-color: #8e2de2;
+      box-shadow: 0 0 0 3px rgba(142, 45, 226, 0.2);
+    }
+    .status {
+      background: #f0f5ff;
+      padding: 15px;
+      border-radius: 12px;
+      margin: 20px 0;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    .output {
+      background: #f9f9ff;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      min-height: 80px;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 2px solid #f0f0ff;
+    }
+    .counter {
+      background: linear-gradient(to right, #8e2de2, #4a00e0);
+      color: white;
+      text-align: center;
+      font-size: 2.5em;
+      font-weight: bold;
+      padding: 25px 20px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .instructions {
+      background: #eef5ff;
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 25px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .instructions h3 {
+      margin-top: 0;
+      color: #4a00e0;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    .instructions ul {
+      padding-left: 25px;
+      margin: 0;
+    }
+    .instructions li {
+      margin-bottom: 10px;
+    }
+    .highlight {
+      background: #ffed99;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+    .progress-container {
+      height: 8px;
+      background: #e0e0ff;
+      border-radius: 4px;
+      margin-top: 15px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(to right, #8e2de2, #4a00e0);
+      transition: width 0.5s ease;
+    }
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+      font-size: 14px;
+      color: #666;
+    }
+    .match-quality {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #666;
+    }
+    @media (max-width: 500px) {
+      .container {
+        padding: 25px 20px;
+      }
+      .controls {
+        flex-direction: column;
+      }
+      .counter {
+        font-size: 2em;
+        padding: 20px 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fas fa-microphone-alt"></i>Tongue Twister Counter</h1>
+    
+    <div class="input-group">
+      <label for="phraseInput"><i class="fas fa-quote-right"></i> Phrase to Match:</label>
+      <input type="text" id="phraseInput" value="she sells seashell by the seashore">
+    </div>
+    <div class="counter">
+      Total Phrases: <span id="phraseCount">0</span>
+    </div>
+
+    <div class="controls">
+      <button id="startBtn" class="btn btn-primary"><i class="fas fa-play"></i> Start</button>
+      <button id="stopBtn" class="btn btn-secondary"><i class="fas fa-stop"></i> Stop</button>
+      <button id="resetBtn" class="btn btn-success"><i class="fas fa-redo"></i> Reset</button>
+    </div>
+
+    <div class="input-group">
+      <label for="precision"><i class="fas fa-sliders-h"></i> Precision (0 to 1):</label>
+      <input type="number" id="precision" min="0" max="1" step="0.1" value="0.8">
+      <div class="progress-container">
+        <div class="progress-bar" id="precisionBar"></div>
+      </div>
+      <div class="match-quality" id="matchQuality">Matching: Normal</div>
+    </div>
+
+    <div class="status">
+      <i class="fas fa-info-circle"></i> Status: <span id="status">Idle</span>
+      <div class="stats">
+        <span id="wordCount">Words: 0</span>
+        <span id="timer">Time: 0s</span>
+      </div>
+    </div>
+
+    <div class="output">
+      <div><i class="fas fa-comment-dots"></i> Recognized Text:</div>
+      <div id="output" style="margin-top: 10px; min-height: 30px;"></div>
+    </div>
+    
+
+    <div class="instructions">
+      <h3><i class="fas fa-lightbulb"></i> How to use:</h3>
+      <ul>
+        <li>Click <span class="highlight">Start</span> to begin speech recognition</li>
+        <li>Say the tongue twister multiple times (e.g. "She sells seashells by the seashore")</li>
+        <li>The counter tracks how many times you've said the phrase</li>
+        <li>Adjust <span class="highlight">Precision</span> to control matching strictness</li>
+        <li>Click <span class="highlight">Reset</span> to clear text and counters</li>
+        <li>Press <span class="highlight">Stop</span> when finished</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // Global variables
+    let fullTranscript = '';
+    let totalCount = 0;
+    let countInterval;
+    let recognition;
+    let timerInterval;
+    let seconds = 0;
+    
+    // DOM Elements
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const precisionInput = document.getElementById('precision');
+    const phraseInput = document.getElementById('phraseInput');
+    const status = document.getElementById('status');
+    const output = document.getElementById('output');
+    const phraseCount = document.getElementById('phraseCount');
+    const precisionBar = document.getElementById('precisionBar');
+    const matchQuality = document.getElementById('matchQuality');
+    const wordCount = document.getElementById('wordCount');
+    const timerDisplay = document.getElementById('timer');
+    
+    // Initialize Speech Recognition
+    function initSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert('Sorry, your browser does not support SpeechRecognition.');
+        return false;
+      }
+      
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      
+      return true;
+    }
+    
+    // Request microphone access
+    function requestMicrophone() {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(() => console.log('Microphone permission granted.'))
+        .catch(err => {
+          console.error('Microphone error:', err);
+          status.textContent = 'Error: Microphone access denied';
+          alert('Microphone permission denied. Please allow it in browser settings.');
+        });
+    }
+    
+    // Start speech recognition
+    function startRecognition() {
+      if (!recognition) return;
+      
+      try {
+        fullTranscript = ''; // Reset transcript on start
+        recognition.start();
+        status.textContent = 'Listening...';
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        resetBtn.disabled = true;
+        
+        // Start counter interval
+        if (!countInterval) {
+          countInterval = setInterval(countPhrases, 1000);
+        }
+        
+        // Start timer
+        seconds = 0;
+        if (!timerInterval) {
+          timerInterval = setInterval(() => {
+            seconds++;
+            timerDisplay.textContent = `Time: ${seconds}s`;
+          }, 1000);
+        }
+      } catch (err) {
+        console.error('Start error:', err);
+        status.textContent = `Error: ${err.message}`;
+      }
+    }
+    
+    // Stop speech recognition
+    function stopRecognition() {
+      if (!recognition) return;
+      
+      recognition.stop();
+      status.textContent = 'Stopped';
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      resetBtn.disabled = false;
+      
+      // Stop counter interval
+      if (countInterval) {
+        clearInterval(countInterval);
+        countInterval = null;
+      }
+      
+      // Stop timer
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+    
+    // Reset the application
+    function resetApp() {
+      fullTranscript = '';
+      totalCount = 0;
+      output.textContent = '';
+      phraseCount.textContent = '0';
+      status.textContent = 'Idle';
+      wordCount.textContent = 'Words: 0';
+      timerDisplay.textContent = 'Time: 0s';
+      seconds = 0;
+      
+      // Update precision bar
+      updatePrecisionBar();
+      
+      // Enable start button
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      resetBtn.disabled = true;
+    }
+    
+    // Count phrases in transcript
+    function countPhrases() {
+      const phrase = phraseInput.value.trim().toLowerCase();
+      const precision = parseFloat(precisionInput.value) || 0.8;
+      
+      if (!phrase) {
+        phraseCount.textContent = '0';
+        return;
+      }
+      
+      // Split phrase into words
+      const targetWords = phrase.split(/\s+/);
+      const targetLength = targetWords.length;
+      
+      if (targetLength === 0) {
+        phraseCount.textContent = '0';
+        return;
+      }
+      
+      // Split transcript into words
+      // console.info(fullTranscript)
+      console.info(output.textContent)
+      // console.info(count)
+      // const transcriptWords = fullTranscript.trim().toLowerCase().split(/\s+/);
+      const transcriptWords = output.textContent.trim().toLowerCase().split(/\s+/);
+      let count = 0;
+      
+      // Count matching phrases
+      for (let i = 0; i <= transcriptWords.length - targetLength; i++) {
+        const chunk = transcriptWords.slice(i, i + targetLength).join(' ');
+        if (similarity(chunk, phrase) >= precision) {
+          count++;
+        }
+      }
+      
+      // Update UI
+      phraseCount.textContent = count;
+      wordCount.textContent = `Words: ${transcriptWords.length}`;
+    }
+    
+    // Calculate string similarity
+    function similarity(s1, s2) {
+      const longer = s1.length > s2.length ? s1 : s2;
+      const shorter = s1.length > s2.length ? s2 : s1;
+      const longerLength = longer.length;
+      
+      if (longerLength === 0) return 1.0;
+      
+      const editDist = levenshtein(longer, shorter);
+      return (longerLength - editDist) / parseFloat(longerLength);
+    }
+    
+    // Levenshtein distance algorithm
+    function levenshtein(a, b) {
+      const matrix = [];
+      
+      for (let i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+      }
+      
+      for (let j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+      }
+      
+      for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+          if (b.charAt(i - 1) === a.charAt(j - 1)) {
+            matrix[i][j] = matrix[i - 1][j - 1];
+          } else {
+            matrix[i][j] = Math.min(
+              matrix[i - 1][j - 1] + 1,
+              Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
+            );
+          }
+        }
+      }
+      
+      return matrix[b.length][a.length];
+    }
+    
+    // Update precision bar
+    function updatePrecisionBar() {
+      const precision = parseFloat(precisionInput.value) || 0.8;
+      precisionBar.style.width = `${precision * 100}%`;
+      
+      // Update match quality text
+      if (precision >= 0.9) {
+        matchQuality.textContent = 'Matching: Very Strict';
+      } else if (precision >= 0.8) {
+        matchQuality.textContent = 'Matching: Strict';
+      } else if (precision >= 0.7) {
+        matchQuality.textContent = 'Matching: Normal';
+      } else if (precision >= 0.6) {
+        matchQuality.textContent = 'Matching: Lenient';
+      } else {
+        matchQuality.textContent = 'Matching: Very Lenient';
+      }
+    }
+    
+    // Initialize application
+    function initApp() {
+      // Initialize speech recognition
+      if (!initSpeechRecognition()) return;
+      
+      // Request microphone access
+      requestMicrophone();
+      
+      // Set up event listeners
+      startBtn.addEventListener('click', startRecognition);
+      stopBtn.addEventListener('click', stopRecognition);
+      resetBtn.addEventListener('click', resetApp);
+      
+      // Set up recognition event handlers
+      recognition.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const result = event.results[i];
+          const transcript = result[0].transcript;
+          
+          if (result.isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        
+        // Append final results to full transcript
+        if (finalTranscript) {
+          fullTranscript += finalTranscript + ' ';
+        }
+        
+        // Display the full transcript plus any interim results
+        output.textContent = fullTranscript + interimTranscript;
+      };
+      
+      recognition.onerror = (event) => {
+        console.error('Recognition error:', event.error);
+        status.textContent = `Error: ${event.error}`;
+        stopRecognition();
+      };
+      
+      recognition.onstart = () => {
+        status.textContent = 'Listening...';
+      };
+      
+      recognition.onend = () => {
+        if (status.textContent !== 'Stopped') {
+          status.textContent = 'Idle';
+        }
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        resetBtn.disabled = false;
+      };
+      
+      // Update precision bar when precision changes
+      precisionInput.addEventListener('input', updatePrecisionBar);
+      
+      // Initial UI setup
+      stopBtn.disabled = true;
+      resetBtn.disabled = true;
+      updatePrecisionBar();
+    }
+    
+    // Initialize the application when the page loads
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
