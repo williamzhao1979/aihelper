@@ -487,16 +487,27 @@ export default function TextReviewMobilePage() {
               </Card>
             </Collapsible>
 
+              {/* Uploaded Images */}
+              {/* {images.length > 0 && ( */}
             {/* Upload Section */}
             <div className="space-y-6">
-              <Card>
-                <CardContent className="p-8">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      已上传图片 ({images.length})
+                    </CardTitle>
+                    <Button variant="outline" size="sm" onClick={clearAllImages}>
+                      <X className="w-4 h-4 mr-2" />
+                      清除所有
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
                   <div
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     onClick={handleButtonClick}
-                    className={`border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all duration-200 ${
+                    className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all duration-200 ${
                       dragOver
                         ? "border-purple-500 bg-purple-50 scale-105"
                         : "border-gray-300 hover:border-purple-400 hover:bg-gray-50 hover:scale-102"
@@ -534,28 +545,14 @@ export default function TextReviewMobilePage() {
                     <p className="text-sm text-gray-500">{t("common.imgLimit")}</p>
                     <p className="text-xs text-orange-600 mt-1">{t("common.imgZip")}</p>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Uploaded Images */}
-              {images.length > 0 && (
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      已上传图片 ({images.length})<Badge variant="secondary">拖拽图片可调整顺序</Badge>
-                    </CardTitle>
-                    <Button variant="outline" size="sm" onClick={clearAllImages}>
-                      <X className="w-4 h-4 mr-2" />
-                      清除所有
-                    </Button>
-                  </CardHeader>
-                  <CardContent>
+<br></br>
                     <div className="space-y-4">
                       {images.map((image, index) => (
                         <div
                           key={image.id}
-                          className="flex items-center gap-4 p-4 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow"
+                          className="flex flex-wrap items-center gap-4 p-4 border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow"
                         >
+                          {/* 序号徽章 */}
                           <div className="flex-shrink-0">
                             <Badge
                               variant="outline"
@@ -565,6 +562,7 @@ export default function TextReviewMobilePage() {
                             </Badge>
                           </div>
 
+                          {/* 缩略图 */}
                           <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border">
                             <img
                               src={image.preview || "/placeholder.svg"}
@@ -573,6 +571,7 @@ export default function TextReviewMobilePage() {
                             />
                           </div>
 
+                          {/* 文件名 */}
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm truncate" title={image.name}>
                               {image.name}
@@ -580,7 +579,8 @@ export default function TextReviewMobilePage() {
                             <p className="text-xs text-gray-500">{formatFileSize(image.size)}</p>
                           </div>
 
-                          <div className="flex gap-2">
+                          {/* 按钮区域 */}
+                          <div className="flex flex-wrap gap-2 flex-shrink-0 mt-2 sm:mt-0">
                             <Button
                               variant="outline"
                               size="sm"
@@ -610,6 +610,7 @@ export default function TextReviewMobilePage() {
                           </div>
                         </div>
                       ))}
+
                     </div>
 
                     <div className="flex justify-center items-center gap-4 mt-6">
@@ -626,7 +627,7 @@ export default function TextReviewMobilePage() {
                           合并图像
                         </label>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="sr-only flex items-center space-x-2">
                         <Checkbox
                           id="no-wait"
                           checked={noWait}
@@ -657,31 +658,27 @@ export default function TextReviewMobilePage() {
                     </div>
                   </CardContent>
                 </Card>
-              )}
+              {/* )} */}
             </div>
-
+<br></br>
             {/* Results Section */}
             {(results.length > 0 || mergedResult || isProcessing || processingRequests.size > 0) && (
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
+                <CardHeader className="flex flex-row flex-wrap items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <Languages className="w-5 h-5" />
                     AI处理结果
-                    {mergedResult?.result && (
+                    {/* {mergedResult?.result && (
                       <Badge variant="secondary" className="ml-2">
                         合并处理 ({mergedResult.result.image_count} 张图片)
                       </Badge>
-                    )}
-                    {results.length > 0 && (
+                    )} */}
+                    {/* {results.length > 0 && (
                       <Badge variant="outline" className="ml-2">
                         历史结果: {results.length}
                       </Badge>
-                    )}
-                    {processingRequests.size > 0 && (
-                      <Badge variant="default" className="ml-2 bg-orange-500">
-                        处理中: {processingRequests.size}
-                      </Badge>
-                    )}
+                    )} */}
+
                   </CardTitle>
                   {(results.length > 0 || mergedResult) && (
                     <Button
@@ -696,6 +693,12 @@ export default function TextReviewMobilePage() {
                       清除历史
                     </Button>
                   )}
+
+                    {processingRequests.size > 0 && (
+                      <Badge variant="default" className="ml-2 bg-orange-500">
+                        处理中: {processingRequests.size}
+                      </Badge>
+                    )}
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* 处理中状态 */}
@@ -718,7 +721,7 @@ export default function TextReviewMobilePage() {
                   {/* 合并结果显示 */}
                   {mergedResult?.result && (
                     <div className="border rounded-lg p-6 bg-white shadow-sm">
-                      <div className="flex items-center gap-4 mb-4">
+                      <div className="flex flex-wrap items-center gap-4 mb-4">
                         <div className="flex -space-x-2">
                           {images.slice(0, 3).map((image, index) => (
                             <div
@@ -798,7 +801,7 @@ export default function TextReviewMobilePage() {
                   {results.length > 0 &&
                     results.map((result, index) => (
                       <div key={`${result.imageIndex}-${index}`} className="border rounded-lg p-6 bg-white shadow-sm">
-                        <div className="flex items-center gap-4 mb-4">
+                        <div className="flex flex-wrap items-center gap-4 mb-4">
                           <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border">
                             <img
                               src={images[result.imageIndex]?.preview || "/placeholder.svg"}
@@ -898,6 +901,8 @@ export default function TextReviewMobilePage() {
               </Card>
             )}
 
+
+
             {/* 重复内容确认对话框 */}
             {showDuplicateDialog && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -920,7 +925,7 @@ export default function TextReviewMobilePage() {
             <FeatureMenu />
 
             {/* 悬浮打赏按钮 */}
-            <DonationButton position="bottom-right" size="sm" />
+            {/* <DonationButton position="top-left" size="sm" /> */}
 
             {/* 打赏弹窗 */}
             <DonationModal />
