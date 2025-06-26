@@ -39,6 +39,11 @@ export default function FeatureMenu() {
                   练嘴皮子
                 </Button>
               </Link>
+              <Link href="/cowsay">
+                <Button className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white">
+                  Cowsay
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
