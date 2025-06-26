@@ -135,6 +135,15 @@ export default function CowsayPage() {
   // 收藏区展开收缩状态
   const [showFavorites, setShowFavorites] = useState(false)
 
+  // ASCII结果全屏显示状态
+  const [showAsciiFull, setShowAsciiFull] = useState(false)
+
+  // ASCII全屏字体大小状态
+  const [asciiFontSize, setAsciiFontSize] = useState(14); // px
+
+  // ASCII结果区字体大小状态（与全屏共用）
+  const [resultFontSize, setResultFontSize] = useState(14); // px
+
   // 加载收藏
   useEffect(() => {
     const savedFavorites = localStorage.getItem("asciiFavorites")
@@ -499,7 +508,30 @@ export default function CowsayPage() {
                     </div>
                   ) : (
                     <>
-                      <pre className="whitespace-pre min-w-max" id="ascii-result-pre">
+                      <div className="absolute top-2 left-2 flex gap-2 z-10">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-green-300 border border-green-300 px-2"
+                          onClick={() => setAsciiFontSize(f => Math.max(8, f - 2))}
+                          title="缩小"
+                        >
+                          A-
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-green-300 border border-green-300 px-2"
+                          onClick={() => setAsciiFontSize(f => Math.min(32, f + 2))}
+                          title="放大"
+                        >
+                          A+
+                        </Button>
+                      </div>
+                      <pre
+                        className="whitespace-pre min-w-max" id="ascii-result-pre"
+                        style={{ fontSize: asciiFontSize }}
+                      >
                         {asciiResult || defaultAsciiResult}
                       </pre>
                       <Button
@@ -513,6 +545,15 @@ export default function CowsayPage() {
                         title="拷贝到剪贴板"
                       >
                         复制
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="absolute top-2 right-16 text-blue-300 hover:text-blue-500 border border-blue-300"
+                        onClick={() => setShowAsciiFull(true)}
+                        title="全屏显示ASCII"
+                      >
+                        全屏
                       </Button>
                     </>
                   )}
@@ -606,6 +647,69 @@ export default function CowsayPage() {
           <p className="text-sm">🎨 Cowsay ASCII艺术生成器 - 让文字变得更有趣！</p>
         </div>
         <FeatureMenu />
+
+        {/* ASCII全屏显示弹窗 */}
+        {showAsciiFull && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+            <div className="absolute top-0 left-0 w-full h-full" onClick={() => setShowAsciiFull(false)}></div>
+            <div className="relative z-10 w-full max-w-5xl mx-4 flex flex-col items-center justify-center">
+              <div
+                className="bg-gray-900 text-green-400 rounded-lg p-2 md:p-6 font-mono leading-tight overflow-auto shadow-2xl relative flex flex-col items-center"
+                style={{
+                  maxHeight: '90vh',
+                  minHeight: '40vh',
+                  width: '100%',
+                  minWidth: 0,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="absolute top-2 right-2 text-white hover:text-red-400 border border-white"
+                  onClick={() => setShowAsciiFull(false)}
+                  title="关闭全屏"
+                >
+                  关闭
+                </Button>
+                <div className="absolute top-2 left-2 flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-white border border-white px-2"
+                    onClick={() => setAsciiFontSize(f => Math.max(8, f - 2))}
+                    title="缩小"
+                  >
+                    A-
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-white border border-white px-2"
+                    onClick={() => setAsciiFontSize(f => Math.min(32, f + 2))}
+                    title="放大"
+                  >
+                    A+
+                  </Button>
+                </div>
+                <pre
+                  className="whitespace-pre min-w-0 w-full text-center"
+                  style={{
+                    fontFamily: 'monospace',
+                    wordBreak: 'break-all',
+                    overflow: 'auto',
+                    maxHeight: '80vh',
+                    fontSize: asciiFontSize,
+                  }}
+                >
+                  {asciiResult || defaultAsciiResult}
+                </pre>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
