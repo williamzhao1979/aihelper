@@ -127,6 +127,7 @@ export default function CowsayPage() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
   const [asciiResult, setAsciiResult] = useState<string>("")
   const [isConverting, setIsConverting] = useState(false)
+  const [conversionProgress, setConversionProgress] = useState(0)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -177,30 +178,97 @@ export default function CowsayPage() {
     }
   }
 
-  // 模拟图片转ASCII
+  // 真实的图片转ASCII转换
   const convertImageToAscii = (imageData: string) => {
     setIsConverting(true)
-    setAsciiResult("转换中...")
+    setAsciiResult("")
 
-    // 模拟转换过程
-    setTimeout(() => {
-      const mockAscii = `          ,   ,  
-           \\\\ \\\\ 
-            ) \\\\ \\    _p_
-           /   \\)  /     \\ 
-          (     || /       \\ 
-           \\    ||/         \\ 
-            \\_   |/          | 
-              \\__/          / 
-               |          _/ 
-               |         / 
-                \\       / 
-                 |     / 
-                 |    |`
+    const img = new Image()
+    img.crossOrigin = "anonymous"
 
-      setAsciiResult(mockAscii)
+    img.onload = () => {
+      const canvas = document.createElement("canvas")
+      const ctx = canvas.getContext("2d")
+
+      if (!ctx) {
+        setIsConverting(false)
+        setAsciiResult("转换失败：无法创建Canvas上下文")
+        return
+      }
+
+      // 设置输出尺寸
+      const maxWidth = 80
+      const aspectRatio = img.height / img.width
+      const outputWidth = Math.min(maxWidth, img.width)
+      const outputHeight = Math.floor(outputWidth * aspectRatio * 0.5) // 0.5是字符高宽比调整
+
+      // 设置canvas尺寸
+      canvas.width = outputWidth
+      canvas.height = outputHeight
+
+      // 绘制图片到canvas
+      ctx.drawImage(img, 0, 0, outputWidth, outputHeight)
+
+      // 获取像素数据
+      const imageDataObj = ctx.getImageData(0, 0, outputWidth, outputHeight)
+      const pixels = imageDataObj.data
+
+      // ASCII字符集（从亮到暗）
+      const asciiChars = " .:-=+*#%@"
+
+      let result = ""
+      let currentRow = 0
+
+      // 流式处理函数
+      const processRows = () => {
+        const rowsPerBatch = 2 // 每批处理2行
+        const endRow = Math.min(currentRow + rowsPerBatch, outputHeight)
+
+        for (let y = currentRow; y < endRow; y++) {
+          let rowString = ""
+          for (let x = 0; x < outputWidth; x++) {
+            const pixelIndex = (y * outputWidth + x) * 4
+            const r = pixels[pixelIndex]
+            const g = pixels[pixelIndex + 1]
+            const b = pixels[pixelIndex + 2]
+
+            // 计算亮度 (使用标准亮度公式)
+            const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+
+            // 映射到ASCII字符
+            const charIndex = Math.floor((1 - brightness) * (asciiChars.length - 1))
+            rowString += asciiChars[charIndex]
+          }
+          result += rowString + "\n"
+        }
+
+        // 更新显示结果
+        setAsciiResult(result)
+
+        // 在 processRows 函数中添加进度计算
+        const progress = Math.floor((currentRow / outputHeight) * 100)
+        setConversionProgress(progress)
+
+        currentRow = endRow
+
+        // 继续处理下一批或完成
+        if (currentRow < outputHeight) {
+          setTimeout(processRows, 50) // 50ms延迟，创造流式效果
+        } else {
+          setIsConverting(false)
+        }
+      }
+
+      // 开始流式处理
+      processRows()
+    }
+
+    img.onerror = () => {
       setIsConverting(false)
-    }, 2000)
+      setAsciiResult("转换失败：无法加载图片")
+    }
+
+    img.src = imageData
   }
 
   // 语言切换
@@ -328,6 +396,20 @@ export default function CowsayPage() {
                     <Type className="w-4 h-4" />
                     ASCII转换结果
                   </h4>
+                  {isConverting && (
+                    <div className="mb-4">
+                      <div className="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>转换进度</span>
+                        <span>{conversionProgress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${conversionProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
                   <div className="bg-gray-900 text-green-400 rounded-lg h-48 p-3 font-mono text-xs leading-tight overflow-auto">
                     {isConverting ? (
                       <div className="flex items-center justify-center h-full">
