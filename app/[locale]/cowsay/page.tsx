@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, RefreshCw, Heart, ImageIcon, Type, Sparkles } from "lucide-react"
+import FeatureMenu from "@/components/feature-menu"
 
 // ASCII艺术数据库
 const asciiArts = [
@@ -130,6 +131,9 @@ export default function CowsayPage() {
   const [conversionProgress, setConversionProgress] = useState(0)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 收藏区展开收缩状态
+  const [showFavorites, setShowFavorites] = useState(false)
 
   // 加载收藏
   useEffect(() => {
@@ -279,6 +283,81 @@ export default function CowsayPage() {
     setCurrentQuote(randomQuote)
   }
 
+  // 默认ASCII转换结果
+  const defaultAsciiResult = `  
+................................................................................
+................................................................................
+................................................................................
+................................................................................
+................................................................................
+................................................................................
+.......................................=========-:..............................
+....................................-**#*******#####++ .........................
+.........................*##########*###########***#*##*=.......................
+......................:+#########***################*****=......................
+.....................*##########*******#################**=.....................
+...................################*#***#****#*#****######*.....................
+...............:+######%%%%%%%%%################*******###*=-:..................
+...........-+*##%##%%#%%%%%%%%%%%%%%%%%%#%%%###############+#*+:................
+...........=*##%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%########%%%%#*##****:..............
+............-*###%%##%%%%%*+++++++++++*###%%%#%%**=:::::=#%###****..............
+............ =*######%%%*+++=======--------:::::::.......=#%##**#*..............
+............. +*####%%%#++======-------::::::::...........#%##***...............
+............ .=*###%%%%*+======-------:::::::::...........-%%#***...............
+............. .+*###%%%*+======------:::::::::::...........%%#**:...............
+........      .=*###%%#+=======---*######*...:.:...........%%#*=................
+.. .           :*###%%#=====+*%%%%##%%%%%*::::=%#########=:+%##-   .............
+               .=*#%%%#====**+===========--:::-**+-:::::-+:.%#+:     ...........
+                -*#%%#=========*-...-+====--:::---....++::::%#=         ........
+          ..=+++**#%%#=======-:..%#%#-:====-..::-###%  .:::.%*-:.         ......
+         .-=++++++##%*========:..#%%#+.====-:::-=#%%#   :-:..*::::.          ...
+        .==+++++++*#%-========---.-:.::====-:::::-=-::.....::*:--::          ...
+        .=+++++++++#%-=====---==---::-=====-::::::--::::...:..:---::            
+        .=+++++++++#+-=====---:::::---=====--:::::::::::....::::-::.            
+        .=+++++++=++--=====----::::---=====--:::::::::::....::::-::.            
+         :=++++*+=++--======----::---=+====-::...::::::.....:.:--::             
+          -=++++++++--=======------===++===--::::::::::::..:::::::              
+           .==++++++-==================+++++==--::...::--::::::::               
+             .===+++-=======---=+==========--::......::::::::::.                
+                 .-+--======----=+#+=++====-------::+....:::::.                 
+                     ========----===+***++=====+#+=:.....:::::                  
+                     .=========-----=====---:::..:.......:::::                  
+                      .===========----------::::.......::::::                   
+                       .============------::::::......::::::                    
+                         .=++++=======----::::::....:::::-.                     
+                       .=*#=++++++======----:::::::::::-:                       
+                    -#+:-+%++++++++++=====-----:::::-:.                         
+                   =##-::--=+++++++++++++======---:.                            
+                  +###*--------=++++++++++==---:::.                             
+                .+#####*-----------=+++===--::::=+.                             
+               +########*=--:::::::::::.:::::::-=.  -=.                         
+             *############=--:::::::......  :-*:*-   ##**:                      
+         :+#################--::::....... .=#=**###:  %#****+.                  
+     --#####################*=:::.........+#*+**+***: .##*******=:              
+ .+*#########################*=::........####=**+*##*- -##**********+:          
+#################********#*####=-:..... +*####*#**++**- =##*************:       
+#################**********######.-:.. .:-+*####++++.:-::*#***************:     
+###########****######%%##****#####=.......:=+*###*+.    .-##***************-    
+#######*************####*******##**=       :++##*=**.    .=%#***************-   
+######*************###**************+.     .==#+*++-=:    :*#****************.  
+###*##***********###******************.    .-*#+#*+**#=   .=##*************#*-  
+####*##**********##%*******************.    .*#+*#*+**#=   :+%************##**. 
+#####**####*******####******************+    =****+-+=-+.  .=##**********###*#- 
+#######*######*****###%#*****************+   .#+++++*:*++.  :+#**********##**#* 
+###############*****###%#****************=.  --*++**.**=:  .=##********####**#.
+################******###%#****************+.  #*+++*-*++-.  :*#********#######*
+##################*#**######*****************. :+++=*=*=+++  :+#********##%*####
+##################**#**#######**************** .###++*****-* .=##******#*#######
+################################***************.=#=+:*:+=++: .-*#*********######
+############%#%################%#**************+:*+*+++=++=*-.-+#********#######
+#############%%%#################%#*************#####=*-*+*+*.-+#*******########
+#############%%%%###################**************###*#+-=++*=-+#*****##########
+############%%%%%#####################******##*****#*#+*=*-*-+=*#****###########
+############%%%%%%####################%#########**##**##++=++*+*#****=*=+#:-=###
+############%%%%%%%####################%##########*##.##***.*+#*#***#####%######
+############%%%%%%%######################%#########*###++##+**###***####%#######
+`
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-purple-800 p-4">
       <div className="max-w-6xl mx-auto">
@@ -326,7 +405,7 @@ export default function CowsayPage() {
             </CardHeader>
             <CardContent>
               <div className="bg-gray-900 text-green-400 p-6 rounded-lg font-mono text-sm leading-tight overflow-x-auto">
-                <pre className="whitespace-pre-wrap">{currentAscii.content}</pre>
+                <pre className="whitespace-pre">{currentAscii.content}</pre>
               </div>
 
               <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border-l-4 border-purple-500">
@@ -356,86 +435,112 @@ export default function CowsayPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div
-                className="border-3 border-dashed border-blue-300 rounded-lg p-8 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/50 transition-all"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload className="w-12 h-12 text-blue-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-blue-600 mb-2">上传图片转换为ASCII艺术</h3>
-                <p className="text-gray-600">点击或拖放图片文件到此处</p>
-                <p className="text-sm text-gray-500 mt-1">(支持 JPG, PNG, 最大10MB)</p>
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
-              </div>
-
-              {/* 图片预览和ASCII结果 */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-                <div>
-                  <h4 className="flex items-center gap-2 font-semibold mb-3">
+              <div className="flex flex-col md:flex-row gap-4">
+                {/* 上传区 */}
+                <div className="flex-1 min-w-0">
+                  <div
+                    className="border-3 border-dashed border-blue-300 rounded-lg p-8 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/50 transition-all"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-blue-600 mb-2">上传图片转换为ASCII艺术</h3>
+                    <p className="text-gray-600">点击或拖放图片文件到此处</p>
+                    <p className="text-sm text-gray-500 mt-1">(支持 JPG, PNG, 最大10MB)</p>
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                  </div>
+                </div>
+                {/* 原始图片预览 */}
+                <div className="flex-1 min-w-0 flex flex-col items-center">
+                  <h4 className="flex items-center gap-2 font-semibold mb-3 mt-2 md:mt-0">
                     <ImageIcon className="w-4 h-4" />
                     原始图片预览
                   </h4>
-                  <div className="bg-gray-100 rounded-lg h-48 flex items-center justify-center overflow-hidden">
+                  <div className="bg-gray-100 rounded-lg h-48 w-full flex items-center justify-center overflow-hidden">
                     {uploadedImage ? (
                       <img
-                        src={uploadedImage || "/placeholder.svg"}
+                        src={uploadedImage || "/daddy2.png"}
                         alt="上传的图片"
                         className="max-w-full max-h-full object-contain"
                       />
                     ) : (
                       <img
-                        src="https://images.unsplash.com/photo-1535435734705-4f0f32e27c83?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+                        src="/daddy2.png"
                         alt="示例图片"
                         className="max-w-full max-h-full object-contain opacity-50"
                       />
                     )}
                   </div>
                 </div>
-
-                <div>
-                  <h4 className="flex items-center gap-2 font-semibold mb-3">
-                    <Type className="w-4 h-4" />
-                    ASCII转换结果
-                  </h4>
-                  {isConverting && (
-                    <div className="mb-4">
-                      <div className="flex justify-between text-sm text-gray-600 mb-1">
-                        <span>转换进度</span>
-                        <span>{conversionProgress}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${conversionProgress}%` }}
-                        ></div>
-                      </div>
+              </div>
+              {/* ASCII结果区和进度条 */}
+              <div className="mt-6">
+                <h4 className="flex items-center gap-2 font-semibold mb-3">
+                  <Type className="w-4 h-4" />
+                  ASCII转换结果
+                </h4>
+                {isConverting && (
+                  <div className="mb-4">
+                    <div className="flex justify-between text-sm text-gray-600 mb-1">
+                      <span>转换进度</span>
+                      <span>{conversionProgress}%</span>
                     </div>
-                  )}
-                  <div className="bg-gray-900 text-green-400 rounded-lg h-48 p-3 font-mono text-xs leading-tight overflow-auto">
-                    {isConverting ? (
-                      <div className="flex items-center justify-center h-full">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400"></div>
-                      </div>
-                    ) : (
-                      <pre className="whitespace-pre-wrap">
-                        {asciiResult ||
-                          `  ..';:cccccccccccc:;,..                  
-.cKNNNNNNNNNNNNNNNNNNNN0l.               
-:0WNNNNNNNNNNNNNNNNNNNNNNXo.             
-'kNNNNNNNNNNNNNNNNNNNNNNNNNk.            
-.;KNNNNNNNNNNNNNNNNNNNNNNNNN0,           
-..xNNNNNNNNNNNNNNNNNNNNNNNNNNXc          
-..lNNNNNNNNNNNNNNNNNNNNNNNNNNNNd.        
-..;0NNNNNNNNNNNNNNNNNNNNNNNNNNNNk.       
-...xWNNNNNNNNNNNNNNNNNNNNNNNNNNNNx.      
-...oWNNNNNNNNNNNNNNNNNNNNNNNNNNNk.     
-...:KNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN0,    
-....dNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNx.   
-....lNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNd.  
-....,0NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNk. 
-.....xWNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNx.`}
-                      </pre>
-                    )}
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${conversionProgress}%` }}
+                      ></div>
+                    </div>
                   </div>
+                )}
+                <div className="bg-gray-900 text-green-400 rounded-lg p-3 font-mono text-xs leading-tight mt-2 overflow-x-auto relative">
+                  {isConverting ? (
+                    <div className="flex items-center justify-center min-h-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-400"></div>
+                    </div>
+                  ) : (
+                    <>
+                      <pre className="whitespace-pre min-w-max" id="ascii-result-pre">
+                        {asciiResult || defaultAsciiResult}
+                      </pre>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="absolute top-2 right-2 text-green-300 hover:text-green-500 border border-green-300"
+                        onClick={() => {
+                          const text = asciiResult || defaultAsciiResult;
+                          navigator.clipboard.writeText(text.replace(/\\n/g, '\n'));
+                        }}
+                        title="拷贝到剪贴板"
+                      >
+                        复制
+                      </Button>
+                    </>
+                  )}
+                </div>
+                <div className="flex justify-center mt-4">
+                  <Button
+                    onClick={() => {
+                      const ascii = asciiResult || defaultAsciiResult;
+                      const favorite = {
+                        id: "fav_" + Date.now(),
+                        ascii,
+                        quote: "图片转ASCII收藏",
+                        author: "图片上传",
+                        timestamp: new Date().toISOString(),
+                      };
+                      const saved = localStorage.getItem("asciiFavorites");
+                      const favs = saved ? JSON.parse(saved) : [];
+                      favs.push(favorite);
+                      localStorage.setItem("asciiFavorites", JSON.stringify(favs));
+                      setFavorites([...favs]);
+                    }}
+                    variant="outline"
+                    className="border-purple-300 text-purple-600 hover:bg-purple-50"
+                    disabled={isConverting}
+                  >
+                    <Heart className="w-4 h-4 mr-2" />
+                    保存到收藏
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -443,19 +548,47 @@ export default function CowsayPage() {
         </div>
 
         {/* 收藏展示 */}
-        {favorites.length > 0 && (
-          <Card className="bg-white/95 backdrop-blur-sm mt-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-purple-700">
-                <Heart className="w-5 h-5" />
-                我的收藏 ({favorites.length})
-              </CardTitle>
-            </CardHeader>
+        <Card className="bg-white/95 backdrop-blur-sm mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-purple-700 cursor-pointer select-none" onClick={() => setShowFavorites(v => !v)}>
+              <Heart className="w-5 h-5" />
+              我的收藏 ({favorites.length})
+              <span className="ml-2 text-base">{showFavorites ? '▼' : '▲'}</span>
+              {favorites.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="ml-4 border-red-300 text-red-600 hover:bg-red-50"
+                  onClick={e => {
+                    e.stopPropagation();
+                    setFavorites([]);
+                    localStorage.removeItem("asciiFavorites");
+                  }}
+                >
+                  清除所有
+                </Button>
+              )}
+            </CardTitle>
+          </CardHeader>
+          {showFavorites && favorites.length > 0 && (
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {favorites.slice(-6).map((fav, index) => (
-                  <div key={fav.id} className="bg-gray-50 rounded-lg p-4">
+                  <div key={fav.id} className="bg-gray-50 rounded-lg p-4 relative">
                     <h4 className="font-semibold mb-2">收藏 #{favorites.length - index}</h4>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="absolute top-2 right-2 text-red-400 hover:text-red-600"
+                      title="删除此收藏"
+                      onClick={() => {
+                        const newFavs = favorites.filter(f => f.id !== fav.id);
+                        setFavorites(newFavs);
+                        localStorage.setItem("asciiFavorites", JSON.stringify(newFavs));
+                      }}
+                    >
+                      ×
+                    </Button>
                     <div className="bg-gray-900 text-green-400 p-2 rounded font-mono text-xs mb-2 max-h-32 overflow-hidden">
                       <pre className="whitespace-pre-wrap">{fav.ascii}</pre>
                     </div>
@@ -465,13 +598,14 @@ export default function CowsayPage() {
                 ))}
               </div>
             </CardContent>
-          </Card>
-        )}
+          )}
+        </Card>
 
         {/* Footer */}
         <div className="text-center mt-8 text-white/70">
           <p className="text-sm">🎨 Cowsay ASCII艺术生成器 - 让文字变得更有趣！</p>
         </div>
+        <FeatureMenu />
       </div>
     </div>
   )
