@@ -122,9 +122,35 @@
     "feature5Desc": "使用温馨友好的语言，激发用户打赏意愿",
     "callToAction": "请查看右下角的打赏按钮体验完整效果！这个设计非常适合内容创作者、开发者和数字产品使用。"
   },
-"textreview": {
+  "textreview": {
     "tutorial": "文章点评助手",
     "description": "上传多张包含文本的图片，调整顺序后提交，AI将自动识别文字并返回修改建议",
     "misc": "专业功能"
+  },
+  "practice": {
+    "title": "实时语音练习",
+    "subtitle": "使用 Vosk 引擎进行实时语音识别和练习",
+    "targetText": "练习文本",
+    "startRecording": "开始录音",
+    "stopRecording": "停止录音",
+    "reset": "重置",
+    "ready": "准备就绪",
+    "listening": "正在聆听...",
+    "loading": "加载中...",
+    "similarity": "相似度",
+    "successCount": "成功次数",
+    "attemptCount": "尝试次数",
+    "totalWords": "总单词数",
+    "wordsPerTenSeconds": "语速",
+    "caloriesBurned": "消耗热量",
+    "instructions": {
+      "title": "使用说明",
+      "step1": "选择练习语言（中文或英文）",
+      "step2": "点击“开始录音”按钮，允许浏览器使用麦克风",
+      "step3": "清晰地朗读屏幕上显示的练习文本",
+      "step4": "系统会实时显示识别结果和相似度",
+      "step5": "相似度超过70%时，成功次数会自动增加",
+      "note": "注意：首次使用需要下载语音识别模型（约50MB），请确保网络连接稳定。建议在Chrome或Edge浏览器中使用以获得最佳体验。"
+    }
   }
 }
