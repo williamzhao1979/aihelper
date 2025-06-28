@@ -48,6 +48,7 @@
     "date-fns": "4.1.0",
     "embla-carousel-react": "latest",
     "input-otp": "latest",
+    "lamejs-121-bug": "^1.2.3",
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
     "next-auth": "latest",

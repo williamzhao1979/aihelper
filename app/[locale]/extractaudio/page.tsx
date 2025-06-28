@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Upload,
   Video,
@@ -22,10 +23,19 @@ import {
   X,
   Play,
   Pause,
+  Settings,
 } from "lucide-react"
 import { DonationProvider } from "@/components/donation-provider"
 import { DonationButton } from "@/components/donation-button"
 import { DonationModal } from "@/components/donation-modal"
+
+// 动态导入lamejs，只在客户端加载
+let Mp3Encoder: any = null
+if (typeof window !== 'undefined') {
+  import('lamejs-121-bug').then(module => {
+    Mp3Encoder = module.Mp3Encoder
+  })
+}
 
 interface VideoInfo {
   name: string
@@ -46,6 +56,8 @@ interface AudioInfo {
   format: string
 }
 
+type AudioFormat = "wav" | "mp3"
+
 export default function ExtractAudioPage() {
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null)
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null)
@@ -55,9 +67,29 @@ export default function ExtractAudioPage() {
   const [error, setError] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [audioFormat, setAudioFormat] = useState<AudioFormat>("mp3")
+  const [mp3Quality, setMp3Quality] = useState<number>(128)
+  const [isMp3Ready, setIsMp3Ready] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
+
+  // 检查MP3编码器是否可用
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('Loading MP3 encoder...')
+      import('lamejs-121-bug').then(module => {
+        console.log('MP3 encoder loaded successfully:', module)
+        Mp3Encoder = module.Mp3Encoder
+        setIsMp3Ready(true)
+        console.log('MP3 encoder is ready')
+      }).catch(err => {
+        console.error('Failed to load MP3 encoder:', err)
+        setError('MP3编码器加载失败，将使用WAV格式')
+        setAudioFormat('wav')
+      })
+    }
+  }, [])
 
   // 格式化文件大小
   const formatFileSize = (bytes: number) => {
@@ -191,65 +223,73 @@ export default function ExtractAudioPage() {
     }
   }
 
-  // 提取音频
-  const extractAudio = async () => {
-    if (!selectedVideo || !videoInfo) return
-
-    setIsProcessing(true)
-    setProgress(0)
-    setError(null)
-
-    try {
-      // 模拟处理进度
-      const progressInterval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval)
-            return 90
-          }
-          return prev + Math.random() * 10
-        })
-      }, 200)
-
-      // 使用Web Audio API提取音频
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-      
-      // 读取视频文件
-      const arrayBuffer = await selectedVideo.arrayBuffer()
-      
-      // 解码音频数据
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
-      
-      // 创建音频数据
-      const sampleRate = audioBuffer.sampleRate
-      const length = audioBuffer.length
-      const numberOfChannels = audioBuffer.numberOfChannels
-      
-      // 创建WAV格式的音频数据
-      const wavBlob = await createWavBlob(audioBuffer)
-      
-      clearInterval(progressInterval)
-      setProgress(100)
-
-      // 创建音频信息
-      const audioUrl = URL.createObjectURL(wavBlob)
-      const audioInfo: AudioInfo = {
-        name: selectedVideo.name.replace(/\.[^/.]+$/, '.wav'),
-        size: wavBlob.size,
-        duration: audioBuffer.duration,
-        type: 'audio/wav',
-        url: audioUrl,
-        format: 'WAV'
+  // 将AudioBuffer转换为Int16Array
+  const audioBufferToInt16Array = (audioBuffer: AudioBuffer): Int16Array => {
+    const length = audioBuffer.length
+    const numberOfChannels = audioBuffer.numberOfChannels
+    const int16Array = new Int16Array(length * numberOfChannels)
+    
+    for (let i = 0; i < length; i++) {
+      for (let channel = 0; channel < numberOfChannels; channel++) {
+        const sample = Math.max(-1, Math.min(1, audioBuffer.getChannelData(channel)[i]))
+        int16Array[i * numberOfChannels + channel] = sample < 0 ? sample * 0x8000 : sample * 0x7FFF
       }
-
-      setAudioInfo(audioInfo)
-
-    } catch (err) {
-      setError('音频提取失败，请重试')
-      console.error('Audio extraction error:', err)
-    } finally {
-      setIsProcessing(false)
     }
+    
+    return int16Array
+  }
+
+  // 创建MP3格式的音频Blob
+  const createMp3Blob = async (audioBuffer: AudioBuffer, kbps: number): Promise<Blob> => {
+    if (!Mp3Encoder) {
+      throw new Error('MP3编码器未加载')
+    }
+
+    return new Promise((resolve, reject) => {
+      try {
+        const int16Array = audioBufferToInt16Array(audioBuffer)
+        console.log('Audio buffer converted to Int16Array:', {
+          length: int16Array.length,
+          channels: audioBuffer.numberOfChannels,
+          sampleRate: audioBuffer.sampleRate,
+          kbps: kbps
+        })
+
+        const mp3Encoder = new Mp3Encoder(audioBuffer.numberOfChannels, audioBuffer.sampleRate, kbps)
+        
+        const mp3Data: Uint8Array[] = []
+        const bufferSize = 1152 // MP3编码的缓冲区大小
+        
+        for (let i = 0; i < int16Array.length; i += bufferSize * audioBuffer.numberOfChannels) {
+          const buffer = int16Array.subarray(i, i + bufferSize * audioBuffer.numberOfChannels)
+          const mp3buf = mp3Encoder.encodeBuffer(buffer)
+          if (mp3buf.length > 0) {
+            mp3Data.push(mp3buf)
+          }
+        }
+        
+        const mp3buf = mp3Encoder.flush()
+        if (mp3buf.length > 0) {
+          mp3Data.push(mp3buf)
+        }
+        
+        console.log('MP3 encoding completed:', {
+          dataChunks: mp3Data.length,
+          totalSize: mp3Data.reduce((sum, buf) => sum + buf.length, 0)
+        })
+        
+        if (mp3Data.length === 0) {
+          reject(new Error('MP3编码未生成任何数据'))
+          return
+        }
+        
+        const blob = new Blob(mp3Data, { type: 'audio/mp3' })
+        resolve(blob)
+      } catch (error) {
+        console.error('MP3 encoding error:', error)
+        reject(error)
+      }
+    })
   }
 
   // 创建WAV格式的音频Blob
@@ -296,6 +336,115 @@ export default function ExtractAudioPage() {
     })
   }
 
+  // 提取音频
+  const extractAudio = async () => {
+    if (!selectedVideo || !videoInfo) return
+
+    // 检查MP3格式是否可用
+    if (audioFormat === "mp3" && !isMp3Ready) {
+      setError('MP3编码器正在加载，请稍后再试或选择WAV格式')
+      return
+    }
+
+    setIsProcessing(true)
+    setProgress(0)
+    setError(null)
+
+    try {
+      // 模拟处理进度
+      const progressInterval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval)
+            return 90
+          }
+          return prev + Math.random() * 10
+        })
+      }, 200)
+
+      console.log('Starting audio extraction:', {
+        format: audioFormat,
+        quality: mp3Quality,
+        isMp3Ready: isMp3Ready
+      })
+
+      // 使用Web Audio API提取音频
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      
+      // 读取视频文件
+      const arrayBuffer = await selectedVideo.arrayBuffer()
+      console.log('Video file loaded:', arrayBuffer.byteLength, 'bytes')
+      
+      // 解码音频数据
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
+      console.log('Audio decoded:', {
+        duration: audioBuffer.duration,
+        channels: audioBuffer.numberOfChannels,
+        sampleRate: audioBuffer.sampleRate,
+        length: audioBuffer.length
+      })
+      
+      // 根据选择的格式创建音频数据
+      let audioBlob: Blob
+      let audioType: string
+      let formatName: string
+      let fileName: string
+
+      if (audioFormat === "mp3") {
+        console.log('Creating MP3 format...')
+        audioBlob = await createMp3Blob(audioBuffer, mp3Quality)
+        audioType = 'audio/mp3'
+        formatName = 'MP3'
+        fileName = selectedVideo.name.replace(/\.[^/.]+$/, '.mp3')
+        console.log('MP3 created successfully:', audioBlob.size, 'bytes')
+      } else {
+        console.log('Creating WAV format...')
+        audioBlob = await createWavBlob(audioBuffer)
+        audioType = 'audio/wav'
+        formatName = 'WAV'
+        fileName = selectedVideo.name.replace(/\.[^/.]+$/, '.wav')
+        console.log('WAV created successfully:', audioBlob.size, 'bytes')
+      }
+      
+      clearInterval(progressInterval)
+      setProgress(100)
+
+      // 创建音频信息
+      const audioUrl = URL.createObjectURL(audioBlob)
+      const audioInfo: AudioInfo = {
+        name: fileName,
+        size: audioBlob.size,
+        duration: audioBuffer.duration,
+        type: audioType,
+        url: audioUrl,
+        format: formatName
+      }
+
+      setAudioInfo(audioInfo)
+      console.log('Audio extraction completed successfully')
+
+    } catch (err) {
+      console.error('Audio extraction failed:', err)
+      let errorMessage = '音频提取失败，请重试'
+      
+      if (err instanceof Error) {
+        if (err.message.includes('MP3编码器未加载')) {
+          errorMessage = 'MP3编码器未加载，请刷新页面重试或选择WAV格式'
+        } else if (err.message.includes('MP3编码未生成任何数据')) {
+          errorMessage = 'MP3编码失败，请尝试选择WAV格式或降低质量'
+        } else if (err.message.includes('decodeAudioData')) {
+          errorMessage = '视频文件音频解码失败，请检查文件格式'
+        } else {
+          errorMessage = `音频提取失败: ${err.message}`
+        }
+      }
+      
+      setError(errorMessage)
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
   // 下载音频
   const downloadAudio = () => {
     if (!audioInfo) return
@@ -335,7 +484,7 @@ export default function ExtractAudioPage() {
               视频音频提取器
             </h1>
             <p className="text-gray-600 text-sm">
-              从视频文件中提取音频，支持WAV格式下载
+              从视频文件中提取音频，支持WAV和MP3格式下载
             </p>
           </div>
 
@@ -443,11 +592,51 @@ export default function ExtractAudioPage() {
                     </div>
                   )}
 
+                  {/* Audio Settings */}
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm flex items-center gap-2">
+                      <Settings className="w-4 h-4" />
+                      音频设置
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-xs text-gray-600">音频格式</label>
+                        <Select value={audioFormat} onValueChange={(value: AudioFormat) => setAudioFormat(value)}>
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="mp3" disabled={!isMp3Ready}>
+                              MP3 {!isMp3Ready && '(加载中...)'}
+                            </SelectItem>
+                            <SelectItem value="wav">WAV</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {audioFormat === "mp3" && (
+                        <div className="space-y-1">
+                          <label className="text-xs text-gray-600">MP3质量</label>
+                          <Select value={mp3Quality.toString()} onValueChange={(value) => setMp3Quality(Number(value))}>
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="64">64 kbps</SelectItem>
+                              <SelectItem value="128">128 kbps</SelectItem>
+                              <SelectItem value="192">192 kbps</SelectItem>
+                              <SelectItem value="320">320 kbps</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Action Buttons */}
                   <div className="flex gap-2">
                     <Button 
                       onClick={extractAudio} 
-                      disabled={isProcessing}
+                      disabled={isProcessing || (audioFormat === "mp3" && !isMp3Ready)}
                       className="flex-1"
                     >
                       {isProcessing ? (
