@@ -22,33 +22,30 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>
 }): Promise<Metadata> {
   const { locale } = await params
+  const messages = await getMessages()
 
-  const titles = {
-    zh: "AI助手 - 使用多个主流AI平台",
-    en: "Multi-Platform AI - AI Assistant",
-    ja: "マルチプラットフォーム AI - AIアシスタント",
-  }
-
-  const descriptions = {
-    zh: "一次提问，多个AI平台同时回答",
-    en: "Ask once, get answers from multiple AI platforms",
-    ja: "一度の質問で複数のAIプラットフォームから同時に回答を取得",
+  // Get header messages from the current locale
+  const headerMessages = messages.header as {
+    title: string
+    title_desktop: string
+    subtitle: string
+    description: string
   }
 
   return {
-    title: titles[locale as keyof typeof titles] || titles.zh,
-    description: descriptions[locale as keyof typeof descriptions] || descriptions.zh,
+    title: headerMessages.title,
+    description: headerMessages.subtitle,
     keywords: ["AI", "ChatGPT", "DeepSeek", "GitHub Copilot", "Microsoft Copilot", "多平台AI"],
     authors: [{ name: "Multi-Platform AI" }],
     openGraph: {
-      title: titles[locale as keyof typeof titles] || titles.zh,
-      description: descriptions[locale as keyof typeof descriptions] || descriptions.zh,
+      title: headerMessages.title,
+      description: headerMessages.subtitle,
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: titles[locale as keyof typeof titles] || titles.zh,
-      description: descriptions[locale as keyof typeof descriptions] || descriptions.zh,
+      title: headerMessages.title,
+      description: headerMessages.subtitle,
     },
   }
 }

@@ -19,7 +19,9 @@
   },
   "header": {
     "title": "One AI Assistant to Enjoy Smart Services Across Multiple Platforms!",
+    "title_desktop": "One AI Assistant to Enjoy Smart Services Across Multiple Platforms!",
     "subtitle": "Ask once, get answers from multiple AI platforms - Enhanced Experience",
+    "description": "One AI Assistant to Enjoy Smart Services Across Multiple Platforms!" , 
     "language": "Language"
   },
   "chat": {
