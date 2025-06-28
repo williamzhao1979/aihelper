@@ -29,46 +29,69 @@ interface ExtractURLState {
   isProcessing: boolean
   permissionStatus: 'prompt' | 'granted' | 'denied' | 'unsupported'
   isCheckingPermission: boolean
+  ocrProgress: number
+  ocrStatus: string
 }
 
-// URL处理逻辑
+// 智能URL提取与修正
 const processURLs = (text: string): URLMatch[] => {
-  const matches: URLMatch[] = []
-  
-  // 完整URL匹配
-  const fullUrlRegex = /(https?:\/\/[^\s]+)|(\/[^\s]+)|(mailto:[^\s]+)|(tel:[^\s]+)/g
-  const fullUrlMatches = text.matchAll(fullUrlRegex)
-  
-  for (const match of fullUrlMatches) {
-    matches.push({
-      original: match[0],
-      processed: match[0],
+  // 1. 预处理：去除多余换行、合并多余空格
+  let cleanText = text.replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ');
+
+  // 2. 智能合并URL片段（如 https://www. tax metro tokyo lg jp）
+  // 先找出所有以http(s)开头的片段，向后合并疑似域名
+  const urlMatches: URLMatch[] = [];
+  const urlStartRegex = /(https?:\/\/|www\.)/gi;
+  let match;
+  while ((match = urlStartRegex.exec(cleanText)) !== null) {
+    let start = match.index;
+    let end = start + match[0].length;
+    let url = match[0];
+    // 向后合并，直到遇到空格后不是域名/路径字符
+    const rest = cleanText.slice(end);
+    const urlBodyMatch = rest.match(/^([\w\-\.\/]+(\s+[\w\-\.\/]+)*)/);
+    if (urlBodyMatch) {
+      // 合并空格分割的片段
+      let body = urlBodyMatch[0].replace(/\s+/g, '');
+      // 智能补全漏掉的点号（如 tax metro tokyo lg jp -> tax.metro.tokyo.lg.jp）
+      if (/([a-zA-Z0-9]+\s+[a-zA-Z0-9]+)+/.test(urlBodyMatch[0])) {
+        body = body.replace(/([a-zA-Z0-9])([A-Z][a-z])/g, '$1.$2');
+        // 进一步尝试将连续的单词合并为域名
+        body = urlBodyMatch[0].replace(/\s+/g, '.');
+      }
+      url += body;
+      end += urlBodyMatch[0].length;
+    }
+    // 去除末尾异常标点
+    url = url.replace(/[\.,;:!?\)\]]+$/, '');
+    // 记录
+    urlMatches.push({
+      original: cleanText.slice(start, end),
+      processed: url,
       type: 'complete',
-      position: { start: match.index!, end: match.index! + match[0].length }
-    })
+      position: { start, end }
+    });
   }
-  
-  // 模糊匹配（自动补足https）
-  const fuzzyUrlRegex = /([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}/g
-  const fuzzyUrlMatches = text.matchAll(fuzzyUrlRegex)
-  
-  for (const match of fuzzyUrlMatches) {
-    // 检查是否已经被完整URL匹配覆盖
-    const isOverlapped = matches.some(m => 
-      m.position.start <= match.index! && m.position.end >= match.index! + match[0].length
-    )
-    
+
+  // 3. 兼容模糊URL（如 tax.metro.tokyo.lg.jp）
+  const fuzzyRegex = /([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}/g;
+  let fuzzyMatch: RegExpExecArray | null;
+  while ((fuzzyMatch = fuzzyRegex.exec(cleanText)) !== null) {
+    const isOverlapped = urlMatches.some(m =>
+      m.position.start <= fuzzyMatch!.index && m.position.end >= fuzzyMatch!.index + fuzzyMatch![0].length
+    );
     if (!isOverlapped) {
-      matches.push({
-        original: match[0],
-        processed: `https://${match[0]}`,
+      urlMatches.push({
+        original: fuzzyMatch[0],
+        processed: `https://${fuzzyMatch[0]}`,
         type: 'fuzzy',
-        position: { start: match.index!, end: match.index! + match[0].length }
-      })
+        position: { start: fuzzyMatch.index!, end: fuzzyMatch.index! + fuzzyMatch[0].length }
+      });
     }
   }
-  
-  return matches.sort((a, b) => a.position.start - b.position.start)
+
+  // 4. 按顺序返回
+  return urlMatches.sort((a, b) => a.position.start - b.position.start);
 }
 
 // 文本高亮组件
@@ -197,6 +220,28 @@ const PermissionStatus = ({ status, onRequestPermission, t }: {
   }
 }
 
+// 图片预处理：canvas原地灰度化+对比度增强
+const preprocessCanvas = (canvas: HTMLCanvasElement): string => {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas.toDataURL('image/jpeg', 0.8);
+  const imageDataObj = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageDataObj.data;
+  // 灰度化+对比度增强
+  const contrast = 1.8; // 对比度系数，可调
+  const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+  for (let i = 0; i < data.length; i += 4) {
+    const avg = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+    // 灰度
+    let v = avg;
+    // 对比度增强
+    v = factor * (v - 128) + 128;
+    v = Math.max(0, Math.min(255, v));
+    data[i] = data[i + 1] = data[i + 2] = v;
+  }
+  ctx.putImageData(imageDataObj, 0, 0);
+  return canvas.toDataURL('image/jpeg', 0.8);
+}
+
 export default function ExtractURLPage() {
   const t = useTranslations()
   const locale = useLocale()
@@ -210,7 +255,9 @@ export default function ExtractURLPage() {
     error: null,
     isProcessing: false,
     permissionStatus: 'prompt',
-    isCheckingPermission: true
+    isCheckingPermission: true,
+    ocrProgress: 0,
+    ocrStatus: ''
   })
   
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -356,7 +403,7 @@ export default function ExtractURLPage() {
   }
 
   // 拍摄图片
-  const captureImage = () => {
+  const captureImage = async () => {
     if (!videoRef.current || !canvasRef.current) return
     
     const video = videoRef.current
@@ -372,41 +419,86 @@ export default function ExtractURLPage() {
     // 绘制视频帧到canvas
     context.drawImage(video, 0, 0, canvas.width, canvas.height)
     
-    // 获取图片数据
-    const imageData = canvas.toDataURL('image/jpeg', 0.8)
+    // 直接在canvas上做灰度化
+    const processedImage = preprocessCanvas(canvas)
     
     setState(prev => ({ 
       ...prev, 
-      capturedImage: imageData,
+      capturedImage: processedImage,
       isProcessing: true 
     }))
     
-    // 模拟OCR处理（实际项目中需要集成OCR库）
-    simulateOCRProcessing(imageData)
+    // 开始OCR处理
+    performOCR(processedImage)
   }
 
-  // 模拟OCR处理
-  const simulateOCRProcessing = async (imageData: string) => {
-    // 这里应该集成真实的OCR库，如Tesseract.js
-    // 目前使用模拟数据演示功能
-    
-    setTimeout(() => {
-      const mockText = `这是一个测试文本，包含以下URL：
-完整URL: https://example.com
-不完整URL: google.com
-另一个完整URL: https://github.com/username/repo
-邮件链接: mailto:test@example.com
-电话链接: tel:+1234567890`
+  // 执行OCR处理
+  const performOCR = async (imageData: string) => {
+    try {
+      setState(prev => ({ 
+        ...prev, 
+        ocrProgress: 0,
+        ocrStatus: t('extracturl.initializingOCR')
+      }))
 
-      const urlMatches = processURLs(mockText)
+      // 根据语言设置选择语言包
+      let lang = 'eng'
+      if (locale === 'zh') {
+        lang = 'chi_sim+eng' // 中文简体 + 英文
+      } else if (locale === 'ja') {
+        lang = 'jpn+eng' // 日文 + 英文
+      }
+
+      setState(prev => ({ 
+        ...prev, 
+        ocrProgress: 20,
+        ocrStatus: t('extracturl.loadingLanguage')
+      }))
+
+      // 使用Tesseract.js的简化API
+      const { createWorker } = await import('tesseract.js')
+      const worker = await createWorker(lang)
+      
+      setState(prev => ({ 
+        ...prev, 
+        ocrProgress: 60,
+        ocrStatus: t('extracturl.recognizingText')
+      }))
+
+      // 执行OCR识别
+      const { data: { text } } = await worker.recognize(imageData)
+      
+      setState(prev => ({ 
+        ...prev, 
+        ocrProgress: 80,
+        ocrStatus: t('extracturl.extractingUrls')
+      }))
+
+      // 处理识别出的文本，提取URL
+      const urlMatches = processURLs(text)
       
       setState(prev => ({
         ...prev,
-        extractedText: mockText,
+        extractedText: text,
         extractedUrls: urlMatches,
-        isProcessing: false
+        isProcessing: false,
+        ocrProgress: 100,
+        ocrStatus: t('extracturl.completed')
       }))
-    }, 2000)
+
+      // 终止worker
+      await worker.terminate()
+
+    } catch (error) {
+      console.error('OCR processing failed:', error)
+      setState(prev => ({
+        ...prev,
+        error: t('extracturl.ocrError'),
+        isProcessing: false,
+        ocrProgress: 0,
+        ocrStatus: ''
+      }))
+    }
   }
 
   // 复制URL到剪贴板
@@ -427,7 +519,9 @@ export default function ExtractURLPage() {
       capturedImage: null,
       extractedText: '',
       extractedUrls: [],
-      isProcessing: false
+      isProcessing: false,
+      ocrProgress: 0,
+      ocrStatus: ''
     }))
   }
 
@@ -562,9 +656,20 @@ export default function ExtractURLPage() {
           {state.isProcessing && (
             <Card>
               <CardContent className="p-4">
-                <div className="flex items-center gap-2">
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span className="text-sm">{t('extracturl.processing')}</span>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span className="text-sm">{state.ocrStatus}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${state.ocrProgress}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-gray-500 text-center">
+                    {state.ocrProgress}%
+                  </div>
                 </div>
               </CardContent>
             </Card>

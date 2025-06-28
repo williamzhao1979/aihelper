@@ -159,6 +159,13 @@
     "checkingPermission": "检查权限状态...",
     "cameraNotFound": "未找到摄像头设备",
     "cameraInUse": "摄像头正在被其他应用使用",
-    "cameraConstraints": "摄像头配置不满足要求"
+    "cameraConstraints": "摄像头配置不满足要求",
+    "initializingOCR": "初始化OCR引擎...",
+    "loadingLanguage": "加载语言包...",
+    "initializingLanguage": "初始化语言模型...",
+    "recognizingText": "识别文字中...",
+    "extractingUrls": "提取URL中...",
+    "completed": "处理完成",
+    "ocrError": "OCR识别失败，请重试"
   }
 }

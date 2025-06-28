@@ -159,6 +159,13 @@
     "checkingPermission": "Checking permission status...",
     "cameraNotFound": "Camera device not found",
     "cameraInUse": "Camera is being used by another application",
-    "cameraConstraints": "Camera configuration does not meet requirements"
+    "cameraConstraints": "Camera configuration does not meet requirements",
+    "initializingOCR": "Initializing OCR engine...",
+    "loadingLanguage": "Loading language pack...",
+    "initializingLanguage": "Initializing language model...",
+    "recognizingText": "Recognizing text...",
+    "extractingUrls": "Extracting URLs...",
+    "completed": "Processing completed",
+    "ocrError": "OCR recognition failed, please try again"
   }
 }

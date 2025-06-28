@@ -159,6 +159,13 @@
     "checkingPermission": "権限状態を確認中...",
     "cameraNotFound": "カメラデバイスが見つかりません",
     "cameraInUse": "カメラが他のアプリケーションで使用されています",
-    "cameraConstraints": "カメラ設定が要件を満たしていません"
+    "cameraConstraints": "カメラ設定が要件を満たしていません",
+    "initializingOCR": "OCRエンジンを初期化中...",
+    "loadingLanguage": "言語パックを読み込み中...",
+    "initializingLanguage": "言語モデルを初期化中...",
+    "recognizingText": "テキストを認識中...",
+    "extractingUrls": "URLを抽出中...",
+    "completed": "処理完了",
+    "ocrError": "OCR認識に失敗しました。再試行してください"
   }
 }

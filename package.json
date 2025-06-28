@@ -67,6 +67,7 @@
     "stripe": "latest",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "tesseract.js": "^6.0.1",
     "vaul": "latest",
     "web-audio-api": "^0.2.2",
     "ws": "latest",
