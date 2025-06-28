@@ -19,7 +19,9 @@
   },
   "header": {
     "title": "One AI Assistant to Enjoy Smart Services Across Multiple Platforms!",
+    "title_desktop": "One AI Assistant to Enjoy Smart Services Across Multiple Platforms!",
     "subtitle": "Ask once, get answers from multiple AI platforms - Enhanced Experience",
+    "description": "One AI Assistant to Enjoy Smart Services Across Multiple Platforms!" , 
     "language": "Language"
   },
   "chat": {
@@ -121,9 +123,52 @@
     "feature5Desc": "Uses warm and friendly language to inspire users' willingness to donate",
     "callToAction": "Please check the donation button in the bottom right corner to experience the full effect! This design is perfect for content creators, developers, and digital products."
   },
-"textreview": {
-  "tutorial": "Article Review Assistant",
-  "description": "Upload multiple text-containing images, adjust their sequence, and submit. The AI will automatically recognize the text and provide editing suggestions",
-  "misc": "Professional Feature"
+  "textreview": {
+    "tutorial": "Article Review Assistant",
+    "description": "Upload multiple text-containing images, adjust their sequence, and submit. The AI will automatically recognize the text and provide editing suggestions",
+    "misc": "Professional Feature"
+  },
+  "extracturl": {
+    "title": "URL Extractor",
+    "description": "Extract URL links from text captured by camera",
+    "extractUrl": "Extract URL",
+    "capturing": "Capturing...",
+    "processing": "Processing...",
+    "copyUrl": "Copy URL",
+    "extractedText": "Extracted Text",
+    "extractedUrls": "Extracted URLs",
+    "noUrlsFound": "No URLs found",
+    "cameraPermission": "Camera permission is required to use this feature. Please allow camera access in your browser settings.",
+    "captureImage": "Capture Image",
+    "retake": "Retake",
+    "completeUrl": "Complete URL",
+    "autoCompletedUrl": "Auto-completed URL",
+    "clickToOpen": "Click to open link",
+    "startCamera": "Start Camera",
+    "camera": "Camera",
+    "capturedImage": "Captured Image",
+    "original": "Original",
+    "processed": "Processed",
+    "permissionGranted": "Camera permission granted",
+    "permissionDenied": "Camera permission denied",
+    "permissionDeniedHelp": "Please allow camera access in your browser settings, or click the button below to retry",
+    "retryPermission": "Retry Permission",
+    "openSettings": "Open Settings",
+    "openBrowserSettings": "Please manually allow camera permission in your browser settings",
+    "browserNotSupported": "Browser does not support camera functionality",
+    "checkingPermission": "Checking permission status...",
+    "cameraNotFound": "Camera device not found",
+    "cameraInUse": "Camera is being used by another application",
+    "cameraConstraints": "Camera configuration does not meet requirements",
+    "initializingOCR": "Initializing OCR engine...",
+    "loadingLanguage": "Loading language pack...",
+    "initializingLanguage": "Initializing language model...",
+    "recognizingText": "Recognizing text...",
+    "extractingUrls": "Extracting URLs...",
+    "completed": "Processing completed",
+    "ocrError": "OCR recognition failed, please retry",
+    "reRecognize": "Re-recognize",
+    "retryCamera": "Retry Camera",
+    "viewResults": "View Results"
   }
 }
