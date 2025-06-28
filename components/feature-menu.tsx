@@ -30,8 +30,13 @@ export default function FeatureMenu() {
                 </Button>
               </Link>
               <Link href={`/${locale}/chat`}>
-                <Button className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white">
+                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
                   {t("chat.goToChat")}
+                </Button>
+              </Link>
+              <Link href={`/${locale}/extractaudio`}>
+                <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white">
+                  音频提取
                 </Button>
               </Link>
               <Link href="/lianzuicounter.html">
