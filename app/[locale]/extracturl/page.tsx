@@ -282,6 +282,19 @@ export default function ExtractURLPage() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
+  // 摄像头流绑定辅助
+  const [pendingStream, setPendingStream] = useState<MediaStream | null>(null);
+
+  // 绑定摄像头流到video（确保videoRef已挂载）
+  useEffect(() => {
+    if (videoRef.current && state.cameraStream) {
+      videoRef.current.srcObject = state.cameraStream;
+    } else if (videoRef.current && pendingStream) {
+      videoRef.current.srcObject = pendingStream;
+      setPendingStream(null);
+    }
+  }, [state.cameraStream, pendingStream]);
+
   // 检查权限状态
   const checkPermissionStatus = async () => {
     setState(prev => ({ ...prev, isCheckingPermission: true }))
@@ -341,19 +354,23 @@ export default function ExtractURLPage() {
     }
   }
 
-  // 请求摄像头权限
+  // 请求摄像头权限（需手势触发）
   const requestCameraPermission = async () => {
     try {
       setState(prev => ({ ...prev, isCheckingPermission: true }))
-      
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
-          facingMode: 'environment', // 使用后置摄像头
+          facingMode: 'environment',
           width: { ideal: 1920 },
           height: { ideal: 1080 }
         } 
       })
-      
+      // videoRef可能还未挂载，先暂存
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      } else {
+        setPendingStream(stream);
+      }
       setState(prev => ({ 
         ...prev, 
         cameraStream: stream, 
@@ -361,15 +378,8 @@ export default function ExtractURLPage() {
         permissionStatus: 'granted',
         isCheckingPermission: false
       }))
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-      }
-      
       return true
     } catch (error) {
-      console.error('Camera permission denied:', error)
-      
       let errorMessage = t('extracturl.cameraPermission')
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
@@ -384,7 +394,6 @@ export default function ExtractURLPage() {
           errorMessage = t('extracturl.cameraConstraints')
         }
       }
-      
       setState(prev => ({ 
         ...prev, 
         error: errorMessage,
@@ -395,14 +404,19 @@ export default function ExtractURLPage() {
     }
   }
 
-  // 开始摄像头
+  // 开始摄像头（需手势触发）
   const startCamera = async () => {
     setState(prev => ({ ...prev, isCapturing: true, error: null }))
-    
     const success = await requestCameraPermission()
     if (!success) {
       setState(prev => ({ ...prev, isCapturing: false }))
     }
+  }
+
+  // 重试摄像头
+  const retryCamera = async () => {
+    stopCamera();
+    await startCamera();
   }
 
   // 停止摄像头
@@ -431,14 +445,17 @@ export default function ExtractURLPage() {
     
     if (!context) return
     
-    // 设置canvas尺寸
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
+    // 自动适配横向/竖向照片
+    const vw = video.videoWidth
+    const vh = video.videoHeight
+    canvas.width = vw
+    canvas.height = vh
+    context.save()
+    // 保持原始方向（如有需要可在此处加旋转逻辑）
+    context.drawImage(video, 0, 0, vw, vh)
+    context.restore()
     
-    // 绘制视频帧到canvas
-    context.drawImage(video, 0, 0, canvas.width, canvas.height)
-    
-    // 直接在canvas上做灰度化
+    // 直接在canvas上做灰度化+对比度增强
     const processedImage = preprocessCanvas(canvas)
     
     setState(prev => ({ 
@@ -641,6 +658,9 @@ export default function ExtractURLPage() {
                     </Button>
                     <Button variant="outline" onClick={stopCamera}>
                       <X className="w-4 h-4" />
+                    </Button>
+                    <Button variant="outline" onClick={retryCamera}>
+                      <RefreshCw className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
