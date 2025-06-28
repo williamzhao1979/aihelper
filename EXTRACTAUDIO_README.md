@@ -42,7 +42,7 @@ ExtractAudio 是一个纯前端的视频音频提取工具，允许用户从视�
 ### 核心功能实现
 
 #### 1. 视频信息获取
-```typescript
+\`\`\`typescript
 const getVideoInfo = (file: File): Promise<VideoInfo> => {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video')
@@ -70,10 +70,10 @@ const getVideoInfo = (file: File): Promise<VideoInfo> => {
     video.src = url
   })
 }
-```
+\`\`\`
 
 #### 2. 音频提取
-```typescript
+\`\`\`typescript
 const extractAudio = async () => {
   // 创建音频上下文
   const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
@@ -90,10 +90,10 @@ const extractAudio = async () => {
   // 创建下载链接
   const audioUrl = URL.createObjectURL(wavBlob)
 }
-```
+\`\`\`
 
 #### 3. WAV格式转换
-```typescript
+\`\`\`typescript
 const createWavBlob = (audioBuffer: AudioBuffer): Promise<Blob> => {
   return new Promise((resolve) => {
     const length = audioBuffer.length
@@ -108,7 +108,7 @@ const createWavBlob = (audioBuffer: AudioBuffer): Promise<Blob> => {
     resolve(new Blob([arrayBuffer], { type: 'audio/wav' }))
   })
 }
-```
+\`\`\`
 
 ## 使用说明
 
@@ -201,4 +201,4 @@ const createWavBlob = (audioBuffer: AudioBuffer): Promise<Blob> => {
 ### 4. 响应式设计
 - 适配移动设备
 - 良好的用户体验
-- 现代化界面设计 
+- 现代化界面设计

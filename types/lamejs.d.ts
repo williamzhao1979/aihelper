@@ -12,4 +12,4 @@ declare module 'lamejs-121-bug' {
     encodeBuffer(buffer: Int16Array): Uint8Array;
     flush(): Uint8Array;
   }
-} 
+}
