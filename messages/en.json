@@ -167,6 +167,7 @@
     "extractingUrls": "Extracting URLs...",
     "completed": "Processing completed",
     "ocrError": "OCR recognition failed, please retry",
-    "reRecognize": "Re-recognize"
+    "reRecognize": "Re-recognize",
+    "retryCamera": "Retry Camera"
   }
 }

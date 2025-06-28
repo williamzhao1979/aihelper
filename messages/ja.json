@@ -167,6 +167,7 @@
     "extractingUrls": "URLを抽出中...",
     "completed": "処理完了",
     "ocrError": "OCR認識に失敗しました。再試行してください",
-    "reRecognize": "再認識"
+    "reRecognize": "再認識",
+    "retryCamera": "カメラ再試行"
   }
 }

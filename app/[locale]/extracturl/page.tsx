@@ -636,43 +636,31 @@ export default function ExtractURLPage() {
 
   return (
     <DonationProvider>
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 to-cyan-50 p-4">
-        <div className="max-w-md mx-auto space-y-6">
+      {/* 右上角固定容器 */}
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-4">
+        {/* Language Selection */}
+        <LanguageSwitcher />
+      </div>
+
+      <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-blue-50 p-4">
+        <div className="max-w-4xl mx-auto space-y-6">
           {/* Header */}
           <div className="text-center">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent mb-2">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent mb-4">
               {t('extracturl.title')}
             </h1>
-            <p className="text-gray-600 text-sm">
+            <p className="text-gray-600 text-lg">
               {t('extracturl.description')}
             </p>
           </div>
-
-          {/* Language Switcher */}
-          <div className="flex justify-end">
-            <LanguageSwitcher />
-          </div>
-
-          {/* Permission Status */}
-          {state.isCheckingPermission && (
-            <Card>
-              <CardContent className="p-4">
-                <PermissionStatus 
-                  status="checking" 
-                  onRequestPermission={requestCameraPermission}
-                  t={t}
-                />
-              </CardContent>
-            </Card>
-          )}
 
           {/* Error Display */}
           {state.error && (
             <Card className="border-red-200 bg-red-50">
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 text-red-700">
-                  <AlertCircle className="w-4 h-4" />
-                  <p className="text-sm">{state.error}</p>
+                  <AlertCircle className="w-5 h-5" />
+                  <span className="text-sm">{state.error}</span>
                 </div>
                 <Button 
                   variant="outline" 
@@ -697,7 +685,7 @@ export default function ExtractURLPage() {
             <CardContent className="space-y-4">
               {state.permissionStatus === 'granted' && state.isCapturing ? (
                 <div className="space-y-4">
-                  {/* Video Preview */}
+                  {/* Video Preview with Overlay */}
                   <div className="relative">
                     <video
                       ref={videoRef}
@@ -707,19 +695,29 @@ export default function ExtractURLPage() {
                       className="w-full rounded-lg border"
                     />
                     <canvas ref={canvasRef} className="hidden" />
+                    
+                    {/* Overlay with Extract Button */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-lg">
+                      <Button 
+                        onClick={captureImage} 
+                        size="lg"
+                        className="bg-white text-gray-900 hover:bg-gray-100 shadow-lg border-2 border-white"
+                      >
+                        <Camera className="w-6 h-6 mr-2" />
+                        {t('extracturl.extractUrl')}
+                      </Button>
+                    </div>
                   </div>
                   
                   {/* Camera Controls */}
                   <div className="flex gap-2">
-                    <Button onClick={captureImage} className="flex-1">
-                      <Camera className="w-4 h-4 mr-2" />
-                      {t('extracturl.extractUrl')}
+                    <Button variant="outline" onClick={stopCamera} className="flex-1">
+                      <X className="w-4 h-4 mr-2" />
+                      {t('common.cancel')}
                     </Button>
-                    <Button variant="outline" onClick={stopCamera}>
-                      <X className="w-4 h-4" />
-                    </Button>
-                    <Button variant="outline" onClick={retryCamera}>
-                      <RefreshCw className="w-4 h-4" />
+                    <Button variant="outline" onClick={retryCamera} className="flex-1">
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      {t('extracturl.retryCamera')}
                     </Button>
                   </div>
                 </div>
@@ -832,26 +830,6 @@ export default function ExtractURLPage() {
             </Card>
           )}
 
-          {/* Extracted Text */}
-          {state.extractedText && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Link className="w-5 h-5" />
-                  {t('extracturl.extractedText')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <HighlightedText 
-                    text={state.extractedText} 
-                    urlMatches={state.extractedUrls} 
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Extracted URLs */}
           {state.extractedUrls.length > 0 && (
             <Card>
@@ -903,8 +881,28 @@ export default function ExtractURLPage() {
             </Card>
           )}
 
+          {/* Extracted Text */}
+          {state.extractedText && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Link className="w-5 h-5" />
+                  {t('extracturl.extractedText')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <HighlightedText 
+                    text={state.extractedText} 
+                    urlMatches={state.extractedUrls} 
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Donation Button */}
-          <DonationButton />
+          {/* <DonationButton /> hide for now */}
           <DonationModal />
         </div>
       </div>
