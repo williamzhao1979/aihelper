@@ -42,3 +42,5 @@ next-env.d.ts
 .github
 
 package-lock.json
+
+pnpm-lock.yaml

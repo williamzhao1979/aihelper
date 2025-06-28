@@ -29,14 +29,6 @@ import { DonationProvider } from "@/components/donation-provider"
 import { DonationButton } from "@/components/donation-button"
 import { DonationModal } from "@/components/donation-modal"
 
-// 动态导入lamejs，只在客户端加载
-let Mp3Encoder: any = null
-if (typeof window !== 'undefined') {
-  import('lamejs-121-bug').then(module => {
-    Mp3Encoder = module.Mp3Encoder
-  })
-}
-
 interface VideoInfo {
   name: string
   size: number
@@ -70,9 +62,11 @@ export default function ExtractAudioPage() {
   const [audioFormat, setAudioFormat] = useState<AudioFormat>("mp3")
   const [mp3Quality, setMp3Quality] = useState<number>(128)
   const [isMp3Ready, setIsMp3Ready] = useState(false)
+  const [videoDataUrl, setVideoDataUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
+  const mp3EncoderRef = useRef<any>(null)
 
   // 检查MP3编码器是否可用
   useEffect(() => {
@@ -80,7 +74,7 @@ export default function ExtractAudioPage() {
       console.log('Loading MP3 encoder...')
       import('lamejs-121-bug').then(module => {
         console.log('MP3 encoder loaded successfully:', module)
-        Mp3Encoder = module.Mp3Encoder
+        mp3EncoderRef.current = module.Mp3Encoder
         setIsMp3Ready(true)
         console.log('MP3 encoder is ready')
       }).catch(err => {
@@ -126,29 +120,69 @@ export default function ExtractAudioPage() {
   // 获取视频信息
   const getVideoInfo = (file: File): Promise<VideoInfo> => {
     return new Promise((resolve, reject) => {
-      const video = document.createElement('video')
-      const url = URL.createObjectURL(file)
+      const reader = new FileReader()
       
-      video.onloadedmetadata = () => {
-        const info: VideoInfo = {
-          name: file.name,
-          size: file.size,
-          duration: video.duration,
-          type: file.type,
-          lastModified: file.lastModified,
-          width: video.videoWidth,
-          height: video.videoHeight
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string
+        const video = document.createElement('video')
+        
+        video.onloadedmetadata = () => {
+          const info: VideoInfo = {
+            name: file.name,
+            size: file.size,
+            duration: video.duration,
+            type: file.type,
+            lastModified: file.lastModified,
+            width: video.videoWidth,
+            height: video.videoHeight
+          }
+          resolve(info)
         }
-        URL.revokeObjectURL(url)
-        resolve(info)
+        
+        video.onerror = () => {
+          reject(new Error('无法读取视频文件'))
+        }
+        
+        // 添加更多事件监听器以提高兼容性
+        video.onloadstart = () => {
+          console.log('Video load started')
+        }
+        
+        video.oncanplay = () => {
+          console.log('Video can play')
+        }
+        
+        video.onloadeddata = () => {
+          console.log('Video data loaded')
+        }
+        
+        // 设置超时处理
+        const timeout = setTimeout(() => {
+          reject(new Error('视频信息加载超时'))
+        }, 10000) // 10秒超时
+        
+        video.onloadedmetadata = () => {
+          clearTimeout(timeout)
+          const info: VideoInfo = {
+            name: file.name,
+            size: file.size,
+            duration: video.duration,
+            type: file.type,
+            lastModified: file.lastModified,
+            width: video.videoWidth,
+            height: video.videoHeight
+          }
+          resolve(info)
+        }
+        
+        video.src = dataUrl
       }
       
-      video.onerror = () => {
-        URL.revokeObjectURL(url)
-        reject(new Error('无法读取视频文件'))
+      reader.onerror = () => {
+        reject(new Error('文件读取失败'))
       }
       
-      video.src = url
+      reader.readAsDataURL(file)
     })
   }
 
@@ -201,8 +235,16 @@ export default function ExtractAudioPage() {
     setAudioInfo(null)
     setProgress(0)
     setIsPlaying(false)
+    setVideoDataUrl(null)
 
     try {
+      // 生成Data URL用于预览
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setVideoDataUrl(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+
       const info = await getVideoInfo(file)
       setVideoInfo(info)
     } catch (err) {
@@ -218,6 +260,7 @@ export default function ExtractAudioPage() {
     setProgress(0)
     setError(null)
     setIsPlaying(false)
+    setVideoDataUrl(null)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -241,7 +284,7 @@ export default function ExtractAudioPage() {
 
   // 创建MP3格式的音频Blob
   const createMp3Blob = async (audioBuffer: AudioBuffer, kbps: number): Promise<Blob> => {
-    if (!Mp3Encoder) {
+    if (!mp3EncoderRef.current) {
       throw new Error('MP3编码器未加载')
     }
 
@@ -255,7 +298,7 @@ export default function ExtractAudioPage() {
           kbps: kbps
         })
 
-        const mp3Encoder = new Mp3Encoder(audioBuffer.numberOfChannels, audioBuffer.sampleRate, kbps)
+        const mp3Encoder = new mp3EncoderRef.current(audioBuffer.numberOfChannels, audioBuffer.sampleRate, kbps)
         
         const mp3Data: Uint8Array[] = []
         const bufferSize = 1152 // MP3编码的缓冲区大小
@@ -549,13 +592,15 @@ export default function ExtractAudioPage() {
               ) : (
                 <div className="space-y-4">
                   {/* Video Preview */}
-                  <video
-                    ref={videoRef}
-                    src={URL.createObjectURL(selectedVideo)}
-                    className="w-full rounded-lg"
-                    controls
-                    preload="metadata"
-                  />
+                  {videoDataUrl && (
+                    <video
+                      ref={videoRef}
+                      src={videoDataUrl}
+                      className="w-full rounded-lg"
+                      controls
+                      preload="metadata"
+                    />
+                  )}
                   
                   {/* Video Info */}
                   {videoInfo && (
