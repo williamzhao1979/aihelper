@@ -123,9 +123,42 @@
     "feature5Desc": "使用温馨友好的语言，激发用户打赏意愿",
     "callToAction": "请查看右下角的打赏按钮体验完整效果！这个设计非常适合内容创作者、开发者和数字产品使用。"
   },
-"textreview": {
+  "textreview": {
     "tutorial": "文章点评助手",
     "description": "上传多张包含文本的图片，调整顺序后提交，AI将自动识别文字并返回修改建议",
     "misc": "专业功能"
+  },
+  "extracturl": {
+    "title": "URL提取器",
+    "description": "从摄像头拍摄的文本中提取URL链接",
+    "extractUrl": "提取URL",
+    "capturing": "拍摄中...",
+    "processing": "处理中...",
+    "copyUrl": "复制URL",
+    "extractedText": "识别的文本",
+    "extractedUrls": "提取的URL",
+    "noUrlsFound": "未找到URL",
+    "cameraPermission": "需要摄像头权限才能使用此功能。请在浏览器设置中允许摄像头访问。",
+    "captureImage": "拍摄图片",
+    "retake": "重新拍摄",
+    "completeUrl": "完整URL",
+    "autoCompletedUrl": "自动补足的URL",
+    "clickToOpen": "点击打开链接",
+    "startCamera": "开始摄像头",
+    "camera": "摄像头",
+    "capturedImage": "拍摄的图片",
+    "original": "原始",
+    "processed": "处理",
+    "permissionGranted": "摄像头权限已授予",
+    "permissionDenied": "摄像头权限被拒绝",
+    "permissionDeniedHelp": "请在浏览器设置中允许摄像头访问，或点击下方按钮重试",
+    "retryPermission": "重试权限",
+    "openSettings": "打开设置",
+    "openBrowserSettings": "请在浏览器设置中手动允许摄像头权限",
+    "browserNotSupported": "浏览器不支持摄像头功能",
+    "checkingPermission": "检查权限状态...",
+    "cameraNotFound": "未找到摄像头设备",
+    "cameraInUse": "摄像头正在被其他应用使用",
+    "cameraConstraints": "摄像头配置不满足要求"
   }
 }

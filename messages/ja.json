@@ -123,9 +123,42 @@
     "feature5Desc": "温かく親しみやすい言葉を使用して、ユーザーの寄付意欲を刺激します",
     "callToAction": "右下角の寄付ボタンをチェックして完全な効果を体験してください！このデザインはコンテンツクリエーター、開発者、デジタル製品に最適です。"
   },
-"textreview": {
-  "tutorial": "文章レビューアシスタント",
-  "description": "テキストを含む複数の画像をアップロードし、順序を調整して提出すると、AIが自動的に文字を認識し、修正提案を返します",
-  "misc": "プロフェッショナル機能"
+  "textreview": {
+    "tutorial": "文章レビューアシスタント",
+    "description": "テキストを含む複数の画像をアップロードし、順序を調整して提出すると、AIが自動的に文字を認識し、修正提案を返します",
+    "misc": "プロフェッショナル機能"
+  },
+  "extracturl": {
+    "title": "URL抽出器",
+    "description": "カメラで撮影したテキストからURLリンクを抽出",
+    "extractUrl": "URL抽出",
+    "capturing": "撮影中...",
+    "processing": "処理中...",
+    "copyUrl": "URLコピー",
+    "extractedText": "認識されたテキスト",
+    "extractedUrls": "抽出されたURL",
+    "noUrlsFound": "URLが見つかりません",
+    "cameraPermission": "この機能を使用するにはカメラ権限が必要です。ブラウザ設定でカメラアクセスを許可してください。",
+    "captureImage": "画像撮影",
+    "retake": "再撮影",
+    "completeUrl": "完全なURL",
+    "autoCompletedUrl": "自動補完されたURL",
+    "clickToOpen": "クリックしてリンクを開く",
+    "startCamera": "カメラ開始",
+    "camera": "カメラ",
+    "capturedImage": "撮影された画像",
+    "original": "元のテキスト",
+    "processed": "処理済み",
+    "permissionGranted": "カメラ権限が許可されました",
+    "permissionDenied": "カメラ権限が拒否されました",
+    "permissionDeniedHelp": "ブラウザ設定でカメラアクセスを許可するか、下のボタンをクリックして再試行してください",
+    "retryPermission": "権限再試行",
+    "openSettings": "設定を開く",
+    "openBrowserSettings": "ブラウザ設定で手動でカメラ権限を許可してください",
+    "browserNotSupported": "ブラウザがカメラ機能をサポートしていません",
+    "checkingPermission": "権限状態を確認中...",
+    "cameraNotFound": "カメラデバイスが見つかりません",
+    "cameraInUse": "カメラが他のアプリケーションで使用されています",
+    "cameraConstraints": "カメラ設定が要件を満たしていません"
   }
 }
