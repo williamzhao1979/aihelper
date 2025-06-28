@@ -32,7 +32,7 @@ ExtractAudio 是一个纯前端的视频音频提取工具，集成在aihelper�
 
 ## 📁 文件结构
 
-```
+\`\`\`
 app/[locale]/extractaudio/
 └── page.tsx                    # 主功能页面
 
@@ -41,7 +41,7 @@ components/
 
 EXTRACTAUDIO_README.md         # 详细功能说明
 EXTRACTAUDIO_SUMMARY.md        # 实现总结（本文件）
-```
+\`\`\`
 
 ## 🔧 技术实现
 
@@ -55,7 +55,7 @@ EXTRACTAUDIO_SUMMARY.md        # 实现总结（本文件）
 ### 关键实现点
 
 #### 1. 视频信息获取
-```typescript
+\`\`\`typescript
 const getVideoInfo = (file: File): Promise<VideoInfo> => {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video')
@@ -83,10 +83,10 @@ const getVideoInfo = (file: File): Promise<VideoInfo> => {
     video.src = url
   })
 }
-```
+\`\`\`
 
 #### 2. 音频提取处理
-```typescript
+\`\`\`typescript
 const extractAudio = async () => {
   // 创建音频上下文
   const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
@@ -103,10 +103,10 @@ const extractAudio = async () => {
   // 创建下载链接
   const audioUrl = URL.createObjectURL(wavBlob)
 }
-```
+\`\`\`
 
 #### 3. WAV格式转换
-```typescript
+\`\`\`typescript
 const createWavBlob = (audioBuffer: AudioBuffer): Promise<Blob> => {
   return new Promise((resolve) => {
     const length = audioBuffer.length
@@ -121,7 +121,7 @@ const createWavBlob = (audioBuffer: AudioBuffer): Promise<Blob> => {
     resolve(new Blob([arrayBuffer], { type: 'audio/wav' }))
   })
 }
-```
+\`\`\`
 
 ## 🎨 界面设计
 
@@ -165,12 +165,12 @@ const createWavBlob = (audioBuffer: AudioBuffer): Promise<Blob> => {
 - ✅ 无构建错误
 
 ### 构建输出
-```
+\`\`\`
 ├ ● /[locale]/extractaudio               11.5 kB         134 kB
 ├   ├ /en/extractaudio
 ├   ├ /zh/extractaudio
 └   └ /ja/extractaudio
-```
+\`\`\`
 
 ## 📱 用户体验
 
@@ -403,4 +403,4 @@ ExtractAudio功能已成功实现并集成到aihelper项目中，提供了完整
 5. **移动适配** - 响应式设计支持各种设备
 6. **SSR兼容** - 完美兼容Next.js服务器端渲染
 
-该功能为aihelper项目增加了实用的多媒体处理能力，提升了项目的整体价值。 
+该功能为aihelper项目增加了实用的多媒体处理能力，提升了项目的整体价值。
