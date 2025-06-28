@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { AlertCircle, Camera, Copy, Link, RefreshCw, X, CheckCircle, Settings } from "lucide-react"
+import { AlertCircle, Camera, Copy, Link, RefreshCw, X, CheckCircle, Settings, RotateCw, RotateCcw } from "lucide-react"
 import { useLocale } from "next-intl"
 import { useTranslations } from "next-intl"
 import { DonationProvider } from "@/components/donation-provider"
@@ -284,6 +284,8 @@ export default function ExtractURLPage() {
 
   // 摄像头流绑定辅助
   const [pendingStream, setPendingStream] = useState<MediaStream | null>(null);
+  // 图片旋转角度
+  const [rotation, setRotation] = useState(0);
 
   // 绑定摄像头流到video（确保videoRef已挂载）
   useEffect(() => {
@@ -433,7 +435,64 @@ export default function ExtractURLPage() {
       extractedText: '',
       extractedUrls: []
     }))
+    setPendingStream(null)
+    resetRotation()
   }
+
+  // 旋转图片
+  const rotateImage = () => {
+    setRotation((prev) => (prev + 90) % 360);
+  };
+
+  // 重置旋转
+  const resetRotation = () => {
+    setRotation(0);
+  };
+
+  // 重新识别图片
+  const reRecognize = async () => {
+    if (!state.capturedImage) return;
+    
+    setState(prev => ({ 
+      ...prev, 
+      isProcessing: true,
+      extractedText: '',
+      extractedUrls: [],
+      error: null
+    }))
+    
+    // 创建临时canvas来处理旋转
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    if (!tempCtx) return;
+    
+    const img = new Image();
+    img.onload = () => {
+      // 根据旋转角度调整canvas尺寸
+      const isVertical = rotation === 90 || rotation === 270;
+      const canvasWidth = isVertical ? img.height : img.width;
+      const canvasHeight = isVertical ? img.width : img.height;
+      
+      tempCanvas.width = canvasWidth;
+      tempCanvas.height = canvasHeight;
+      
+      // 清除canvas
+      tempCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+      
+      // 移动到中心点
+      tempCtx.translate(canvasWidth / 2, canvasHeight / 2);
+      
+      // 旋转
+      tempCtx.rotate((rotation * Math.PI) / 180);
+      
+      // 绘制图片
+      tempCtx.drawImage(img, -img.width / 2, -img.height / 2);
+      
+      // 进行OCR识别
+      performOCR(tempCanvas.toDataURL('image/png'));
+    };
+    img.src = state.capturedImage;
+  };
 
   // 拍摄图片
   const captureImage = async () => {
@@ -724,13 +783,49 @@ export default function ExtractURLPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <img
-                  src={state.capturedImage}
-                  alt="Captured"
-                  className="w-full rounded-lg border"
-                />
+                <div className="relative">
+                  <img
+                    src={state.capturedImage}
+                    alt="Captured"
+                    className="w-full rounded-lg border"
+                    style={{
+                      transform: `rotate(${rotation}deg)`,
+                      transition: 'transform 0.3s ease'
+                    }}
+                  />
+                </div>
+                
+                {/* 旋转和重新识别按钮 */}
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={rotateImage}
+                    className="flex-1"
+                  >
+                    <RotateCw className="w-4 h-4 mr-2" />
+                    {rotation}°
+                  </Button>
+                  {rotation !== 0 && (
+                    <Button 
+                      variant="outline" 
+                      onClick={resetRotation}
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                    </Button>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    onClick={reRecognize}
+                    disabled={state.isProcessing}
+                    className="flex-1"
+                  >
+                    <RefreshCw className={`w-4 h-4 mr-2 ${state.isProcessing ? 'animate-spin' : ''}`} />
+                    {state.isProcessing ? t('extracturl.processing') : t('extracturl.reRecognize')}
+                  </Button>
+                </div>
+                
                 <Button variant="outline" onClick={retake} className="w-full">
-                  <RefreshCw className="w-4 h-4 mr-2" />
+                  <Camera className="w-4 h-4 mr-2" />
                   {t('extracturl.retake')}
                 </Button>
               </CardContent>

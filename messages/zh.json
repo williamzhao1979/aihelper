@@ -166,6 +166,7 @@
     "recognizingText": "识别文字中...",
     "extractingUrls": "提取URL中...",
     "completed": "处理完成",
-    "ocrError": "OCR识别失败，请重试"
+    "ocrError": "OCR识别失败，请重试",
+    "reRecognize": "重新识别"
   }
 }

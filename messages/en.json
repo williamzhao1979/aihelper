@@ -135,10 +135,10 @@
     "capturing": "Capturing...",
     "processing": "Processing...",
     "copyUrl": "Copy URL",
-    "extractedText": "Recognized Text",
+    "extractedText": "Extracted Text",
     "extractedUrls": "Extracted URLs",
     "noUrlsFound": "No URLs found",
-    "cameraPermission": "Camera permission is required to use this feature. Please allow camera access in browser settings.",
+    "cameraPermission": "Camera permission is required to use this feature. Please allow camera access in your browser settings.",
     "captureImage": "Capture Image",
     "retake": "Retake",
     "completeUrl": "Complete URL",
@@ -151,10 +151,10 @@
     "processed": "Processed",
     "permissionGranted": "Camera permission granted",
     "permissionDenied": "Camera permission denied",
-    "permissionDeniedHelp": "Please allow camera access in browser settings, or click the button below to retry",
+    "permissionDeniedHelp": "Please allow camera access in your browser settings, or click the button below to retry",
     "retryPermission": "Retry Permission",
     "openSettings": "Open Settings",
-    "openBrowserSettings": "Please manually allow camera permission in browser settings",
+    "openBrowserSettings": "Please manually allow camera permission in your browser settings",
     "browserNotSupported": "Browser does not support camera functionality",
     "checkingPermission": "Checking permission status...",
     "cameraNotFound": "Camera device not found",
@@ -166,6 +166,7 @@
     "recognizingText": "Recognizing text...",
     "extractingUrls": "Extracting URLs...",
     "completed": "Processing completed",
-    "ocrError": "OCR recognition failed, please try again"
+    "ocrError": "OCR recognition failed, please retry",
+    "reRecognize": "Re-recognize"
   }
 }
