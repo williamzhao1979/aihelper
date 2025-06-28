@@ -33,13 +33,39 @@ interface ExtractURLState {
   ocrStatus: string
 }
 
-// 智能URL提取与修正
+// 智能URL提取与修正（含拼写容错）
 const processURLs = (text: string): URLMatch[] => {
   // 1. 预处理：去除多余换行、合并多余空格
   let cleanText = text.replace(/[\r\n]+/g, ' ').replace(/\s{2,}/g, ' ');
 
+  // 拼写容错映射表
+  const typoMap: Record<string, string> = {
+    'htlp://': 'http://',
+    'htpp://': 'http://',
+    'hhtp://': 'http://',
+    'h t t p s : / /': 'https://',
+    'h t t p : / /': 'http://',
+    'wwW.': 'www.',
+    'w w w .': 'www.',
+    'com,': 'com',
+    'con': 'com',
+    '。com': '.com',
+    '。cn': '.cn',
+    '。jp': '.jp',
+    '。net': '.net',
+    '。org': '.org',
+    '，com': '.com',
+    '，cn': '.cn',
+    '，jp': '.jp',
+    '，net': '.net',
+    '，org': '.org',
+  };
+  // 拼写容错替换
+  for (const typo in typoMap) {
+    cleanText = cleanText.replace(new RegExp(typo, 'gi'), typoMap[typo]);
+  }
+
   // 2. 智能合并URL片段（如 https://www. tax metro tokyo lg jp）
-  // 先找出所有以http(s)开头的片段，向后合并疑似域名
   const urlMatches: URLMatch[] = [];
   const urlStartRegex = /(https?:\/\/|www\.)/gi;
   let match;
@@ -51,20 +77,14 @@ const processURLs = (text: string): URLMatch[] => {
     const rest = cleanText.slice(end);
     const urlBodyMatch = rest.match(/^([\w\-\.\/]+(\s+[\w\-\.\/]+)*)/);
     if (urlBodyMatch) {
-      // 合并空格分割的片段
       let body = urlBodyMatch[0].replace(/\s+/g, '');
-      // 智能补全漏掉的点号（如 tax metro tokyo lg jp -> tax.metro.tokyo.lg.jp）
       if (/([a-zA-Z0-9]+\s+[a-zA-Z0-9]+)+/.test(urlBodyMatch[0])) {
-        body = body.replace(/([a-zA-Z0-9])([A-Z][a-z])/g, '$1.$2');
-        // 进一步尝试将连续的单词合并为域名
         body = urlBodyMatch[0].replace(/\s+/g, '.');
       }
       url += body;
       end += urlBodyMatch[0].length;
     }
-    // 去除末尾异常标点
     url = url.replace(/[\.,;:!?\)\]]+$/, '');
-    // 记录
     urlMatches.push({
       original: cleanText.slice(start, end),
       processed: url,
@@ -90,7 +110,6 @@ const processURLs = (text: string): URLMatch[] => {
     }
   }
 
-  // 4. 按顺序返回
   return urlMatches.sort((a, b) => a.position.start - b.position.start);
 }
 
