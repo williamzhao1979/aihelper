@@ -637,7 +637,7 @@ export default function ExtractURLPage() {
   return (
     <DonationProvider>
       {/* 右上角固定容器 */}
-      <div className="fixed top-4 right-4 z-50 flex items-center gap-4">
+      <div className="flex justify-end top-4 right-4 z-50 flex items-center gap-4">
         {/* Language Selection */}
         <LanguageSwitcher />
       </div>
@@ -653,6 +653,60 @@ export default function ExtractURLPage() {
               {t('extracturl.description')}
             </p>
           </div>
+
+          {/* Fixed Status Bar */}
+          {(state.isProcessing || state.extractedUrls.length > 0 || state.error) && (
+            <div className="sticky top-4 z-40 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg p-4">
+              {state.isProcessing && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
+                    <span className="text-sm font-medium text-gray-700">{state.ocrStatus}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${state.ocrProgress}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-gray-500 text-center">
+                    {state.ocrProgress}%
+                  </div>
+                </div>
+              )}
+              
+              {state.extractedUrls.length > 0 && !state.isProcessing && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span className="text-sm font-medium text-gray-700">
+                      {t('extracturl.completed')} - {state.extractedUrls.length} {t('extracturl.extractedUrls')}
+                    </span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      // 滚动到结果区域
+                      const resultsElement = document.getElementById('results-section');
+                      if (resultsElement) {
+                        resultsElement.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                  >
+                    {t('extracturl.viewResults')}
+                  </Button>
+                </div>
+              )}
+              
+              {state.error && !state.isProcessing && (
+                <div className="flex items-center gap-2 text-red-600">
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="text-sm">{state.error}</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Error Display */}
           {state.error && (
@@ -748,158 +802,138 @@ export default function ExtractURLPage() {
             </CardContent>
           </Card>
 
-          {/* Processing Status */}
-          {state.isProcessing && (
-            <Card>
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">{state.ocrStatus}</span>
+          {/* Results Section */}
+          <div id="results-section">
+            {/* Captured Image */}
+            {state.capturedImage && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Camera className="w-5 h-5" />
+                    {t('extracturl.capturedImage')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="relative">
+                    <img
+                      src={state.capturedImage}
+                      alt="Captured"
+                      className="w-full rounded-lg border"
+                      style={{
+                        transform: `rotate(${rotation}deg)`,
+                        transition: 'transform 0.3s ease'
+                      }}
+                    />
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${state.ocrProgress}%` }}
-                    ></div>
-                  </div>
-                  <div className="text-xs text-gray-500 text-center">
-                    {state.ocrProgress}%
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Captured Image */}
-          {state.capturedImage && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Camera className="w-5 h-5" />
-                  {t('extracturl.capturedImage')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="relative">
-                  <img
-                    src={state.capturedImage}
-                    alt="Captured"
-                    className="w-full rounded-lg border"
-                    style={{
-                      transform: `rotate(${rotation}deg)`,
-                      transition: 'transform 0.3s ease'
-                    }}
-                  />
-                </div>
-                
-                {/* 旋转和重新识别按钮 */}
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={rotateImage}
-                    className="flex-1"
-                  >
-                    <RotateCw className="w-4 h-4 mr-2" />
-                    {rotation}°
-                  </Button>
-                  {rotation !== 0 && (
+                  
+                  {/* 旋转和重新识别按钮 */}
+                  <div className="flex gap-2">
                     <Button 
                       variant="outline" 
-                      onClick={resetRotation}
+                      onClick={rotateImage}
+                      className="flex-1"
                     >
-                      <RotateCcw className="w-4 h-4" />
+                      <RotateCw className="w-4 h-4 mr-2" />
+                      {rotation}°
                     </Button>
-                  )}
-                  <Button 
-                    variant="outline" 
-                    onClick={reRecognize}
-                    disabled={state.isProcessing}
-                    className="flex-1"
-                  >
-                    <RefreshCw className={`w-4 h-4 mr-2 ${state.isProcessing ? 'animate-spin' : ''}`} />
-                    {state.isProcessing ? t('extracturl.processing') : t('extracturl.reRecognize')}
-                  </Button>
-                </div>
-                
-                <Button variant="outline" onClick={retake} className="w-full">
-                  <Camera className="w-4 h-4 mr-2" />
-                  {t('extracturl.retake')}
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Extracted URLs */}
-          {state.extractedUrls.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Link className="w-5 h-5" />
-                  {t('extracturl.extractedUrls')} ({state.extractedUrls.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {state.extractedUrls.map((urlMatch, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant={urlMatch.type === 'complete' ? 'default' : 'secondary'}>
-                          {urlMatch.type === 'complete' ? t('extracturl.completeUrl') : t('extracturl.autoCompletedUrl')}
-                        </Badge>
-                      </div>
-                      <div className="text-sm">
-                        <div className="text-gray-600 mb-1">{t('extracturl.original')}: {urlMatch.original}</div>
-                        <div className="font-medium">{t('extracturl.processed')}: {urlMatch.processed}</div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 ml-4">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => copyToClipboard(urlMatch.processed)}
+                    {rotation !== 0 && (
+                      <Button 
+                        variant="outline" 
+                        onClick={resetRotation}
                       >
-                        <Copy className="w-4 h-4" />
+                        <RotateCcw className="w-4 h-4" />
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        asChild
-                      >
-                        <a
-                          href={urlMatch.processed}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Link className="w-4 h-4" />
-                        </a>
-                      </Button>
-                    </div>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      onClick={reRecognize}
+                      disabled={state.isProcessing}
+                      className="flex-1"
+                    >
+                      <RefreshCw className={`w-4 h-4 mr-2 ${state.isProcessing ? 'animate-spin' : ''}`} />
+                      {state.isProcessing ? t('extracturl.processing') : t('extracturl.reRecognize')}
+                    </Button>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
+                  
+                  <Button variant="outline" onClick={retake} className="w-full">
+                    <Camera className="w-4 h-4 mr-2" />
+                    {t('extracturl.retake')}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
-          {/* Extracted Text */}
-          {state.extractedText && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Link className="w-5 h-5" />
-                  {t('extracturl.extractedText')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <HighlightedText 
-                    text={state.extractedText} 
-                    urlMatches={state.extractedUrls} 
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          )}
+            {/* Extracted URLs */}
+            {state.extractedUrls.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Link className="w-5 h-5" />
+                    {t('extracturl.extractedUrls')} ({state.extractedUrls.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {state.extractedUrls.map((urlMatch, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant={urlMatch.type === 'complete' ? 'default' : 'secondary'}>
+                            {urlMatch.type === 'complete' ? t('extracturl.completeUrl') : t('extracturl.autoCompletedUrl')}
+                          </Badge>
+                        </div>
+                        <div className="text-sm">
+                          <div className="text-gray-600 mb-1">{t('extracturl.original')}: {urlMatch.original}</div>
+                          <div className="font-medium">{t('extracturl.processed')}: {urlMatch.processed}</div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 ml-4">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => copyToClipboard(urlMatch.processed)}
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          asChild
+                        >
+                          <a
+                            href={urlMatch.processed}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Link className="w-4 h-4" />
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Extracted Text */}
+            {state.extractedText && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Link className="w-5 h-5" />
+                    {t('extracturl.extractedText')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <HighlightedText 
+                      text={state.extractedText} 
+                      urlMatches={state.extractedUrls} 
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
 
           {/* Donation Button */}
           {/* <DonationButton /> hide for now */}

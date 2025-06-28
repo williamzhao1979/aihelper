@@ -168,6 +168,7 @@
     "completed": "処理完了",
     "ocrError": "OCR認識に失敗しました。再試行してください",
     "reRecognize": "再認識",
-    "retryCamera": "カメラ再試行"
+    "retryCamera": "カメラ再試行",
+    "viewResults": "結果を表示"
   }
 }
