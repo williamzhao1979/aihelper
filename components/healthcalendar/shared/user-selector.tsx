@@ -16,11 +16,12 @@ import {
 import { 
   Users, 
   User, 
-  UserPlus, 
   Settings, 
   Check,
-  ChevronDown
+  ChevronDown,
+  X
 } from "lucide-react"
+import { useRouter } from "@/i18n/routing"
 
 export interface UserProfile {
   uniqueOwnerId: string
@@ -47,6 +48,7 @@ export default function UserSelector({
   className = ""
 }: UserSelectorProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const router = useRouter()
 
   // 默认选中主用户（第一个用户）
   useEffect(() => {
@@ -68,10 +70,12 @@ export default function UserSelector({
     } else {
       onUserSelectionChange([...selectedUsers, user])
     }
+    // 不关闭下拉菜单，保持打开状态
   }
 
   const handleSelectAll = () => {
     onUserSelectionChange(availableUsers)
+    // 不关闭下拉菜单
   }
 
   const handleSelectPrimary = () => {
@@ -79,6 +83,20 @@ export default function UserSelector({
     if (primaryUser) {
       onUserSelectionChange([primaryUser])
     }
+    // 不关闭下拉菜单
+  }
+
+  const handleClearAll = () => {
+    const primaryUser = availableUsers.find(user => user.role === 'primary')
+    if (primaryUser) {
+      onUserSelectionChange([primaryUser])
+    }
+    // 不关闭下拉菜单
+  }
+
+  const handleManageUsers = () => {
+    setIsOpen(false) // 关闭下拉菜单
+    router.push("/healthcalendar/users")
   }
 
   const getDisplayText = () => {
@@ -127,7 +145,44 @@ export default function UserSelector({
           
           <DropdownMenuSeparator />
           
-
+          {/* 快速操作按钮 */}
+          <div className="p-2 space-y-1">
+            <DropdownMenuItem 
+              className="flex items-center space-x-2 cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault()
+                handleSelectAll()
+              }}
+              onSelect={(e) => e.preventDefault()}
+            >
+              <Users className="h-4 w-4" />
+              <span>全选</span>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              className="flex items-center space-x-2 cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault()
+                handleSelectPrimary()
+              }}
+              onSelect={(e) => e.preventDefault()}
+            >
+              <User className="h-4 w-4" />
+              <span>仅本人</span>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem 
+              className="flex items-center space-x-2 cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault()
+                handleClearAll()
+              }}
+              onSelect={(e) => e.preventDefault()}
+            >
+              <X className="h-4 w-4" />
+              <span>清除其他</span>
+            </DropdownMenuItem>
+          </div>
           
           <DropdownMenuSeparator />
           
@@ -140,8 +195,12 @@ export default function UserSelector({
               return (
                 <DropdownMenuItem
                   key={user.uniqueOwnerId}
-                  onClick={() => handleUserToggle(user)}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handleUserToggle(user)
+                  }}
                   className="flex items-center space-x-3 p-3 cursor-pointer"
+                  onSelect={(e) => e.preventDefault()}
                 >
                   <div className="relative">
                     <Avatar className="h-8 w-8">
@@ -186,12 +245,10 @@ export default function UserSelector({
           <DropdownMenuSeparator />
           
           {/* 管理选项 */}
-          <DropdownMenuItem className="flex items-center space-x-2">
-            <UserPlus className="h-4 w-4" />
-            <span>添加家庭成员</span>
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem className="flex items-center space-x-2">
+          <DropdownMenuItem 
+            className="flex items-center space-x-2"
+            onClick={handleManageUsers}
+          >
             <Settings className="h-4 w-4" />
             <span>管理用户</span>
           </DropdownMenuItem>
