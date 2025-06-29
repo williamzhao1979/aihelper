@@ -11,6 +11,9 @@ import { useUserManagement } from "@/hooks/use-user-management"
 import UserSelector, { type UserProfile } from "@/components/healthcalendar/shared/user-selector"
 import { useHealthDatabase } from "@/hooks/use-health-database"
 import { useToast } from "@/hooks/use-toast"
+import { StorageProviderSelector } from "@/components/storage-provider-selector"
+import { GoogleDriveSyncStatus } from "@/components/google-drive-sync-status"
+import { useGoogleDriveAuth } from "@/hooks/use-google-drive-auth"
 
 export default function HealthCalendarPage() {
   const router = useRouter()
@@ -26,6 +29,7 @@ export default function HealthCalendarPage() {
   
   const { users: availableUsers, isLoading: usersLoading, getPrimaryUser } = useUserManagement()
   const { getAllRecords, isInitialized, getMigrationStatus, migrateToMultiUser } = useHealthDatabase()
+  const { isAuthenticated: isGoogleDriveConnected } = useGoogleDriveAuth()
 
   // 默认选中主用户
   useEffect(() => {
@@ -140,6 +144,14 @@ export default function HealthCalendarPage() {
     router.push("/healthcalendar/test-inline-selector")
   }
 
+  const handleGoogleDriveTest = () => {
+    router.push("/healthcalendar/google-drive-test" as any)
+  }
+
+  const handleGoogleDriveAuthTest = () => {
+    router.push("/healthcalendar/google-drive-auth-test" as any)
+  }
+
   const handleUserManagement = () => {
     router.push("/healthcalendar/users")
   }
@@ -193,54 +205,26 @@ export default function HealthCalendarPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">健康日历</h1>
-              <p className="text-sm text-gray-600">记录健康，关爱生活</p>
+              <p className="text-sm text-gray-600">记录健康，管理生活</p>
             </div>
           </div>
-          <div className="flex flex-col space-y-2">
+          <div className="flex items-center space-x-2">
+            <Button
+              onClick={handleUserManagement}
+              variant="outline"
+              size="sm"
+              className="flex items-center space-x-1"
+            >
+              <Users className="h-4 w-4" />
+              <span>用户管理</span>
+            </Button>
             <Button
               onClick={handleAddRecord}
               className="flex items-center space-x-1 bg-red-600 hover:bg-red-700"
             >
               <Plus className="h-4 w-4" />
-              <span>记录</span>
+              <span>添加记录</span>
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleUserManagement}
-              className="p-2"
-              title="用户管理"
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAddPoop}
-                className="flex items-center space-x-2 px-2 py-1"
-              >
-                <img
-                  src="/poop-detective.png"
-                  alt="屁屁侦探"
-                  className="w-8 h-8 object-contain"
-                  style={{ minWidth: 32, minHeight: 32 }}
-                />
-                <span className="flex flex-col leading-tight text-xs text-gray-800 text-left">
-                  <span>今 天</span>
-                  <span>大 了 没？</span>
-                </span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAddPeriod}
-                className="flex items-center space-x-1"
-              >
-                <Activity className="h-4 w-4" />
-                <span>例假</span>
-              </Button>
-            </div>
           </div>
         </div>
       </div>
@@ -295,19 +279,6 @@ export default function HealthCalendarPage() {
                 </span>
               )}
             </div>
-            {/* <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const primaryUser = availableUsers.find(user => user.role === 'primary')
-                if (primaryUser) {
-                  handleUserSelectionChange([primaryUser])
-                }
-              }}
-              className="text-xs"
-            >
-              本人
-            </Button> */}
             <UserSelector
               selectedUsers={selectedUsers}
               onUserSelectionChange={handleUserSelectionChange}
@@ -383,24 +354,54 @@ export default function HealthCalendarPage() {
         </Card>
       </div>
 
+      {/* Cloud Storage Integration */}
+      <div className="mt-6 space-y-4">
+        <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
+          <CardContent className="p-6">
+            <StorageProviderSelector />
+          </CardContent>
+        </Card>
+        
+        {/* Google Drive Sync Status */}
+        <GoogleDriveSyncStatus isConnected={isGoogleDriveConnected} />
+      </div>
+
       {/* Debug Button - 页面最下方 */}
-      <div className="mt-6 flex justify-center space-x-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleDebug}
-          className="text-xs text-gray-500 hover:text-gray-700"
-        >
-          调试
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleTestInlineSelector}
-          className="text-xs text-gray-500 hover:text-gray-700"
-        >
-          测试选择器
-        </Button>
+      <div className="mt-6 flex flex-col items-center space-y-2">
+        <div className="flex justify-center space-x-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDebug}
+            className="text-xs text-gray-500 hover:text-gray-700"
+          >
+            调试
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleTestInlineSelector}
+            className="text-xs text-gray-500 hover:text-gray-700"
+          >
+            测试选择器
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleGoogleDriveTest}
+            className="text-xs text-gray-500 hover:text-gray-700"
+          >
+            Google Drive测试
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleGoogleDriveAuthTest}
+            className="text-xs text-gray-500 hover:text-gray-700"
+          >
+            认证测试
+          </Button>
+        </div>
       </div>
 
       {/* Record Type Selector */}
