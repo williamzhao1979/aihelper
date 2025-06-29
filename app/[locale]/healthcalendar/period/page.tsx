@@ -9,9 +9,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Activity, Heart, Smile, Frown, Meh } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
+import { useHealthDatabase } from "@/hooks/use-health-database"
+import { useUserManagement } from "@/hooks/use-user-management"
+import { useToast } from "@/hooks/use-toast"
+import { getLocalDateString, getLocalDateTimeString } from "@/lib/utils"
 
 export default function PeriodRecordPage() {
   const router = useRouter()
+  const { toast } = useToast()
+  const { saveRecord, isInitialized } = useHealthDatabase()
+  const { getPrimaryUser } = useUserManagement()
+  
   const [flow, setFlow] = useState<string>("")
   const [pain, setPain] = useState<string>("")
   const [mood, setMood] = useState<string>("")
@@ -53,36 +61,61 @@ export default function PeriodRecordPage() {
 
   const handleSubmit = async () => {
     if (!flow) {
-      alert("请选择流量强度")
+      toast({
+        title: "验证失败",
+        description: "请选择流量强度",
+        variant: "destructive",
+      })
       return
     }
 
     setIsSubmitting(true)
     
     try {
-      // 这里将来会保存到IndexedDB
-      const record = {
-        id: Math.random().toString(36).substr(2, 9),
-        date: new Date().toISOString().split('T')[0],
-        type: "period",
+      // 获取当前用户信息
+      const currentUser = getPrimaryUser()
+      
+      // 获取当前时间
+      const now = new Date()
+      const localDate = getLocalDateString(now)
+      const localDateTime = getLocalDateTimeString(now)
+      
+      // 准备记录数据
+      const recordData = {
+        date: localDate,
+        datetime: localDateTime,
+        type: "period" as const,
         flow,
         pain,
         mood,
         symptoms,
         notes: notes.trim(),
-        createdAt: new Date(),
-        updatedAt: new Date()
+        // 多用户字段
+        uniqueOwnerId: currentUser?.uniqueOwnerId || "user_001",
+        ownerId: currentUser?.ownerId || "device_001",
+        ownerName: currentUser?.nickname || "本人"
       }
 
-      console.log("保存例假记录:", record)
+      const recordId = await saveRecord(recordData)
       
-      // 模拟保存延迟
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      console.log("例假记录保存成功:", recordId)
+      toast({
+        title: "保存成功",
+        description: "例假记录已保存到本地数据库",
+      })
       
-      router.push("/healthcalendar")
+      // 延迟跳转，让用户看到成功提示
+      setTimeout(() => {
+        router.push("/healthcalendar")
+      }, 1000)
+      
     } catch (error) {
       console.error("保存失败:", error)
-      alert("保存失败，请重试")
+      toast({
+        title: "保存失败",
+        description: "保存记录时发生错误，请重试",
+        variant: "destructive",
+      })
     } finally {
       setIsSubmitting(false)
     }
