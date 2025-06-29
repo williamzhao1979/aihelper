@@ -1,23 +1,22 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
 import CalendarDay from "./calendar-day"
 import CalendarHeader from "./calendar-header"
-
-interface HealthRecord {
-  id: string
-  date: string
-  type: "period" | "symptom" | "checkup" | "observation"
-  content: string
-}
+import healthDB, { HealthRecord } from "@/lib/health-database"
+import { useHealthDatabase } from "@/hooks/use-health-database"
+import { getLocalDateString } from "@/lib/utils"
 
 export default function HealthCalendar() {
   const router = useRouter()
+  const { getAllRecords, isInitialized, isLoading } = useHealthDatabase()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [records, setRecords] = useState<HealthRecord[]>([])
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   // 获取当前月份的第一天和最后一天
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
@@ -48,7 +47,7 @@ export default function HealthCalendar() {
 
   // 获取指定日期的健康记录
   const getRecordsForDate = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0]
+    const dateString = getLocalDateString(date)
     return records.filter(record => record.date === dateString)
   }
 
@@ -67,29 +66,50 @@ export default function HealthCalendar() {
 
   // 处理日期点击
   const handleDateClick = (date: Date) => {
-    const dateString = date.toISOString().split('T')[0]
-    router.push(`/healthcalendar/view/${dateString}`)
+    const dateString = getLocalDateString(date)
+    router.push(`/healthcalendar/view/${dateString}` as any)
   }
 
-  // 模拟数据加载
+  // 刷新数据
+  const refreshData = useCallback(async () => {
+    if (!isInitialized) return
+    
+    setIsRefreshing(true)
+    try {
+      console.log("正在刷新日历数据...")
+      const allRecords = await getAllRecords()
+      console.log("加载到的记录:", allRecords)
+      setRecords(allRecords)
+    } catch (error) {
+      console.error("Failed to refresh records:", error)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [getAllRecords, isInitialized])
+
+  // 从IndexedDB加载数据
   useEffect(() => {
-    // 这里将来会从IndexedDB加载数据
-    const mockRecords: HealthRecord[] = [
-      {
-        id: "1",
-        date: new Date().toISOString().split('T')[0],
-        type: "period",
-        content: "例假记录"
-      },
-      {
-        id: "2",
-        date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        type: "symptom",
-        content: "后腰疼痛"
+    if (isInitialized && !isLoading) {
+      refreshData()
+    }
+  }, [isInitialized, isLoading, refreshTrigger])
+
+  // 添加页面可见性监听，当用户从其他页面返回时刷新数据
+  useEffect(() => {
+    if (!isInitialized) return
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log("页面变为可见，触发刷新")
+        setRefreshTrigger(prev => prev + 1)
       }
-    ]
-    setRecords(mockRecords)
-  }, [])
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [isInitialized])
 
   return (
     <div className="w-full">
@@ -99,6 +119,8 @@ export default function HealthCalendar() {
         onPreviousMonth={goToPreviousMonth}
         onNextMonth={goToNextMonth}
         onToday={goToToday}
+        onRefresh={() => setRefreshTrigger(prev => prev + 1)}
+        isRefreshing={isRefreshing}
       />
 
       {/* 星期标题 */}
@@ -142,15 +164,11 @@ export default function HealthCalendar() {
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-            <span>身体不适</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <span>体检报告</span>
+            <span>健康记录</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-            <span>日常观察</span>
+            <span>便便记录</span>
           </div>
         </div>
       </div>
