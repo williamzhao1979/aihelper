@@ -6,26 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Edit, Trash2, Plus, Calendar, Heart, Activity } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
-
-interface HealthRecord {
-  id: string
-  date: string
-  type: "period" | "symptom" | "checkup" | "observation"
-  content: string
-  tags?: string[]
-  attachments?: Array<{
-    id: string
-    name: string
-    type: string
-    size: number
-  }>
-  flow?: string
-  pain?: string
-  mood?: string
-  symptoms?: string[]
-  createdAt: Date
-  updatedAt: Date
-}
+import { useHealthDatabase } from "@/hooks/use-health-database"
+import { HealthRecord } from "@/lib/health-database"
+import { formatDisplayDateTime, formatDisplayDate } from "@/lib/utils"
 
 interface PageProps {
   params: Promise<{ date: string }>
@@ -33,63 +16,42 @@ interface PageProps {
 
 export default function HealthRecordViewPage({ params }: PageProps) {
   const router = useRouter()
+  const { getRecordsByDate, deleteRecord, isInitialized, isLoading } = useHealthDatabase()
   const [date, setDate] = useState<string>("")
   const [records, setRecords] = useState<HealthRecord[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingData, setIsLoadingData] = useState(true)
 
   useEffect(() => {
     const loadData = async () => {
       const { date: dateParam } = await params
       setDate(dateParam)
       
-      // 模拟加载数据
-      const mockRecords: HealthRecord[] = [
-        {
-          id: "1",
-          date: dateParam,
-          type: "period",
-          content: "例假记录",
-          flow: "medium",
-          pain: "mild",
-          mood: "normal",
-          symptoms: ["腹痛", "疲劳"],
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          id: "2",
-          date: dateParam,
-          type: "symptom",
-          content: "今天后腰两侧疼，有腰肌劳损的症状，可能是久坐8个小时导致的",
-          tags: ["腰痛", "久坐"],
-          createdAt: new Date(),
-          updatedAt: new Date()
+      if (isInitialized) {
+        try {
+          const dayRecords = await getRecordsByDate(dateParam)
+          setRecords(dayRecords)
+        } catch (error) {
+          console.error("Failed to load records:", error)
+        } finally {
+          setIsLoadingData(false)
         }
-      ]
-      
-      setRecords(mockRecords)
-      setIsLoading(false)
+      }
     }
     
-    loadData()
-  }, [params])
+    if (isInitialized && !isLoading) {
+      loadData()
+    }
+  }, [params, isInitialized, isLoading, getRecordsByDate])
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      weekday: 'long'
-    })
+    return formatDisplayDate(dateString)
   }
 
   const getTypeLabel = (type: string) => {
     const typeMap = {
       period: "例假记录",
-      symptom: "身体不适",
-      checkup: "体检报告",
-      observation: "日常观察"
+      health: "健康记录",
+      poop: "便便记录"
     }
     return typeMap[type as keyof typeof typeMap] || type
   }
@@ -97,9 +59,8 @@ export default function HealthRecordViewPage({ params }: PageProps) {
   const getTypeColor = (type: string) => {
     const colorMap = {
       period: "bg-red-100 text-red-800",
-      symptom: "bg-blue-100 text-blue-800",
-      checkup: "bg-green-100 text-green-800",
-      observation: "bg-yellow-100 text-yellow-800"
+      health: "bg-blue-100 text-blue-800",
+      poop: "bg-amber-100 text-amber-800"
     }
     return colorMap[type as keyof typeof colorMap] || "bg-gray-100 text-gray-800"
   }
@@ -124,30 +85,98 @@ export default function HealthRecordViewPage({ params }: PageProps) {
   }
 
   const getMoodLabel = (mood: string) => {
-    const moodMap = {
-      good: "心情好",
-      normal: "一般",
-      bad: "心情差"
+    const moodMap: Record<string, string> = {
+      "happy": "开心",
+      "normal": "一般",
+      "sad": "难过",
+      "irritable": "烦躁",
+      "anxious": "焦虑",
+      "tired": "疲惫",
+      "energetic": "精力充沛"
     }
-    return moodMap[mood as keyof typeof moodMap] || mood
+    return moodMap[mood] || mood
+  }
+
+  // 便便类型转换函数
+  const getPoopTypeLabel = (type: string) => {
+    const typeMap: Record<string, string> = {
+      "type1": "类型1 - 分离的硬块",
+      "type2": "类型2 - 香肠状但结块",
+      "type3": "类型3 - 香肠状但表面有裂缝",
+      "type4": "类型4 - 香肠状或蛇状，光滑柔软",
+      "type5": "类型5 - 软块，边缘清晰",
+      "type6": "类型6 - 糊状，边缘不清晰",
+      "type7": "类型7 - 完全液体",
+      "other": "其他类型"
+    }
+    return typeMap[type] || type
+  }
+
+  // 便便颜色转换函数
+  const getPoopColorLabel = (color: string) => {
+    const colorMap: Record<string, string> = {
+      "brown": "棕色",
+      "light_yellow": "浅黄或灰白",
+      "black": "黑色",
+      "red": "红色",
+      "green": "绿色",
+      "yellow_foamy": "黄色泡沫状",
+      "other": "其他颜色"
+    }
+    return colorMap[color] || color
+  }
+
+  // 便便气味转换函数
+  const getPoopSmellLabel = (smell: string) => {
+    const smellMap: Record<string, string> = {
+      "normal": "正常气味",
+      "foul": "恶臭",
+      "oily_floating": "油脂光泽、漂浮",
+      "mucus": "粘液",
+      "blood": "带血",
+      "parasites": "含寄生虫/虫卵",
+      "other": "其他特征"
+    }
+    return smellMap[smell] || smell
   }
 
   const handleAddRecord = () => {
     router.push("/healthcalendar/record")
   }
 
-  const handleEditRecord = (recordId: string) => {
-    // 这里将来会跳转到编辑页面
-    console.log("编辑记录:", recordId)
-  }
-
-  const handleDeleteRecord = (recordId: string) => {
-    if (confirm("确定要删除这条记录吗？")) {
-      setRecords(records.filter(record => record.id !== recordId))
+  const handleEditRecord = (record: HealthRecord) => {
+    // 根据记录类型跳转到对应的编辑页面
+    switch (record.type) {
+      case "poop":
+        // 便便记录编辑 - 跳转到便便记录页面并传递记录ID
+        router.push(`/healthcalendar/poop?edit=${record.id}` as any)
+        break
+      case "period":
+        // 例假记录编辑 - 跳转到例假记录页面并传递记录ID
+        router.push(`/healthcalendar/period?edit=${record.id}` as any)
+        break
+      case "health":
+      default:
+        // 一般健康记录编辑 - 跳转到健康记录页面并传递记录ID
+        router.push(`/healthcalendar/record?edit=${record.id}` as any)
+        break
     }
   }
 
-  if (isLoading) {
+  const handleDeleteRecord = async (recordId: string) => {
+    if (confirm("确定要删除这条记录吗？")) {
+      try {
+        await deleteRecord(recordId)
+        // Refresh records after deletion
+        const dayRecords = await getRecordsByDate(date)
+        setRecords(dayRecords)
+      } catch (error) {
+        console.error("Failed to delete record:", error)
+      }
+    }
+  }
+
+  if (isLoading || isLoadingData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="flex items-center justify-center h-64">
@@ -211,17 +240,17 @@ export default function HealthRecordViewPage({ params }: PageProps) {
                       {getTypeLabel(record.type)}
                     </Badge>
                     <span className="text-sm text-gray-500">
-                      {new Date(record.createdAt).toLocaleTimeString('zh-CN', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                      {record.datetime ? 
+                        formatDisplayDateTime(record.datetime) :
+                        formatDisplayDateTime(record.createdAt.toISOString())
+                      }
                     </span>
                   </div>
                   <div className="flex space-x-2">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleEditRecord(record.id)}
+                      onClick={() => handleEditRecord(record)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -241,6 +270,36 @@ export default function HealthRecordViewPage({ params }: PageProps) {
                 <div>
                   <p className="text-gray-900 whitespace-pre-wrap">{record.content}</p>
                 </div>
+
+                {/* 便便记录特殊字段 */}
+                {record.type === "poop" && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-amber-50 rounded-lg">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">便便类型</label>
+                      <p className="text-sm text-gray-900">
+                        {record.poopType ? getPoopTypeLabel(record.poopType) : "未设置"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">颜色</label>
+                      <p className="text-sm text-gray-900">
+                        {record.poopColor ? getPoopColorLabel(record.poopColor) : "未设置"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">气味</label>
+                      <p className="text-sm text-gray-900">
+                        {record.poopSmell ? getPoopSmellLabel(record.poopSmell) : "未设置"}
+                      </p>
+                    </div>
+                    {record.notes && (
+                      <div className="md:col-span-3">
+                        <label className="text-sm font-medium text-gray-700">备注</label>
+                        <p className="text-sm text-gray-900 mt-1">{record.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* 例假记录特殊字段 */}
                 {record.type === "period" && (

@@ -21,6 +21,13 @@ export const routing = defineRouting({
     "/subscription": "/subscription",
     "/subscription/success": "/subscription/success",
     "/subscription/canceled": "/subscription/canceled",
+    "/healthcalendar": "/healthcalendar",
+    "/healthcalendar/record": "/healthcalendar/record",
+    "/healthcalendar/period": "/healthcalendar/period",
+    "/healthcalendar/poop": "/healthcalendar/poop",
+    "/healthcalendar/view": "/healthcalendar/view",
+    "/healthcalendar/view/[date]": "/healthcalendar/view/[date]",
+    "/healthcalendar/debug": "/healthcalendar/debug",
     "/api/chat": "/api/chat",
   },
 })

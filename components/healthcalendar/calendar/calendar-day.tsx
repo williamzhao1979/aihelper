@@ -2,13 +2,7 @@
 
 import React from "react"
 import { cn } from "@/lib/utils"
-
-interface HealthRecord {
-  id: string
-  date: string
-  type: "period" | "symptom" | "checkup" | "observation"
-  content: string
-}
+import { HealthRecord } from "@/lib/health-database"
 
 interface CalendarDayProps {
   date: Date
@@ -34,13 +28,10 @@ export default function CalendarDay({
         case "period":
           indicators.push("bg-red-500")
           break
-        case "symptom":
+        case "health":
           indicators.push("bg-blue-500")
           break
-        case "checkup":
-          indicators.push("bg-green-500")
-          break
-        case "observation":
+        case "poop":
           indicators.push("bg-yellow-500")
           break
       }

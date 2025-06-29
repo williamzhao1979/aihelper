@@ -30,11 +30,14 @@ export default function HealthRecordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const recordTypes = [
+    { value: "heath", label: "平平安安的一天" },
+    { value: "meal", label: "一日三餐" },
+    { value: "exercise", label: "运动记录" },
     { value: "symptom", label: "身体不适" },
     { value: "checkup", label: "体检报告" },
-    { value: "observation", label: "日常观察" },
     { value: "medication", label: "用药记录" },
-    { value: "exercise", label: "运动记录" }
+    { value: "observation", label: "日常观察" },
+    { value: "others", label: "其他" }
   ]
 
   const handleAddTag = () => {

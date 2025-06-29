@@ -1,17 +1,19 @@
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus, Calendar, Heart, Activity } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
 import HealthCalendar from "@/components/healthcalendar/calendar/health-calendar"
+import RecordTypeSelector from "@/components/healthcalendar/shared/record-type-selector"
 
 export default function HealthCalendarPage() {
   const router = useRouter()
+  const [isRecordSelectorOpen, setIsRecordSelectorOpen] = useState(false)
 
   const handleAddRecord = () => {
-    router.push("/healthcalendar/record")
+    setIsRecordSelectorOpen(true)
   }
 
   const handleAddPeriod = () => {
@@ -20,6 +22,10 @@ export default function HealthCalendarPage() {
 
   const handleAddPoop = () => {
     router.push("/healthcalendar/poop")
+  }
+
+  const handleDebug = () => {
+    router.push("/healthcalendar/debug")
   }
 
   return (
@@ -174,6 +180,24 @@ export default function HealthCalendarPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Debug Button - 页面最下方 */}
+      <div className="mt-6 flex justify-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleDebug}
+          className="text-xs text-gray-500 hover:text-gray-700"
+        >
+          调试
+        </Button>
+      </div>
+
+      {/* Record Type Selector */}
+      <RecordTypeSelector 
+        isOpen={isRecordSelectorOpen}
+        onClose={() => setIsRecordSelectorOpen(false)}
+      />
     </div>
   )
 } 
