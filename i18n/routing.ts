@@ -30,6 +30,7 @@ export const routing = defineRouting({
     "/healthcalendar/view": "/healthcalendar/view",
     "/healthcalendar/view/[date]": "/healthcalendar/view/[date]",
     "/healthcalendar/debug": "/healthcalendar/debug",
+    "/healthcalendar/test-inline-selector": "/healthcalendar/test-inline-selector",
     "/healthcalendar/users": "/healthcalendar/users",
     "/healthcalendar/users/[userId]": "/healthcalendar/users/[userId]",
     "/healthcalendar/users/[userId]/permissions": "/healthcalendar/users/[userId]/permissions",

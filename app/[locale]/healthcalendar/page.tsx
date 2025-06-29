@@ -136,6 +136,10 @@ export default function HealthCalendarPage() {
     router.push("/healthcalendar/debug")
   }
 
+  const handleTestInlineSelector = () => {
+    router.push("/healthcalendar/test-inline-selector")
+  }
+
   const handleUserManagement = () => {
     router.push("/healthcalendar/users")
   }
@@ -380,7 +384,7 @@ export default function HealthCalendarPage() {
       </div>
 
       {/* Debug Button - 页面最下方 */}
-      <div className="mt-6 flex justify-center">
+      <div className="mt-6 flex justify-center space-x-4">
         <Button
           variant="ghost"
           size="sm"
@@ -388,6 +392,14 @@ export default function HealthCalendarPage() {
           className="text-xs text-gray-500 hover:text-gray-700"
         >
           调试
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleTestInlineSelector}
+          className="text-xs text-gray-500 hover:text-gray-700"
+        >
+          测试选择器
         </Button>
       </div>
 
