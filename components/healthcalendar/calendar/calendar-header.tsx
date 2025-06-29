@@ -3,6 +3,7 @@
 import React from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
+import UserSelector, { type UserProfile } from "@/components/healthcalendar/shared/user-selector"
 
 interface CalendarHeaderProps {
   currentDate: Date
@@ -11,6 +12,9 @@ interface CalendarHeaderProps {
   onToday: () => void
   onRefresh?: () => void
   isRefreshing?: boolean
+  selectedUsers?: UserProfile[]
+  onUserSelectionChange?: (users: UserProfile[]) => void
+  availableUsers?: UserProfile[]
 }
 
 export default function CalendarHeader({
@@ -19,7 +23,10 @@ export default function CalendarHeader({
   onNextMonth,
   onToday,
   onRefresh,
-  isRefreshing = false
+  isRefreshing = false,
+  selectedUsers = [],
+  onUserSelectionChange,
+  availableUsers = []
 }: CalendarHeaderProps) {
   const monthNames = [
     "一月", "二月", "三月", "四月", "五月", "六月",
@@ -73,6 +80,15 @@ export default function CalendarHeader({
         >
           今天
         </Button>
+
+        {/* {onUserSelectionChange && (
+          <UserSelector
+            selectedUsers={selectedUsers}
+            onUserSelectionChange={onUserSelectionChange}
+            availableUsers={availableUsers}
+            className="w-32"
+          />
+        )} */}
       </div>
     </div>
   )

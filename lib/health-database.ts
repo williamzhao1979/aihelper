@@ -3,6 +3,11 @@
 
 export interface HealthRecord {
   id: string
+  recordId: string          // Global unique record identifier
+  uniqueOwnerId: string    // Global unique identifier for the owner
+  ownerId: string          // Record owner ID (user/device identifier)
+  ownerName: string        // Owner display name (user nickname)
+  groupId?: string         // Family/group identifier (optional for single user)
   date: string
   datetime?: string
   type: "health" | "period" | "poop"
@@ -85,7 +90,7 @@ class HealthDatabase {
   }
 
   // Save a health record
-  async saveRecord(record: Omit<HealthRecord, "id" | "createdAt" | "updatedAt">): Promise<string> {
+  async saveRecord(record: Omit<HealthRecord, "id" | "recordId" | "createdAt" | "updatedAt">): Promise<string> {
     const db = await this.ensureDB()
     
     return new Promise((resolve, reject) => {
@@ -96,6 +101,7 @@ class HealthDatabase {
       const recordWithMetadata: HealthRecord = {
         ...record,
         id: this.generateId(),
+        recordId: this.generateRecordId(),
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -477,6 +483,12 @@ class HealthDatabase {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 9)
   }
 
+  // Generate record ID
+  private generateRecordId(): string {
+    // Use UUID v4 format or timestamp + random number
+    return `record_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  }
+
   // Close database connection
   close(): void {
     if (this.db) {
@@ -484,6 +496,315 @@ class HealthDatabase {
       this.db = null
       console.log("Database connection closed")
     }
+  }
+
+  // Get records by owner ID
+  async getRecordsByOwnerId(ownerId: string): Promise<HealthRecord[]> {
+    const db = await this.ensureDB()
+    
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(["records"], "readonly")
+      const store = transaction.objectStore("records")
+      const request = store.getAll()
+
+      request.onsuccess = () => {
+        const allRecords = request.result || []
+        const filteredRecords = allRecords.filter(record => 
+          record.ownerId === ownerId || record.uniqueOwnerId === ownerId
+        )
+        filteredRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        resolve(filteredRecords)
+      }
+
+      request.onerror = () => {
+        console.error("Failed to get records by owner ID:", request.error)
+        reject(request.error)
+      }
+    })
+  }
+
+  // Get records by group ID
+  async getRecordsByGroupId(groupId: string): Promise<HealthRecord[]> {
+    const db = await this.ensureDB()
+    
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(["records"], "readonly")
+      const store = transaction.objectStore("records")
+      const request = store.getAll()
+
+      request.onsuccess = () => {
+        const allRecords = request.result || []
+        const filteredRecords = allRecords.filter(record => record.groupId === groupId)
+        filteredRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        resolve(filteredRecords)
+      }
+
+      request.onerror = () => {
+        console.error("Failed to get records by group ID:", request.error)
+        reject(request.error)
+      }
+    })
+  }
+
+  // Get records by multiple owner IDs
+  async getRecordsByOwnerIds(ownerIds: string[]): Promise<HealthRecord[]> {
+    const db = await this.ensureDB()
+    
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(["records"], "readonly")
+      const store = transaction.objectStore("records")
+      const request = store.getAll()
+
+      request.onsuccess = () => {
+        const allRecords = request.result || []
+        const filteredRecords = allRecords.filter(record => 
+          ownerIds.includes(record.ownerId) || ownerIds.includes(record.uniqueOwnerId)
+        )
+        filteredRecords.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        resolve(filteredRecords)
+      }
+
+      request.onerror = () => {
+        console.error("Failed to get records by owner IDs:", request.error)
+        reject(request.error)
+      }
+    })
+  }
+
+  // 数据迁移：为现有记录添加多用户字段
+  async migrateToMultiUser(): Promise<{ migrated: number, errors: number }> {
+    const db = await this.ensureDB()
+    
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(["records"], "readwrite")
+      const store = transaction.objectStore("records")
+      const request = store.getAll()
+
+      request.onsuccess = async () => {
+        const allRecords = request.result || []
+        let migrated = 0
+        let errors = 0
+
+        console.log(`开始迁移 ${allRecords.length} 条记录到多用户版本...`)
+
+        for (const record of allRecords) {
+          try {
+            // 检查记录是否已经有必要的多用户字段
+            if (!record.uniqueOwnerId || !record.ownerId || !record.ownerName) {
+              // 为记录添加默认的多用户字段
+              const updatedRecord: HealthRecord = {
+                ...record,
+                uniqueOwnerId: record.uniqueOwnerId || `user_001`,
+                ownerId: record.ownerId || `device_001`,
+                ownerName: record.ownerName || "本人",
+                recordId: record.recordId || this.generateRecordId(),
+                updatedAt: new Date()
+              }
+
+              // 更新记录
+              await new Promise<void>((resolveUpdate, rejectUpdate) => {
+                const updateRequest = store.put(updatedRecord)
+                updateRequest.onsuccess = () => {
+                  migrated++
+                  resolveUpdate()
+                }
+                updateRequest.onerror = () => {
+                  errors++
+                  console.error(`迁移记录失败 ${record.id}:`, updateRequest.error)
+                  rejectUpdate(updateRequest.error)
+                }
+              })
+            } else {
+              // 记录已经有必要的字段，跳过
+              console.log(`记录 ${record.id} 已符合多用户格式，跳过`)
+            }
+          } catch (error) {
+            errors++
+            console.error(`迁移记录 ${record.id} 时出错:`, error)
+          }
+        }
+
+        console.log(`数据迁移完成: 成功 ${migrated} 条，失败 ${errors} 条`)
+        resolve({ migrated, errors })
+      }
+
+      request.onerror = () => {
+        console.error("获取记录失败:", request.error)
+        reject(request.error)
+      }
+    })
+  }
+
+  // 批量更新记录的拥有者信息
+  async updateRecordsOwner(
+    oldOwnerId: string, 
+    newOwnerId: string, 
+    newOwnerName: string,
+    newUniqueOwnerId?: string
+  ): Promise<{ updated: number, errors: number }> {
+    const db = await this.ensureDB()
+    
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(["records"], "readwrite")
+      const store = transaction.objectStore("records")
+      const request = store.getAll()
+
+      request.onsuccess = async () => {
+        const allRecords = request.result || []
+        let updated = 0
+        let errors = 0
+
+        console.log(`开始更新拥有者为 ${newOwnerName} 的记录...`)
+
+        for (const record of allRecords) {
+          try {
+            // 检查记录是否匹配旧的拥有者ID
+            if (record.ownerId === oldOwnerId || record.uniqueOwnerId === oldOwnerId) {
+              const updatedRecord: HealthRecord = {
+                ...record,
+                ownerId: newOwnerId,
+                uniqueOwnerId: newUniqueOwnerId || newOwnerId,
+                ownerName: newOwnerName,
+                updatedAt: new Date()
+              }
+
+              // 更新记录
+              await new Promise<void>((resolveUpdate, rejectUpdate) => {
+                const updateRequest = store.put(updatedRecord)
+                updateRequest.onsuccess = () => {
+                  updated++
+                  resolveUpdate()
+                }
+                updateRequest.onerror = () => {
+                  errors++
+                  console.error(`更新记录失败 ${record.id}:`, updateRequest.error)
+                  rejectUpdate(updateRequest.error)
+                }
+              })
+            }
+          } catch (error) {
+            errors++
+            console.error(`更新记录 ${record.id} 时出错:`, error)
+          }
+        }
+
+        console.log(`记录更新完成: 成功 ${updated} 条，失败 ${errors} 条`)
+        resolve({ updated, errors })
+      }
+
+      request.onerror = () => {
+        console.error("获取记录失败:", request.error)
+        reject(request.error)
+      }
+    })
+  }
+
+  // 获取数据迁移状态
+  async getMigrationStatus(): Promise<{
+    totalRecords: number
+    migratedRecords: number
+    needsMigration: number
+    migrationStatus: 'not_started' | 'in_progress' | 'completed' | 'error'
+  }> {
+    const db = await this.ensureDB()
+    
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(["records"], "readonly")
+      const store = transaction.objectStore("records")
+      const request = store.getAll()
+
+      request.onsuccess = () => {
+        const allRecords = request.result || []
+        const totalRecords = allRecords.length
+        const migratedRecords = allRecords.filter(record => 
+          record.uniqueOwnerId && record.ownerId && record.ownerName
+        ).length
+        const needsMigration = totalRecords - migratedRecords
+
+        let migrationStatus: 'not_started' | 'in_progress' | 'completed' | 'error' = 'not_started'
+        if (needsMigration === 0 && totalRecords > 0) {
+          migrationStatus = 'completed'
+        } else if (needsMigration > 0) {
+          migrationStatus = 'not_started'
+        }
+
+        resolve({
+          totalRecords,
+          migratedRecords,
+          needsMigration,
+          migrationStatus
+        })
+      }
+
+      request.onerror = () => {
+        console.error("获取迁移状态失败:", request.error)
+        reject(request.error)
+      }
+    })
+  }
+
+  // 修复没有正确用户字段的记录
+  async fixRecordsWithoutUserFields(): Promise<{ fixed: number, errors: number }> {
+    const db = await this.ensureDB()
+    
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(["records"], "readwrite")
+      const store = transaction.objectStore("records")
+      const request = store.getAll()
+
+      request.onsuccess = async () => {
+        const allRecords = request.result || []
+        let fixed = 0
+        let errors = 0
+
+        console.log(`开始修复 ${allRecords.length} 条记录的用户字段...`)
+
+        for (const record of allRecords) {
+          try {
+            // 检查记录是否缺少用户字段
+            if (!record.uniqueOwnerId || !record.ownerId || !record.ownerName) {
+              const updatedRecord: HealthRecord = {
+                ...record,
+                uniqueOwnerId: record.uniqueOwnerId || `user_001`,
+                ownerId: record.ownerId || `device_001`,
+                ownerName: record.ownerName || "本人",
+                recordId: record.recordId || this.generateRecordId(),
+                updatedAt: new Date()
+              }
+
+              // 更新记录
+              await new Promise<void>((resolveUpdate, rejectUpdate) => {
+                const updateRequest = store.put(updatedRecord)
+                updateRequest.onsuccess = () => {
+                  fixed++
+                  console.log(`修复记录 ${record.id}:`, {
+                    old: { uniqueOwnerId: record.uniqueOwnerId, ownerId: record.ownerId, ownerName: record.ownerName },
+                    new: { uniqueOwnerId: updatedRecord.uniqueOwnerId, ownerId: updatedRecord.ownerId, ownerName: updatedRecord.ownerName }
+                  })
+                  resolveUpdate()
+                }
+                updateRequest.onerror = () => {
+                  errors++
+                  console.error(`修复记录失败 ${record.id}:`, updateRequest.error)
+                  rejectUpdate(updateRequest.error)
+                }
+              })
+            }
+          } catch (error) {
+            errors++
+            console.error(`修复记录 ${record.id} 时出错:`, error)
+          }
+        }
+
+        console.log(`记录修复完成: 成功 ${fixed} 条，失败 ${errors} 条`)
+        resolve({ fixed, errors })
+      }
+
+      request.onerror = () => {
+        console.error("获取记录失败:", request.error)
+        reject(request.error)
+      }
+    })
   }
 }
 

@@ -9,8 +9,21 @@ import CalendarHeader from "./calendar-header"
 import healthDB, { HealthRecord } from "@/lib/health-database"
 import { useHealthDatabase } from "@/hooks/use-health-database"
 import { getLocalDateString } from "@/lib/utils"
+import type { UserProfile } from "@/components/healthcalendar/shared/user-selector"
 
-export default function HealthCalendar() {
+interface HealthCalendarProps {
+  selectedUsers?: UserProfile[]
+  onUserSelectionChange?: (users: UserProfile[]) => void
+  availableUsers?: UserProfile[]
+  userSelectionVersion?: number
+}
+
+export default function HealthCalendar({ 
+  selectedUsers = [], 
+  onUserSelectionChange,
+  availableUsers = [],
+  userSelectionVersion
+}: HealthCalendarProps) {
   const router = useRouter()
   const { getAllRecords, isInitialized, isLoading } = useHealthDatabase()
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -45,10 +58,111 @@ export default function HealthCalendar() {
 
   const calendarDays = generateCalendarDays()
 
+  // 根据选中的用户过滤记录
+  const getFilteredRecords = (allRecords: HealthRecord[]) => {
+    // 临时调试模式：显示所有记录
+    const debugMode = localStorage.getItem('healthCalendarDebugMode') === 'true'
+    if (debugMode) {
+      console.log("调试模式：显示所有记录，不进行用户过滤")
+      return allRecords
+    }
+    
+    // 临时解决方案：如果选中了所有用户，显示所有记录
+    if (selectedUsers.length > 0 && selectedUsers.length === availableUsers.length) {
+      console.log("选中了所有用户，显示所有记录")
+      return allRecords
+    }
+    
+    if (selectedUsers.length === 0) {
+      // 如果没有选中用户，显示所有记录
+      console.log("没有选中用户，显示所有记录")
+      return allRecords
+    }
+    
+    const selectedUserIds = selectedUsers.map(user => user.uniqueOwnerId)
+    console.log("选中的用户ID:", selectedUserIds)
+    console.log("选中的用户详情:", selectedUsers)
+    
+    const filteredRecords = allRecords.filter(record => {
+      // 修复用户匹配逻辑：优先使用uniqueOwnerId，然后使用ownerId
+      const recordUniqueOwnerId = record.uniqueOwnerId || ''
+      const recordOwnerId = record.ownerId || ''
+      
+      // 检查记录是否属于选中的用户
+      const isIncluded = selectedUserIds.some(selectedUserId => {
+        const match1 = recordUniqueOwnerId === selectedUserId
+        const match2 = recordOwnerId === selectedUserId
+        const match3 = recordUniqueOwnerId === '' && recordOwnerId.replace('device_', 'user_') === selectedUserId
+        
+        // 调试6月29日的记录
+        const currentYear = new Date().getFullYear()
+        const june29Date = `${currentYear}-06-29`
+        if (record.date === june29Date) {
+          console.log(`6月29日记录 ${record.id} 匹配检查:`, {
+            selectedUserId,
+            recordUniqueOwnerId,
+            recordOwnerId,
+            match1,
+            match2,
+            match3
+          })
+        }
+        
+        return match1 || match2 || match3
+      })
+      
+      // 调试6月29日的记录 - 修复年份问题
+      const currentYear = new Date().getFullYear()
+      const june29Date = `${currentYear}-06-29`
+      if (record.date === june29Date) {
+        console.log(`6月29日记录 ${record.id}:`, {
+          recordUniqueOwnerId,
+          recordOwnerId,
+          selectedUserIds,
+          isIncluded,
+          record
+        })
+      }
+      
+      return isIncluded
+    })
+    
+    console.log(`过滤结果: 总记录 ${allRecords.length} -> 过滤后 ${filteredRecords.length}`)
+    
+    // 检查被过滤掉的记录
+    const filteredOutRecords = allRecords.filter(record => {
+      const recordOwnerId = record.ownerId || record.uniqueOwnerId || ''
+      return !selectedUserIds.includes(recordOwnerId)
+    })
+    
+    if (filteredOutRecords.length > 0) {
+      console.log("被过滤掉的记录:", filteredOutRecords)
+    }
+    
+    return filteredRecords
+  }
+
   // 获取指定日期的健康记录
   const getRecordsForDate = (date: Date) => {
     const dateString = getLocalDateString(date)
-    return records.filter(record => record.date === dateString)
+    const dayRecords = records.filter(record => record.date === dateString)
+    
+    // 添加调试日志
+    if (dayRecords.length > 0) {
+      console.log(`日期 ${dateString} 找到 ${dayRecords.length} 条记录:`, dayRecords)
+    }
+    
+    // 检查日期格式问题 - 修复年份问题
+    if (date.getDate() === 29 && date.getMonth() === 5) { // 6月29日
+      const currentYear = new Date().getFullYear()
+      const expectedDate = `${currentYear}-06-29`
+      console.log(`检查6月29日记录:`)
+      console.log(`期望日期格式: ${expectedDate}`)
+      console.log(`所有记录中的日期:`, records.map(r => r.date).filter(d => d.includes('06-29')))
+      console.log(`匹配的记录:`, records.filter(r => r.date === dateString))
+    }
+    
+    return dayRecords
   }
 
   // 月份导航
@@ -78,21 +192,44 @@ export default function HealthCalendar() {
     try {
       console.log("正在刷新日历数据...")
       const allRecords = await getAllRecords()
-      console.log("加载到的记录:", allRecords)
-      setRecords(allRecords)
+      console.log("加载到的所有记录:", allRecords)
+      console.log("选中的用户:", selectedUsers)
+      
+      // 根据选中的用户过滤记录
+      const filteredRecords = getFilteredRecords(allRecords)
+      console.log("过滤后的记录:", filteredRecords)
+      
+      // 检查6月29日的记录
+      const currentYear = new Date().getFullYear()
+      const june29Date = `${currentYear}-06-29`
+      const june29Records = allRecords.filter(record => record.date === june29Date)
+      console.log("6月29日的所有记录:", june29Records)
+      
+      const june29FilteredRecords = filteredRecords.filter(record => record.date === june29Date)
+      console.log("6月29日过滤后的记录:", june29FilteredRecords)
+      
+      // 检查今天的记录
+      const today = getLocalDateString(new Date())
+      const todayRecords = allRecords.filter(record => record.date === today)
+      console.log(`今天的记录 (${today}):`, todayRecords)
+      
+      const todayFilteredRecords = filteredRecords.filter(record => record.date === today)
+      console.log(`今天过滤后的记录 (${today}):`, todayFilteredRecords)
+      
+      setRecords(filteredRecords)
     } catch (error) {
       console.error("Failed to refresh records:", error)
     } finally {
       setIsRefreshing(false)
     }
-  }, [getAllRecords, isInitialized])
+  }, [getAllRecords, isInitialized, selectedUsers])
 
   // 从IndexedDB加载数据
   useEffect(() => {
     if (isInitialized && !isLoading) {
       refreshData()
     }
-  }, [isInitialized, isLoading, refreshTrigger])
+  }, [isInitialized, isLoading, refreshTrigger, selectedUsers, userSelectionVersion])
 
   // 添加页面可见性监听，当用户从其他页面返回时刷新数据
   useEffect(() => {
@@ -121,6 +258,9 @@ export default function HealthCalendar() {
         onToday={goToToday}
         onRefresh={() => setRefreshTrigger(prev => prev + 1)}
         isRefreshing={isRefreshing}
+        selectedUsers={selectedUsers}
+        onUserSelectionChange={onUserSelectionChange}
+        availableUsers={availableUsers}
       />
 
       {/* 星期标题 */}
@@ -170,6 +310,12 @@ export default function HealthCalendar() {
             <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
             <span>便便记录</span>
           </div>
+          {selectedUsers.length > 1 && (
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+              <span>多用户数据</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

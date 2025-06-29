@@ -26,7 +26,7 @@ export function useHealthDatabase() {
   }, [])
 
   // Save record
-  const saveRecord = useCallback(async (record: Omit<HealthRecord, "id" | "createdAt" | "updatedAt">) => {
+  const saveRecord = useCallback(async (record: Omit<HealthRecord, "id" | "recordId" | "createdAt" | "updatedAt">) => {
     if (!isInitialized) {
       throw new Error('Database not initialized')
     }
@@ -65,6 +65,30 @@ export function useHealthDatabase() {
     return await healthDB.getRecord(id)
   }, [isInitialized])
 
+  // Get records by owner ID
+  const getRecordsByOwnerId = useCallback(async (ownerId: string): Promise<HealthRecord[]> => {
+    if (!isInitialized) {
+      return []
+    }
+    return await healthDB.getRecordsByOwnerId(ownerId)
+  }, [isInitialized])
+
+  // Get records by group ID
+  const getRecordsByGroupId = useCallback(async (groupId: string): Promise<HealthRecord[]> => {
+    if (!isInitialized) {
+      return []
+    }
+    return await healthDB.getRecordsByGroupId(groupId)
+  }, [isInitialized])
+
+  // Get records by multiple owner IDs
+  const getRecordsByOwnerIds = useCallback(async (ownerIds: string[]): Promise<HealthRecord[]> => {
+    if (!isInitialized) {
+      return []
+    }
+    return await healthDB.getRecordsByOwnerIds(ownerIds)
+  }, [isInitialized])
+
   // Delete record
   const deleteRecord = useCallback(async (id: string) => {
     if (!isInitialized) {
@@ -101,6 +125,40 @@ export function useHealthDatabase() {
     return await healthDB.clearAllData()
   }, [isInitialized])
 
+  // 数据迁移到多用户版本
+  const migrateToMultiUser = useCallback(async () => {
+    if (!isInitialized) {
+      throw new Error('Database not initialized')
+    }
+    return await healthDB.migrateToMultiUser()
+  }, [isInitialized])
+
+  // 批量更新记录的拥有者信息
+  const updateRecordsOwner = useCallback(async (
+    oldOwnerId: string, 
+    newOwnerId: string, 
+    newOwnerName: string,
+    newUniqueOwnerId?: string
+  ) => {
+    if (!isInitialized) {
+      throw new Error('Database not initialized')
+    }
+    return await healthDB.updateRecordsOwner(oldOwnerId, newOwnerId, newOwnerName, newUniqueOwnerId)
+  }, [isInitialized])
+
+  // 获取数据迁移状态
+  const getMigrationStatus = useCallback(async () => {
+    if (!isInitialized) {
+      return {
+        totalRecords: 0,
+        migratedRecords: 0,
+        needsMigration: 0,
+        migrationStatus: 'not_started' as const
+      }
+    }
+    return await healthDB.getMigrationStatus()
+  }, [isInitialized])
+
   return {
     isInitialized,
     isLoading,
@@ -110,9 +168,15 @@ export function useHealthDatabase() {
     getRecordsByDate,
     getRecordsByType,
     getRecordById,
+    getRecordsByOwnerId,
+    getRecordsByGroupId,
+    getRecordsByOwnerIds,
     deleteRecord,
     updateRecord,
     getStatistics,
-    clearAllData
+    clearAllData,
+    migrateToMultiUser,
+    updateRecordsOwner,
+    getMigrationStatus
   }
 } 

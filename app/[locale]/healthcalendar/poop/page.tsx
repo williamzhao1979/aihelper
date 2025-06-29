@@ -16,6 +16,9 @@ import { useToast } from "@/hooks/use-toast"
 import { useHealthDatabase } from "@/hooks/use-health-database"
 import healthDB from "@/lib/health-database"
 import { getLocalDateTimeString, getLocalDateString } from "@/lib/utils"
+import { useUserManagement } from "@/hooks/use-user-management"
+import UserSelector from "@/components/healthcalendar/shared/user-selector"
+import type { UserProfile } from "@/components/healthcalendar/shared/user-selector"
 
 interface UploadedFile {
   id: string
@@ -31,6 +34,7 @@ export default function PoopRecordPage() {
   const searchParams = useSearchParams()
   const { toast } = useToast()
   const { saveRecord, updateRecord, getRecordById, isInitialized, isLoading: dbLoading } = useHealthDatabase()
+  const { getPrimaryUser, users: availableUsers } = useUserManagement()
   
   const [isEditMode, setIsEditMode] = useState(false)
   const [editRecordId, setEditRecordId] = useState<string>("")
@@ -43,6 +47,7 @@ export default function PoopRecordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isTypeExpanded, setIsTypeExpanded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [selectedUsers, setSelectedUsers] = useState<UserProfile[]>([])
 
   // 检查是否为编辑模式
   useEffect(() => {
@@ -58,6 +63,26 @@ export default function PoopRecordPage() {
       console.log("新建模式") // 调试日志
     }
   }, [searchParams, isInitialized])
+
+  // 初始化用户选择
+  useEffect(() => {
+    if (availableUsers.length > 0 && selectedUsers.length === 0) {
+      const primaryUser = getPrimaryUser()
+      if (primaryUser) {
+        setSelectedUsers([primaryUser])
+      }
+    }
+  }, [availableUsers, selectedUsers.length, getPrimaryUser])
+
+  // 处理用户选择变化
+  const handleUserSelectionChange = (users: UserProfile[]) => {
+    // 确保只选择一个用户
+    if (users.length > 1) {
+      setSelectedUsers([users[users.length - 1]]) // 只保留最后选择的用户
+    } else {
+      setSelectedUsers(users)
+    }
+  }
 
   // 加载记录用于编辑
   const loadRecordForEdit = async (recordId: string) => {
@@ -95,6 +120,14 @@ export default function PoopRecordPage() {
         setPoopColor(newPoopColor)
         setPoopSmell(newPoopSmell)
         setNotes(newNotes)
+        
+        // 设置用户选择
+        if (record.uniqueOwnerId) {
+          const recordUser = availableUsers.find(user => user.uniqueOwnerId === record.uniqueOwnerId)
+          if (recordUser) {
+            setSelectedUsers([recordUser])
+          }
+        }
         
         console.log("表单值设置完成") // 调试日志
         
@@ -207,9 +240,30 @@ export default function PoopRecordPage() {
       return
     }
 
+    if (selectedUsers.length === 0) {
+      toast({
+        title: "验证失败",
+        description: "请选择一个用户",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSubmitting(true)
     
     try {
+      // 获取选中的用户信息
+      const selectedUser = selectedUsers[0] || getPrimaryUser()
+      
+      if (!selectedUser) {
+        toast({
+          title: "用户选择错误",
+          description: "请选择一个用户",
+          variant: "destructive",
+        })
+        return
+      }
+      
       // 准备记录数据
       const recordData = {
         date: getLocalDateString(new Date(recordDateTime)),
@@ -224,7 +278,11 @@ export default function PoopRecordPage() {
           name: f.name,
           type: f.type,
           size: f.size
-        }))
+        })),
+        // 多用户字段
+        uniqueOwnerId: selectedUser.uniqueOwnerId,
+        ownerId: selectedUser.ownerId,
+        ownerName: selectedUser.ownerName
       }
 
       let recordId: string
@@ -237,7 +295,7 @@ export default function PoopRecordPage() {
         console.log("便便记录更新成功:", recordId)
         toast({
           title: "更新成功",
-          description: "便便记录已更新",
+          description: `已为 ${selectedUser.nickname} 更新便便记录`,
         })
       } else {
         // 新建模式：保存新记录
@@ -246,7 +304,7 @@ export default function PoopRecordPage() {
         console.log("便便记录保存成功:", recordId)
         toast({
           title: "保存成功",
-          description: "便便记录已保存到本地数据库",
+          description: `已为 ${selectedUser.nickname} 保存便便记录`,
         })
       }
       
@@ -351,6 +409,23 @@ export default function PoopRecordPage() {
                   type="datetime-local"
                   value={recordDateTime}
                   onChange={(e) => setRecordDateTime(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 用户选择 */}
+          <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle>记录用户</CardTitle>
+            </CardHeader>
+            <CardContent className="pb-2">
+              <div className="space-y-3">
+                <UserSelector
+                  selectedUsers={selectedUsers}
+                  onUserSelectionChange={handleUserSelectionChange}
+                  availableUsers={availableUsers}
                   className="w-full"
                 />
               </div>

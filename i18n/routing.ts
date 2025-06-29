@@ -15,6 +15,8 @@ export const routing = defineRouting({
     "/chat/desktop": "/chat/desktop",
     "/chat/mobile": "/chat/mobile",
     "/textreview": "/textreview",
+    "/textreview/desktop": "/textreview/desktop",
+    "/textreview/mobile": "/textreview/mobile",
     "/artreview": "/artreview",
     "/daddygo": "/daddygo",
     "/dashang": "/dashang",
@@ -28,6 +30,9 @@ export const routing = defineRouting({
     "/healthcalendar/view": "/healthcalendar/view",
     "/healthcalendar/view/[date]": "/healthcalendar/view/[date]",
     "/healthcalendar/debug": "/healthcalendar/debug",
+    "/healthcalendar/users": "/healthcalendar/users",
+    "/healthcalendar/users/[userId]": "/healthcalendar/users/[userId]",
+    "/healthcalendar/users/[userId]/permissions": "/healthcalendar/users/[userId]/permissions",
     "/api/chat": "/api/chat",
   },
 })
