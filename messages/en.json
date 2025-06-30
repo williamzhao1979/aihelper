@@ -149,6 +149,7 @@
     "capturedImage": "Captured Image",
     "original": "Original",
     "processed": "Processed",
+    "requestingPermission": "Requesting camera permission...",
     "permissionGranted": "Camera permission granted",
     "permissionDenied": "Camera permission denied",
     "permissionDeniedHelp": "Please allow camera access in your browser settings, or click the button below to retry",

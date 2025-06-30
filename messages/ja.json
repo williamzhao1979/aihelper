@@ -149,6 +149,7 @@
     "capturedImage": "撮影された画像",
     "original": "オリジナル",
     "processed": "処理済み",
+    "requestingPermission": "カメラの許可を要求中...",
     "permissionGranted": "カメラの許可が付与されました",
     "permissionDenied": "カメラの許可が拒否されました",
     "permissionDeniedHelp": "ブラウザの設定でカメラアクセスを許可するか、下のボタンをクリックして再試行してください",

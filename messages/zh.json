@@ -149,6 +149,7 @@
     "capturedImage": "拍摄的图片",
     "original": "原始",
     "processed": "处理",
+    "requestingPermission": "请求摄像头权限...",
     "permissionGranted": "摄像头权限已授予",
     "permissionDenied": "摄像头权限被拒绝",
     "permissionDeniedHelp": "请在浏览器设置中允许摄像头访问，或点击下方按钮重试",

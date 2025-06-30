@@ -83,48 +83,98 @@ const processURLs = (text: string): URLMatch[] => {
   for (const typo in typoMap) {
     cleanText = cleanText.replace(new RegExp(typo, 'gi'), typoMap[typo]);
   }
+  
   const urlMatches: URLMatch[] = [];
-  const urlStartRegex = /(https?:\/\/|www\.)/gi;
+  
+  // 改进的URL正则表达式，更好地处理完整URL
+  const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
   let match;
-  while ((match = urlStartRegex.exec(cleanText)) !== null) {
-    let start = match.index;
-    let end = start + match[0].length;
+  
+  while ((match = urlRegex.exec(cleanText)) !== null) {
     let url = match[0];
-    const rest = cleanText.slice(end);
-    const urlBodyMatch = rest.match(/^([\w\-\./]+(\s+[\w\-\./]+)*)/);
-    if (urlBodyMatch) {
-      let body = urlBodyMatch[0].replace(/\s+/g, '');
-      if (/([a-zA-Z0-9]+\s+[a-zA-Z0-9]+)/.test(urlBodyMatch[0])) {
-        body = urlBodyMatch[0].replace(/\s+/g, '.');
-      }
-      url += body;
-      end += urlBodyMatch[0].length;
-    }
+    const start = match.index;
+    let end = start + url.length;
+    
+    // 清理URL末尾的标点符号
     url = url.replace(/[\.,;:!?)\]]+$/, '');
-    urlMatches.push({
-      original: cleanText.slice(start, end),
-      processed: url,
-      type: 'complete',
-      position: { start, end }
-    });
+    
+    // 确保URL有协议
+    if (url.startsWith('www.')) {
+      url = 'https://' + url;
+    }
+    
+    // 验证URL格式
+    try {
+      new URL(url);
+      urlMatches.push({
+        original: cleanText.slice(start, end),
+        processed: url,
+        type: 'complete',
+        position: { start, end }
+      });
+    } catch (e) {
+      // 如果URL格式无效，尝试修复
+      const fixedUrl = fixUrl(url);
+      if (fixedUrl) {
+        urlMatches.push({
+          original: cleanText.slice(start, end),
+          processed: fixedUrl,
+          type: 'complete',
+          position: { start, end }
+        });
+      }
+    }
   }
-  const fuzzyRegex = /([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}/g;
-  let fuzzyMatch: RegExpExecArray | null;
-  while ((fuzzyMatch = fuzzyRegex.exec(cleanText)) !== null) {
+  
+  // 模糊匹配：查找可能的域名
+  const domainRegex = /([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}/g;
+  let domainMatch;
+  
+  while ((domainMatch = domainRegex.exec(cleanText)) !== null) {
+    const domain = domainMatch[0];
+    const start = domainMatch.index;
+    const end = start + domain.length;
+    
+    // 检查是否已经被完整URL匹配覆盖
     const isOverlapped = urlMatches.some(m =>
-      m.position.start <= fuzzyMatch!.index && m.position.end >= fuzzyMatch!.index + fuzzyMatch![0].length
+      m.position.start <= start && m.position.end >= end
     );
+    
     if (!isOverlapped) {
       urlMatches.push({
-        original: fuzzyMatch[0],
-        processed: `https://${fuzzyMatch[0]}`,
+        original: domain,
+        processed: `https://${domain}`,
         type: 'fuzzy',
-        position: { start: fuzzyMatch.index!, end: fuzzyMatch.index! + fuzzyMatch[0].length }
+        position: { start, end }
       });
     }
   }
+  
   return urlMatches.sort((a, b) => a.position.start - b.position.start);
-}
+};
+
+// 辅助函数：修复URL格式
+const fixUrl = (url: string): string | null => {
+  // 移除多余的空格和换行
+  url = url.replace(/\s+/g, '');
+  
+  // 如果URL包含多个连续的斜杠，保留协议部分
+  if (url.includes('://')) {
+    const [protocol, rest] = url.split('://');
+    if (protocol && rest) {
+      // 清理路径部分的多余字符
+      const cleanRest = rest.replace(/[^\w\-\.\/\?\=\&\#]/g, '');
+      return `${protocol}://${cleanRest}`;
+    }
+  }
+  
+  // 如果是www开头的域名
+  if (url.startsWith('www.')) {
+    return `https://${url}`;
+  }
+  
+  return null;
+};
 
 const HighlightedText = ({ text, urlMatches }: { text: string; urlMatches: URLMatch[] }) => {
   const segments: Array<{ text: string; isUrl: boolean; url?: string; type?: string }> = []
@@ -150,19 +200,38 @@ const HighlightedText = ({ text, urlMatches }: { text: string; urlMatches: URLMa
       isUrl: false
     })
   }
+  
+  const handleCopyUrl = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      // 可以添加一个简单的toast提示
+      console.log('URL copied to clipboard:', url);
+    } catch (err) {
+      console.error('Failed to copy URL:', err);
+    }
+  };
+  
   return (
     <div className="text-sm leading-relaxed whitespace-pre-wrap">
       {segments.map((segment, index) => (
         segment.isUrl ? (
-          <a
-            key={index}
-            href={segment.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`$${segment.type === 'complete' ? 'bg-blue-100 text-blue-800 border-b border-blue-300' : 'bg-green-100 text-green-800 border-b border-green-300'} px-1 rounded hover:underline`}
-          >
-            {segment.text}
-          </a>
+          <span key={index} className="inline-flex items-center gap-1">
+            <a
+              href={segment.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${segment.type === 'complete' ? 'bg-blue-100 text-blue-800 border-b border-blue-300' : 'bg-green-100 text-green-800 border-b border-green-300'} px-1 rounded hover:underline`}
+            >
+              {segment.text}
+            </a>
+            <button
+              onClick={() => handleCopyUrl(segment.url!)}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              title="Copy URL"
+            >
+              <Copy className="w-3 h-3 text-gray-500 hover:text-gray-700" />
+            </button>
+          </span>
         ) : (
           <span key={index}>{segment.text}</span>
         )
@@ -197,12 +266,7 @@ const PermissionStatus = ({ status, onRequestPermission, t }: {
 }) => {
   switch (status) {
     case 'granted':
-      return (
-        <div className="flex items-center gap-2 text-green-600">
-          <CheckCircle className="w-4 h-4" />
-          <span className="text-sm">{t('permissionGranted')}</span>
-        </div>
-      )
+      return null; // 权限已授予时不显示任何内容，避免影响预览
     case 'denied':
       return (
         <div className="space-y-3">
@@ -244,6 +308,12 @@ const PermissionStatus = ({ status, onRequestPermission, t }: {
         </div>
       )
     case 'prompt':
+      return (
+        <div className="flex items-center gap-2 text-blue-600">
+          <AlertCircle className="w-4 h-4" />
+          <span className="text-sm">{t('requestingPermission') || 'Requesting camera permission...'}</span>
+        </div>
+      )
     default:
       return null;
   }
@@ -511,6 +581,42 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
   const [localResult, setLocalResult] = useState<OCRResult | null>(null);
   const [openaiResult, setOpenaiResult] = useState<OCRResult | null>(null);
   const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null);
+  const [currentCamera, setCurrentCamera] = useState<'environment' | 'user'>('environment');
+
+  // 拷贝URL函数
+  const handleCopyUrl = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      console.log('URL copied to clipboard:', url);
+    } catch (err) {
+      console.error('Failed to copy URL:', err);
+    }
+  };
+
+  // 切换摄像头
+  const switchCamera = async () => {
+    if (state.cameraStream) {
+      state.cameraStream.getTracks().forEach(track => track.stop());
+    }
+    const newCamera = currentCamera === 'environment' ? 'user' : 'environment';
+    setCurrentCamera(newCamera);
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: newCamera,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        } 
+      });
+      setState(s => ({ ...s, cameraStream: stream, error: null }));
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (e: any) {
+      setState(s => ({ ...s, error: t('camera_switch_failed') }));
+    }
+  };
 
   // 摄像头权限和流初始化
   useEffect(() => {
@@ -519,13 +625,35 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
     const getCamera = async () => {
       setState(s => ({ ...s, isCheckingPermission: true, error: null }));
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        // 优先使用后置摄像头（environment），如果失败则回退到前置摄像头
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'environment',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+          } 
+        });
         setState(s => ({ ...s, cameraStream: stream, permissionStatus: 'granted', isCheckingPermission: false }));
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
       } catch (e: any) {
-        setState(s => ({ ...s, error: t('camera_permission_denied'), permissionStatus: 'denied', isCheckingPermission: false }));
+        // 如果后置摄像头失败，尝试前置摄像头
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+              facingMode: 'user',
+              width: { ideal: 1920 },
+              height: { ideal: 1080 }
+            } 
+          });
+          setState(s => ({ ...s, cameraStream: stream, permissionStatus: 'granted', isCheckingPermission: false }));
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        } catch (fallbackError: any) {
+          setState(s => ({ ...s, error: t('camera_permission_denied'), permissionStatus: 'denied', isCheckingPermission: false }));
+        }
       }
     };
     getCamera();
@@ -625,6 +753,7 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
     setLocalResult(null);
     setOpenaiResult(null);
     setComparisonResult(null);
+    setCurrentCamera('environment'); // 重置为后置摄像头
     setState(s => ({
       ...s,
       isCapturing: true,
@@ -642,8 +771,8 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
   return (
     <div className="flex flex-col items-center justify-center w-full min-h-[60vh] p-4">
       {/* 标题和描述区 */}
-      <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent mb-4">
+      <div className="text-center mb-2">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent mb-2">
           {t('title')}
         </h1>
       </div>
@@ -666,20 +795,41 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
           />
         )}
         <canvas ref={canvasRef} className="hidden" />
+        
+        {/* 摄像头切换按钮 */}
+        {state.isCapturing && state.permissionStatus === 'granted' && (
+          <button
+            onClick={switchCamera}
+            className="absolute top-2 right-2 z-40 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+            title={currentCamera === 'environment' ? '切换到前置摄像头' : '切换到后置摄像头'}
+          >
+            <RotateCw className="w-4 h-4" />
+          </button>
+        )}
+        
         {/* 遮罩禁用层 */}
         {!state.isCapturing && (
           <div className="absolute inset-0 bg-white/70 z-10 flex items-center justify-center" />
         )}
-        {/* 权限/错误提示 */}
-        <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-          <PermissionStatus status={state.permissionStatus} onRequestPermission={() => setState(s => ({ ...s, isCapturing: true, error: null, permissionStatus: 'prompt' }))} t={t} />
-        </div>
+        
+        {/* 错误提示 */}
         {state.error && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-30">
             <div className="text-red-600 text-center">{state.error}</div>
           </div>
         )}
       </div>
+      
+      {/* 权限状态提示 - 只在需要时显示 */}
+      {(state.permissionStatus === 'denied' || state.permissionStatus === 'unsupported' || state.permissionStatus === 'prompt') && (
+        <div className="mt-2">
+          <PermissionStatus 
+            status={state.permissionStatus} 
+            onRequestPermission={() => setState(s => ({ ...s, isCapturing: true, error: null, permissionStatus: 'prompt' }))} 
+            t={t} 
+          />
+        </div>
+      )}
       {/* 拍摄按钮（移动端浮动，桌面端覆盖视频中心） */}
       {isMobile
         ? <FloatingExtractButton onClick={handleCapture} disabled={state.isProcessing} t={t} isMobile={isMobile} orientation={orientation} isCapturing={state.isCapturing} isProcessing={state.isProcessing} />
@@ -765,15 +915,23 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
                       {localResult.urls.length > 0 ? (
                         <div className="space-y-1">
                           {localResult.urls.map((url, idx) => (
-                            <a
-                              key={idx}
-                              href={url.processed}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline text-sm block"
-                            >
-                              {url.processed}
-                            </a>
+                            <div key={idx} className="flex items-center justify-between group">
+                              <a
+                                href={url.processed}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline text-sm flex-1"
+                              >
+                                {url.processed}
+                              </a>
+                              <button
+                                onClick={() => handleCopyUrl(url.processed)}
+                                className="p-1 hover:bg-gray-100 rounded transition-colors opacity-0 group-hover:opacity-100"
+                                title="Copy URL"
+                              >
+                                <Copy className="w-3 h-3 text-gray-500 hover:text-gray-700" />
+                              </button>
+                            </div>
                           ))}
                         </div>
                       ) : (
@@ -829,15 +987,23 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
                       {openaiResult.urls.length > 0 ? (
                         <div className="space-y-1">
                           {openaiResult.urls.map((url, idx) => (
-                            <a
-                              key={idx}
-                              href={url.processed}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline text-sm block"
-                            >
-                              {url.processed}
-                            </a>
+                            <div key={idx} className="flex items-center justify-between group">
+                              <a
+                                href={url.processed}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline text-sm flex-1"
+                              >
+                                {url.processed}
+                              </a>
+                              <button
+                                onClick={() => handleCopyUrl(url.processed)}
+                                className="p-1 hover:bg-gray-100 rounded transition-colors opacity-0 group-hover:opacity-100"
+                                title="Copy URL"
+                              >
+                                <Copy className="w-3 h-3 text-gray-500 hover:text-gray-700" />
+                              </button>
+                            </div>
                           ))}
                         </div>
                       ) : (
