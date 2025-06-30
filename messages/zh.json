@@ -169,6 +169,8 @@
     "ocrError": "OCR识别失败，请重试",
     "reRecognize": "重新识别",
     "retryCamera": "重试摄像头",
-    "viewResults": "查看结果"
+    "viewResults": "查看结果",
+    "ocr_text": "OCR识别文本",
+    "result_card_title": "识别结果"
   }
 }
