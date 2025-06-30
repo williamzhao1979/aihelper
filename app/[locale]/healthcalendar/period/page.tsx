@@ -1,9 +1,10 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
@@ -13,13 +14,16 @@ import { useHealthDatabase } from "@/hooks/use-health-database"
 import { useUserManagement } from "@/hooks/use-user-management"
 import { useToast } from "@/hooks/use-toast"
 import { getLocalDateString, getLocalDateTimeString } from "@/lib/utils"
+import InlineUserSelector, { type UserProfile } from "@/components/healthcalendar/shared/inline-user-selector"
 
 export default function PeriodRecordPage() {
   const router = useRouter()
   const { toast } = useToast()
   const { saveRecord, isInitialized } = useHealthDatabase()
-  const { getPrimaryUser } = useUserManagement()
+  const { getPrimaryUser, users: availableUsers } = useUserManagement()
   
+  const [recordDateTime, setRecordDateTime] = useState<string>(getLocalDateTimeString())
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
   const [flow, setFlow] = useState<string>("")
   const [pain, setPain] = useState<string>("")
   const [mood, setMood] = useState<string>("")
@@ -48,7 +52,8 @@ export default function PeriodRecordPage() {
 
   const symptomOptions = [
     "腹痛", "腰痛", "乳房胀痛", "头痛", "疲劳", "情绪波动", 
-    "食欲变化", "失眠", "便秘", "腹泻", "水肿", "痤疮"
+    "食欲变化", "失眠", "便秘", "腹泻", "水肿", "痤疮",
+    "开始", "结束", "基本结束", "少量", "中等", "大量"
   ]
 
   const handleSymptomToggle = (symptom: string) => {
@@ -69,21 +74,22 @@ export default function PeriodRecordPage() {
       return
     }
 
+    if (!selectedUser) {
+      toast({
+        title: "验证失败",
+        description: "请选择一个用户",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSubmitting(true)
     
     try {
-      // 获取当前用户信息
-      const currentUser = getPrimaryUser()
-      
-      // 获取当前时间
-      const now = new Date()
-      const localDate = getLocalDateString(now)
-      const localDateTime = getLocalDateTimeString(now)
-      
       // 准备记录数据
       const recordData = {
-        date: localDate,
-        datetime: localDateTime,
+        date: getLocalDateString(new Date(recordDateTime)),
+        datetime: recordDateTime,
         type: "period" as const,
         flow,
         pain,
@@ -91,9 +97,9 @@ export default function PeriodRecordPage() {
         symptoms,
         notes: notes.trim(),
         // 多用户字段
-        uniqueOwnerId: currentUser?.uniqueOwnerId || "user_001",
-        ownerId: currentUser?.ownerId || "device_001",
-        ownerName: currentUser?.nickname || "本人"
+        uniqueOwnerId: selectedUser.uniqueOwnerId,
+        ownerId: selectedUser.ownerId,
+        ownerName: selectedUser.ownerName
       }
 
       const recordId = await saveRecord(recordData)
@@ -101,7 +107,7 @@ export default function PeriodRecordPage() {
       console.log("例假记录保存成功:", recordId)
       toast({
         title: "保存成功",
-        description: "例假记录已保存到本地数据库",
+        description: `已为 ${selectedUser.nickname} 保存例假记录`,
       })
       
       // 延迟跳转，让用户看到成功提示
@@ -147,30 +153,59 @@ export default function PeriodRecordPage() {
       </div>
 
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* 流量强度 */}
+        {/* 用户选择器 - 内联在页面头部 */}
+        <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
+          <CardContent className="p-4">
+            <InlineUserSelector
+              selectedUser={selectedUser}
+              onUserChange={setSelectedUser}
+              availableUsers={availableUsers}
+              recordType="period"
+            />
+          </CardContent>
+        </Card>
+
+        {/* 日期时间 */}
+        <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle>日期时间</CardTitle>
+          </CardHeader>
+          <CardContent className="pb-2">
+            <div className="space-y-3">
+              <Input
+                id="record-datetime"
+                type="datetime-local"
+                value={recordDateTime}
+                onChange={(e) => setRecordDateTime(e.target.value)}
+                className="w-full"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+
+        {/* 症状选择 */}
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Heart className="h-5 w-5 text-red-600" />
-              <span>流量强度</span>
-            </CardTitle>
+            <CardTitle>身体感觉</CardTitle>
           </CardHeader>
           <CardContent>
-            <Select value={flow} onValueChange={setFlow}>
-              <SelectTrigger>
-                <SelectValue placeholder="选择流量强度" />
-              </SelectTrigger>
-              <SelectContent>
-                {flowOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{option.label}</span>
-                      <span className="text-xs text-gray-500">{option.description}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap gap-2">
+              {symptomOptions.map(symptom => (
+                <Badge
+                  key={symptom}
+                  variant={symptoms.includes(symptom) ? "default" : "outline"}
+                  className={`cursor-pointer transition-colors ${
+                    symptoms.includes(symptom)
+                      ? "bg-red-600 hover:bg-red-700"
+                      : "hover:bg-gray-100"
+                  }`}
+                  onClick={() => handleSymptomToggle(symptom)}
+                >
+                  {symptom}
+                </Badge>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
@@ -228,31 +263,6 @@ export default function PeriodRecordPage() {
           </CardContent>
         </Card>
 
-        {/* 症状选择 */}
-        <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
-          <CardHeader>
-            <CardTitle>症状</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {symptomOptions.map(symptom => (
-                <Badge
-                  key={symptom}
-                  variant={symptoms.includes(symptom) ? "default" : "outline"}
-                  className={`cursor-pointer transition-colors ${
-                    symptoms.includes(symptom)
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "hover:bg-gray-100"
-                  }`}
-                  onClick={() => handleSymptomToggle(symptom)}
-                >
-                  {symptom}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* 备注 */}
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
           <CardHeader>
@@ -279,7 +289,7 @@ export default function PeriodRecordPage() {
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || !flow}
+            disabled={isSubmitting || !flow || !selectedUser}
             className="flex-1 bg-red-600 hover:bg-red-700"
           >
             {isSubmitting ? "保存中..." : "保存记录"}
