@@ -171,6 +171,9 @@
     "retryCamera": "重试摄像头",
     "viewResults": "查看结果",
     "ocr_text": "OCR识别文本",
+    "ocr_processing": "OCR识别中...",
+    "noTextFound": "未找到文字",
+    "extracted_urls": "URL",
     "result_card_title": "识别结果"
   }
 }

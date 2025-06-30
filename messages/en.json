@@ -171,6 +171,9 @@
     "retryCamera": "Retry Camera",
     "viewResults": "View Results",
     "ocr_text": "Recognized OCR Text",
+    "ocr_processing": "OCR processing...",
+    "noTextFound": "No text found",
+    "extracted_urls": "URL",
     "result_card_title": "Recognition Result"
   }
 }

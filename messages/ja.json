@@ -171,6 +171,9 @@
     "retryCamera": "カメラ再試行",
     "viewResults": "結果を表示",
     "ocr_text": "OCR認識テキスト",
+    "ocr_processing": "OCR認識中...",
+    "noTextFound": "テキストが見つかりません",
+    "extracted_urls": "URL",
     "result_card_title": "認識結果"
   }
 }

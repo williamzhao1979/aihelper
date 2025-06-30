@@ -223,19 +223,27 @@ const PermissionStatus = ({ status, onRequestPermission, t }: {
 };
 
 // FloatingExtractButton组件（从V1复制，适配V2状态）
-const FloatingExtractButton = ({ onClick, disabled, t }: { onClick: () => void; disabled: boolean; t: any }) => (
-  <Button
-    className="fixed bottom-8 right-8 z-50 rounded-full w-16 h-16 flex items-center justify-center shadow-lg bg-blue-600 hover:bg-blue-700 text-white text-2xl"
-    onClick={onClick}
-    disabled={disabled}
-    aria-label={t('extractUrl')}
-  >
-    <Camera className="w-8 h-8" />
-  </Button>
-);
+const FloatingExtractButton = ({ onClick, disabled, t, isMobile, orientation, isCapturing, isProcessing }: { onClick: () => void; disabled: boolean; t: any; isMobile: boolean; orientation: string; isCapturing: boolean; isProcessing: boolean }) => {
+  if (!isMobile || !isCapturing || isProcessing) return null;
+  const positionClass = orientation === 'landscape'
+    ? 'top-4 right-4'
+    : 'bottom-4 right-4';
+  return (
+    <button
+      onClick={onClick}
+      className={`fixed z-50 ${positionClass} bg-blue-600 text-white rounded-full shadow-lg p-4 flex items-center justify-center active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400`}
+      aria-label={t('extractUrl')}
+      style={{ minWidth: 56, minHeight: 56 }}
+      disabled={disabled}
+    >
+      <Camera className="w-7 h-7" />
+    </button>
+  );
+};
 
 export default function ExtractURLV2() {
   const t = useTranslations('extracturl');
+  const locale = useLocale();
   const isMobile = useIsMobile();
   const orientation = useOrientation();
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -280,38 +288,63 @@ export default function ExtractURLV2() {
     // eslint-disable-next-line
   }, [state.isCapturing]);
 
-  // 拍摄按钮点击
-  const handleCapture = () => {
+  // 拍摄按钮点击（真实OCR识别）
+  const handleCapture = async () => {
     if (!videoRef.current || !canvasRef.current) return;
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    canvas.width = vw;
+    canvas.height = vh;
     const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = preprocessCanvas(canvas);
-      setState(s => ({ ...s, capturedImage: dataUrl, isCapturing: false, isProcessing: true, ocrProgress: 0, ocrStatus: t('ocr_processing') }));
-      setModalOpen(true);
-      // 模拟OCR进度
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 20;
-        setState(s => ({ ...s, ocrProgress: Math.min(progress, 100) }));
-        if (progress >= 100) {
-          clearInterval(interval);
-          // 模拟OCR结果
-          const fakeText = 'Visit https://openai.com or www.example.com for more info.';
-          const urls = processURLs(fakeText);
-          setState(s => ({
-            ...s,
-            extractedText: fakeText,
-            extractedUrls: urls,
-            isProcessing: false,
-            ocrStatus: t('ocr_done'),
-          }));
-        }
-      }, 400);
+    if (!ctx) return;
+    ctx.save();
+    ctx.drawImage(video, 0, 0, vw, vh);
+    ctx.restore();
+    const processedImage = preprocessCanvas(canvas);
+    setState(s => ({
+      ...s,
+      capturedImage: processedImage,
+      isProcessing: true,
+      ocrProgress: 0,
+      ocrStatus: t('ocr_processing'),
+      isCapturing: false
+    }));
+    setModalOpen(true);
+    // 真实OCR识别
+    try {
+      let lang = 'eng';
+      if (locale === 'zh') lang = 'chi_sim+eng';
+      else if (locale === 'ja') lang = 'jpn+eng';
+      setState(s => ({ ...s, ocrProgress: 10, ocrStatus: t('initializingOCR') }));
+      const { createWorker } = await import('tesseract.js');
+      const worker = await createWorker();
+      setState(s => ({ ...s, ocrProgress: 20, ocrStatus: t('loadingLanguage') }));
+      await worker.load();
+      await (worker as any).loadLanguage(lang);
+      await (worker as any).initialize(lang);
+      setState(s => ({ ...s, ocrProgress: 40, ocrStatus: t('recognizingText') }));
+      const { data: { text } } = await worker.recognize(processedImage);
+      setState(s => ({ ...s, ocrProgress: 80, ocrStatus: t('extractingUrls') }));
+      const urls = processURLs(text);
+      setState(s => ({
+        ...s,
+        extractedText: text,
+        extractedUrls: urls,
+        isProcessing: false,
+        ocrProgress: 100,
+        ocrStatus: t('completed'),
+      }));
+      await worker.terminate();
+    } catch (error) {
+      setState(s => ({
+        ...s,
+        error: t('ocrError'),
+        isProcessing: false,
+        ocrProgress: 0,
+        ocrStatus: ''
+      }));
     }
   };
 
@@ -373,10 +406,21 @@ export default function ExtractURLV2() {
           </div>
         )}
       </div>
-      {/* 拍摄按钮（浮动按钮，移动端适配） */}
-      {state.isCapturing && !state.error && (
-        <FloatingExtractButton onClick={handleCapture} disabled={state.isProcessing} t={t} />
-      )}
+      {/* 拍摄按钮（移动端浮动，桌面端覆盖视频中心） */}
+      {isMobile
+        ? <FloatingExtractButton onClick={handleCapture} disabled={state.isProcessing} t={t} isMobile={isMobile} orientation={orientation} isCapturing={state.isCapturing} isProcessing={state.isProcessing} />
+        : (state.isCapturing && !state.error &&
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <Button
+              onClick={handleCapture}
+              size="lg"
+              className="bg-white text-gray-900 hover:bg-gray-100 shadow-lg border-2 border-white pointer-events-auto"
+            >
+              <Camera className="w-6 h-6 mr-2" />
+              {t('extractUrl')}
+            </Button>
+          </div>
+        )}
       {/* Modal结果卡片 */}
       <Dialog open={modalOpen} onOpenChange={open => { if (!open) handleRetake(); }}>
         <DialogContent className="max-w-md w-full">
@@ -403,31 +447,56 @@ export default function ExtractURLV2() {
               className="w-full rounded-lg my-2 border"
             />
           )}
-          {/* URL提取 */}
-          {state.extractedUrls.length > 0 && (
-            <div className="my-2">
-              <div className="font-semibold mb-1 flex items-center gap-2"><Link className="w-4 h-4" />{t('extracted_urls') || 'Extracted URLs'}</div>
-              <div className="flex flex-col gap-1">
-                {state.extractedUrls.map((url, idx) => (
-                  <a
-                    key={idx}
-                    href={url.processed}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-700 underline text-sm break-all"
-                  >
-                    {url.processed}
-                  </a>
-                ))}
-              </div>
+          {/* 识别文本（始终显示） */}
+          <div className="my-2">
+            <div className="font-semibold mb-1 flex items-center gap-2">
+              <Badge>{t('ocr_text') || 'Recognized Text'}</Badge>
             </div>
-          )}
-          {/* 识别文本 */}
+            {state.extractedText
+              ? <HighlightedText text={state.extractedText} urlMatches={state.extractedUrls} />
+              : <div className="text-gray-400 text-sm">{t('noTextFound') || 'No text recognized.'}</div>
+            }
+          </div>
+          {/* URL提取（始终显示） */}
+          <div className="my-2">
+            <div className="font-semibold mb-1 flex items-center gap-2">
+              <Link className="w-4 h-4" />
+              {t('extracted_urls') || 'Extracted URLs'}
+            </div>
+            {state.extractedUrls.length > 0
+              ? (
+                <div className="flex flex-col gap-1">
+                  {state.extractedUrls.map((url, idx) => (
+                    <a
+                      key={idx}
+                      href={url.processed}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-700 underline text-sm break-all"
+                    >
+                      {url.processed}
+                    </a>
+                  ))}
+                </div>
+              )
+              : <div className="text-gray-400 text-sm">{t('noUrlsFound') || 'No URLs found.'}</div>
+            }
+          </div>
+          {/* 识别文本卡片（V1风格） */}
           {state.extractedText && (
-            <div className="my-2">
-              <div className="font-semibold mb-1 flex items-center gap-2"><Badge>{t('ocr_text') || 'Recognized Text'}</Badge></div>
-              <HighlightedText text={state.extractedText} urlMatches={state.extractedUrls} />
-            </div>
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Link className="w-5 h-5" />
+                  {t('extractedText') || 'Recognized Text'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <HighlightedText text={state.extractedText} urlMatches={state.extractedUrls} />
+                </div>
+              </CardContent>
+            </Card>
           )}
           {/* 重新拍摄按钮 */}
           <Button
