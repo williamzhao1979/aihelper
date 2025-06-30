@@ -11,6 +11,7 @@ import { DonationProvider } from "@/components/donation-provider"
 import { DonationButton } from "@/components/donation-button"
 import { DonationModal } from "@/components/donation-modal"
 import LanguageSwitcher from "@/components/language-switcher"
+import { useIsMobile, useOrientation } from '@/hooks/use-mobile'
 
 interface URLMatch {
   original: string
@@ -286,6 +287,9 @@ export default function ExtractURLPage() {
   const [pendingStream, setPendingStream] = useState<MediaStream | null>(null);
   // 图片旋转角度
   const [rotation, setRotation] = useState(0);
+
+  const isMobile = useIsMobile();
+  const orientation = useOrientation();
 
   // 绑定摄像头流到video（确保videoRef已挂载）
   useEffect(() => {
@@ -634,8 +638,29 @@ export default function ExtractURLPage() {
     }
   }, [state.cameraStream])
 
+  // 悬浮提取按钮组件
+  const FloatingExtractButton = () => {
+    if (!isMobile || !state.isCapturing || state.isProcessing) return null;
+    // 横屏时右上，竖屏时右下
+    const positionClass = orientation === 'landscape'
+      ? 'top-4 right-4'
+      : 'bottom-4 right-4';
+    return (
+      <button
+        onClick={captureImage}
+        className={`fixed z-50 ${positionClass} bg-blue-600 text-white rounded-full shadow-lg p-4 flex items-center justify-center active:scale-95 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-400`}
+        aria-label={t('extracturl.extractUrl')}
+        style={{ minWidth: 56, minHeight: 56 }}
+      >
+        <Camera className="w-7 h-7" />
+      </button>
+    );
+  };
+
   return (
     <DonationProvider>
+      {/* 悬浮提取按钮（仅移动端） */}
+      <FloatingExtractButton />
       {/* 右上角固定容器 */}
       <div className="flex justify-end top-4 right-4 z-50 flex items-center gap-4">
         {/* Language Selection */}
@@ -749,20 +774,20 @@ export default function ExtractURLPage() {
                       className="w-full rounded-lg border"
                     />
                     <canvas ref={canvasRef} className="hidden" />
-                    
-                    {/* Overlay with Extract Button */}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-lg">
-                      <Button 
-                        onClick={captureImage} 
-                        size="lg"
-                        className="bg-white text-gray-900 hover:bg-gray-100 shadow-lg border-2 border-white"
-                      >
-                        <Camera className="w-6 h-6 mr-2" />
-                        {t('extracturl.extractUrl')}
-                      </Button>
-                    </div>
+                    {/* Overlay with Extract Button (仅桌面端) */}
+                    {!isMobile && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-lg">
+                        <Button 
+                          onClick={captureImage} 
+                          size="lg"
+                          className="bg-white text-gray-900 hover:bg-gray-100 shadow-lg border-2 border-white"
+                        >
+                          <Camera className="w-6 h-6 mr-2" />
+                          {t('extracturl.extractUrl')}
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  
                   {/* Camera Controls */}
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={stopCamera} className="flex-1">
