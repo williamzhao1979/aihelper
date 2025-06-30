@@ -19,14 +19,13 @@ export function useIsMobile() {
 }
 
 export function useOrientation() {
-  const [orientation, setOrientation] = React.useState<'portrait' | 'landscape'>(
-    window.innerWidth > window.innerHeight ? 'landscape' : 'portrait'
-  );
+  const [orientation, setOrientation] = React.useState<'portrait' | 'landscape'>('portrait');
 
   React.useEffect(() => {
-    const handleResize = () => {
-      setOrientation(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
-    };
+    const getOrientation = () =>
+      window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+    setOrientation(getOrientation());
+    const handleResize = () => setOrientation(getOrientation());
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
