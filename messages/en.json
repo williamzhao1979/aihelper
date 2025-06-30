@@ -174,6 +174,7 @@
     "ocr_processing": "OCR processing...",
     "noTextFound": "No text found",
     "extracted_urls": "URL",
+    "close": "Close",
     "result_card_title": "Recognition Result"
   }
 }

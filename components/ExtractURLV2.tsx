@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { AlertCircle, Camera, Copy, Link, RefreshCw, X, CheckCircle, Settings, RotateCw, RotateCcw } from "lucide-react"
+import { AlertCircle, Camera, Copy, Link, RefreshCw, X, CheckCircle, Settings, RotateCw, RotateCcw, Star, Clock, Target } from "lucide-react"
 import { useLocale } from "next-intl"
 import { useTranslations } from "next-intl"
 import { useIsMobile, useOrientation } from '@/hooks/use-mobile'
@@ -28,6 +28,33 @@ interface ExtractURLState {
   isCheckingPermission: boolean
   ocrProgress: number
   ocrStatus: string
+}
+
+interface ExtractURLV2Props {
+  aiProviders: string[];
+}
+
+interface OCRResult {
+  text: string
+  urls: URLMatch[]
+  loading: boolean
+  error?: string
+  confidence?: number
+  processingTime?: number
+  source: 'local' | 'openai'
+}
+
+interface TextDiff {
+  type: 'same' | 'different' | 'local-only' | 'openai-only'
+  text: string
+  originalText: string
+}
+
+interface ComparisonResult {
+  textSimilarity: number
+  urlSimilarity: number
+  recommendedSource: 'local' | 'openai' | 'both'
+  differences: TextDiff[]
 }
 
 const processURLs = (text: string): URLMatch[] => {
@@ -145,7 +172,7 @@ const HighlightedText = ({ text, urlMatches }: { text: string; urlMatches: URLMa
 }
 
 const preprocessCanvas = (canvas: HTMLCanvasElement): string => {
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) return canvas.toDataURL('image/jpeg', 0.8);
   const imageDataObj = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageDataObj.data;
@@ -241,7 +268,226 @@ const FloatingExtractButton = ({ onClick, disabled, t, isMobile, orientation, is
   );
 };
 
-export default function ExtractURLV2() {
+// 工具函数：计算编辑距离
+const levenshteinDistance = (str1: string, str2: string): number => {
+  const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
+  
+  for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
+  
+  for (let j = 1; j <= str2.length; j++) {
+    for (let i = 1; i <= str1.length; i++) {
+      const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1,
+        matrix[j - 1][i] + 1,
+        matrix[j - 1][i - 1] + indicator
+      );
+    }
+  }
+  
+  return matrix[str2.length][str1.length];
+};
+
+// 工具函数：计算文本相似度
+const calculateTextSimilarity = (text1: string, text2: string): number => {
+  if (!text1 || !text2) return 0;
+  const distance = levenshteinDistance(text1, text2);
+  const maxLength = Math.max(text1.length, text2.length);
+  return Math.max(0, 1 - distance / maxLength);
+};
+
+// 工具函数：URL标准化
+const normalizeUrl = (url: string): string => {
+  return url.toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '')
+    .replace(/www\./, '');
+};
+
+// 工具函数：计算URL相似度
+const calculateUrlSimilarity = (urls1: URLMatch[], urls2: URLMatch[]): number => {
+  if (urls1.length === 0 && urls2.length === 0) return 1;
+  if (urls1.length === 0 || urls2.length === 0) return 0;
+  
+  const normalized1 = urls1.map(u => normalizeUrl(u.processed));
+  const normalized2 = urls2.map(u => normalizeUrl(u.processed));
+  
+  const intersection = normalized1.filter(url => normalized2.includes(url));
+  const union = [...new Set([...normalized1, ...normalized2])];
+  
+  return intersection.length / union.length;
+};
+
+// 工具函数：计算置信度
+const calculateConfidence = (result: OCRResult, imageQuality?: number): number => {
+  if (result.error) return 0;
+  
+  let confidence = 0.5; // 基础置信度
+  
+  // 基于文本长度
+  if (result.text.length > 0) {
+    confidence += 0.2;
+  }
+  
+  // 基于URL数量
+  if (result.urls.length > 0) {
+    confidence += 0.1;
+  }
+  
+  // 基于处理时间（本地识别越快越好，OpenAI越慢越准确）
+  if (result.processingTime) {
+    if (result.source === 'local' && result.processingTime < 3000) {
+      confidence += 0.1;
+    } else if (result.source === 'openai' && result.processingTime > 5000) {
+      confidence += 0.1;
+    }
+  }
+  
+  // 基于源类型
+  if (result.source === 'openai') {
+    confidence += 0.1; // OpenAI默认更高置信度
+  }
+  
+  return Math.min(1, confidence);
+};
+
+// 工具函数：生成文本差异
+const generateTextDiff = (localText: string, openaiText: string): TextDiff[] => {
+  const diffs: TextDiff[] = [];
+  
+  // 简单实现：按句子分割比较
+  const localSentences = localText.split(/[.!?。！？]/).filter(s => s.trim());
+  const openaiSentences = openaiText.split(/[.!?。！？]/).filter(s => s.trim());
+  
+  const maxLength = Math.max(localSentences.length, openaiSentences.length);
+  
+  for (let i = 0; i < maxLength; i++) {
+    const localSentence = localSentences[i] || '';
+    const openaiSentence = openaiSentences[i] || '';
+    
+    if (localSentence && openaiSentence) {
+      const similarity = calculateTextSimilarity(localSentence, openaiSentence);
+      if (similarity > 0.8) {
+        diffs.push({
+          type: 'same',
+          text: localSentence,
+          originalText: localSentence
+        });
+      } else {
+        diffs.push({
+          type: 'different',
+          text: localSentence,
+          originalText: openaiSentence
+        });
+      }
+    } else if (localSentence) {
+      diffs.push({
+        type: 'local-only',
+        text: localSentence,
+        originalText: localSentence
+      });
+    } else if (openaiSentence) {
+      diffs.push({
+        type: 'openai-only',
+        text: openaiSentence,
+        originalText: openaiSentence
+      });
+    }
+  }
+  
+  return diffs;
+};
+
+// 工具函数：比较结果
+const compareResults = (localResult: OCRResult, openaiResult: OCRResult): ComparisonResult => {
+  const textSimilarity = calculateTextSimilarity(localResult.text, openaiResult.text);
+  const urlSimilarity = calculateUrlSimilarity(localResult.urls, openaiResult.urls);
+  
+  let recommendedSource: 'local' | 'openai' | 'both' = 'both';
+  
+  if (localResult.confidence && openaiResult.confidence) {
+    if (openaiResult.confidence > localResult.confidence + 0.1) {
+      recommendedSource = 'openai';
+    } else if (localResult.confidence > openaiResult.confidence + 0.1) {
+      recommendedSource = 'local';
+    }
+  }
+  
+  const differences = generateTextDiff(localResult.text, openaiResult.text);
+  
+  return {
+    textSimilarity,
+    urlSimilarity,
+    recommendedSource,
+    differences
+  };
+};
+
+// 工具函数：渲染置信度星星
+const ConfidenceStars = ({ confidence }: { confidence: number }) => {
+  const stars = [];
+  const fullStars = Math.floor(confidence * 5);
+  const hasHalfStar = confidence * 5 % 1 >= 0.5;
+  
+  for (let i = 0; i < 5; i++) {
+    if (i < fullStars) {
+      stars.push(<Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />);
+    } else if (i === fullStars && hasHalfStar) {
+      stars.push(<Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" style={{ clipPath: 'inset(0 50% 0 0)' }} />);
+    } else {
+      stars.push(<Star key={i} className="w-4 h-4 text-gray-300" />);
+    }
+  }
+  
+  return <div className="flex gap-1">{stars}</div>;
+};
+
+// 工具函数：渲染进度条
+const ProgressBar = ({ value, max = 100, className = "" }: { value: number; max?: number; className?: string }) => {
+  const percentage = (value / max) * 100;
+  return (
+    <div className={`w-full bg-gray-200 rounded-full h-2 ${className}`}>
+      <div
+        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+        style={{ width: `${percentage}%` }}
+      />
+    </div>
+  );
+};
+
+// 工具函数：渲染文本差异
+const TextDiffDisplay = ({ diffs }: { diffs: TextDiff[] }) => {
+  return (
+    <div className="space-y-2">
+      {diffs.map((diff, index) => (
+        <div key={index} className={`p-2 rounded text-sm ${
+          diff.type === 'same' ? 'bg-green-50 border border-green-200' :
+          diff.type === 'different' ? 'bg-yellow-50 border border-yellow-200' :
+          diff.type === 'local-only' ? 'bg-blue-50 border border-blue-200' :
+          'bg-purple-50 border border-purple-200'
+        }`}>
+          <div className="flex items-center gap-2 mb-1">
+            {diff.type === 'same' && <CheckCircle className="w-3 h-3 text-green-600" />}
+            {diff.type === 'different' && <AlertCircle className="w-3 h-3 text-yellow-600" />}
+            {diff.type === 'local-only' && <span className="text-blue-600 text-xs">本地独有</span>}
+            {diff.type === 'openai-only' && <span className="text-purple-600 text-xs">OpenAI独有</span>}
+          </div>
+          <div className="font-mono text-xs">
+            {diff.text}
+          </div>
+          {diff.type === 'different' && (
+            <div className="text-xs text-gray-500 mt-1">
+              OpenAI: {diff.originalText}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
   const t = useTranslations('extracturl');
   const locale = useLocale();
   const isMobile = useIsMobile();
@@ -262,6 +508,9 @@ export default function ExtractURLV2() {
     ocrStatus: '',
   });
   const [modalOpen, setModalOpen] = useState(false);
+  const [localResult, setLocalResult] = useState<OCRResult | null>(null);
+  const [openaiResult, setOpenaiResult] = useState<OCRResult | null>(null);
+  const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null);
 
   // 摄像头权限和流初始化
   useEffect(() => {
@@ -297,60 +546,85 @@ export default function ExtractURLV2() {
     const vh = video.videoHeight;
     canvas.width = vw;
     canvas.height = vh;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
     ctx.save();
     ctx.drawImage(video, 0, 0, vw, vh);
     ctx.restore();
     const processedImage = preprocessCanvas(canvas);
-    setState(s => ({
-      ...s,
-      capturedImage: processedImage,
-      isProcessing: true,
-      ocrProgress: 0,
-      ocrStatus: t('ocr_processing'),
-      isCapturing: false
-    }));
     setModalOpen(true);
-    // 真实OCR识别
-    try {
-      let lang = 'eng';
-      if (locale === 'zh') lang = 'chi_sim+eng';
-      else if (locale === 'ja') lang = 'jpn+eng';
-      setState(s => ({ ...s, ocrProgress: 10, ocrStatus: t('initializingOCR') }));
-      const { createWorker } = await import('tesseract.js');
-      const worker = await createWorker();
-      setState(s => ({ ...s, ocrProgress: 20, ocrStatus: t('loadingLanguage') }));
-      await worker.load();
-      await (worker as any).loadLanguage(lang);
-      await (worker as any).initialize(lang);
-      setState(s => ({ ...s, ocrProgress: 40, ocrStatus: t('recognizingText') }));
-      const { data: { text } } = await worker.recognize(processedImage);
-      setState(s => ({ ...s, ocrProgress: 80, ocrStatus: t('extractingUrls') }));
-      const urls = processURLs(text);
-      setState(s => ({
-        ...s,
-        extractedText: text,
-        extractedUrls: urls,
-        isProcessing: false,
-        ocrProgress: 100,
-        ocrStatus: t('completed'),
-      }));
-      await worker.terminate();
-    } catch (error) {
-      setState(s => ({
-        ...s,
-        error: t('ocrError'),
-        isProcessing: false,
-        ocrProgress: 0,
-        ocrStatus: ''
-      }));
+    // 清空结果，设置 loading
+    if (aiProviders.includes('local')) setLocalResult({ text: '', urls: [], loading: true, source: 'local' });
+    if (aiProviders.includes('openai')) setOpenaiResult({ text: '', urls: [], loading: true, source: 'openai' });
+    // 本地识别
+    if (aiProviders.includes('local')) {
+      (async () => {
+        try {
+          let lang = 'eng';
+          if (locale === 'zh') lang = 'chi_sim+eng';
+          else if (locale === 'ja') lang = 'jpn+eng';
+          console.log('[OCR] 开始本地识别，语言包:', lang);
+          const { createWorker } = await import('tesseract.js');
+          const worker = await createWorker(lang);
+          console.log('[OCR] worker initialized');
+          console.log('[OCR] 识别图片数据前100字符:', processedImage.slice(0, 100));
+          const { data: { text } } = await worker.recognize(processedImage);
+          console.log('[OCR] 识别完成，文本内容:', text);
+          await worker.terminate();
+          const startTime = Date.now();
+          const urls = processURLs(text);
+          const processingTime = Date.now() - startTime;
+          const result: OCRResult = { text, urls, loading: false, source: 'local', processingTime };
+          result.confidence = calculateConfidence(result);
+          setLocalResult(result);
+        } catch (e) {
+          console.error('[OCR] Tesseract.js 本地识别异常:', e);
+          setLocalResult({ text: '', urls: [], loading: false, error: t('ocrError'), source: 'local' });
+        }
+      })();
+    }
+    // OpenAI识别
+    if (aiProviders.includes('openai')) {
+      (async () => {
+        try {
+          const blob = await (await fetch(processedImage)).blob();
+          const formData = new FormData();
+          formData.append('image_0', blob, 'capture.jpg');
+          formData.append('mergeImages', 'false');
+          const res = await fetch('/api/ocr', { method: 'POST', body: formData });
+          const data = await res.json();
+          if (data.success && data.results?.[0]?.result?.text) {
+            const text = data.results[0].result.text;
+            const startTime = Date.now();
+            const urls = processURLs(text);
+            const processingTime = Date.now() - startTime;
+            const result: OCRResult = { text, urls, loading: false, source: 'openai', processingTime };
+            result.confidence = calculateConfidence(result);
+            setOpenaiResult(result);
+          } else {
+            setOpenaiResult({ text: '', urls: [], loading: false, error: data.error || t('ocrError'), source: 'openai' });
+          }
+        } catch (e) {
+          setOpenaiResult({ text: '', urls: [], loading: false, error: t('ocrError'), source: 'openai' });
+        }
+              })();
     }
   };
+
+  // 当两个结果都完成时，进行比较
+  useEffect(() => {
+    if (localResult && !localResult.loading && openaiResult && !openaiResult.loading) {
+      const comparison = compareResults(localResult, openaiResult);
+      setComparisonResult(comparison);
+    }
+  }, [localResult, openaiResult]);
 
   // 重新拍摄
   const handleRetake = () => {
     setModalOpen(false);
+    setLocalResult(null);
+    setOpenaiResult(null);
+    setComparisonResult(null);
     setState(s => ({
       ...s,
       isCapturing: true,
@@ -422,8 +696,8 @@ export default function ExtractURLV2() {
           </div>
         )}
       {/* Modal结果卡片 */}
-      <Dialog open={modalOpen} onOpenChange={open => { if (!open) handleRetake(); }}>
-        <DialogContent className="max-w-md w-full">
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="max-w-md w-full max-h-[90vh] md:max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{t('result_card_title') || 'Result'}</DialogTitle>
           </DialogHeader>
@@ -447,65 +721,195 @@ export default function ExtractURLV2() {
               className="w-full rounded-lg my-2 border"
             />
           )}
-          {/* 识别文本（始终显示） */}
-          <div className="my-2">
-            <div className="font-semibold mb-1 flex items-center gap-2">
-              <Badge>{t('ocr_text') || 'Recognized Text'}</Badge>
-            </div>
-            {state.extractedText
-              ? <HighlightedText text={state.extractedText} urlMatches={state.extractedUrls} />
-              : <div className="text-gray-400 text-sm">{t('noTextFound') || 'No text recognized.'}</div>
-            }
-          </div>
-          {/* URL提取（始终显示） */}
-          <div className="my-2">
-            <div className="font-semibold mb-1 flex items-center gap-2">
-              <Link className="w-4 h-4" />
-              {t('extracted_urls') || 'Extracted URLs'}
-            </div>
-            {state.extractedUrls.length > 0
-              ? (
-                <div className="flex flex-col gap-1">
-                  {state.extractedUrls.map((url, idx) => (
-                    <a
-                      key={idx}
-                      href={url.processed}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-700 underline text-sm break-all"
-                    >
-                      {url.processed}
-                    </a>
-                  ))}
-                </div>
-              )
-              : <div className="text-gray-400 text-sm">{t('noUrlsFound') || 'No URLs found.'}</div>
-            }
-          </div>
-          {/* 识别文本卡片（V1风格） */}
-          {state.extractedText && (
+ 
+          {/* 本地识别结果 */}
+          {aiProviders.includes('local') && localResult && (
             <Card className="mt-4">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Link className="w-5 h-5" />
-                  {t('extractedText') || 'Recognized Text'}
+                <CardTitle className="flex items-center justify-between">
+                  <span>本地识别结果</span>
+                  {localResult.confidence && (
+                    <div className="flex items-center gap-2">
+                      <ConfidenceStars confidence={localResult.confidence} />
+                      <span className="text-sm text-gray-500">
+                        {Math.round(localResult.confidence * 100)}%
+                      </span>
+                    </div>
+                  )}
                 </CardTitle>
+                {localResult.processingTime && (
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <Clock className="w-3 h-3" />
+                    {localResult.processingTime}ms
+                  </div>
+                )}
               </CardHeader>
               <CardContent>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <HighlightedText text={state.extractedText} urlMatches={state.extractedUrls} />
-                </div>
+                {localResult.loading ? (
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    识别中...
+                  </div>
+                ) : localResult.error ? (
+                  <div className="text-red-500">{localResult.error}</div>
+                ) : (
+                  <div>
+                    <div className="mb-2">
+                      <div className="text-sm font-medium mb-1">识别文本</div>
+                      <div className="text-sm bg-gray-50 p-2 rounded">
+                        {localResult.text || '无文本内容'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium mb-1">提取URLs</div>
+                      {localResult.urls.length > 0 ? (
+                        <div className="space-y-1">
+                          {localResult.urls.map((url, idx) => (
+                            <a
+                              key={idx}
+                              href={url.processed}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline text-sm block"
+                            >
+                              {url.processed}
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-gray-500 text-sm">未发现URL</div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
-          {/* 重新拍摄按钮 */}
-          <Button
-            variant="outline"
-            className="w-full mt-4"
-            onClick={handleRetake}
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />{t('retake') || 'Retake'}
-          </Button>
+
+          {/* OpenAI识别结果 */}
+          {aiProviders.includes('openai') && openaiResult && (
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>OpenAI识别结果</span>
+                  {openaiResult.confidence && (
+                    <div className="flex items-center gap-2">
+                      <ConfidenceStars confidence={openaiResult.confidence} />
+                      <span className="text-sm text-gray-500">
+                        {Math.round(openaiResult.confidence * 100)}%
+                      </span>
+                    </div>
+                  )}
+                </CardTitle>
+                {openaiResult.processingTime && (
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <Clock className="w-3 h-3" />
+                    {openaiResult.processingTime}ms
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent>
+                {openaiResult.loading ? (
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    识别中...
+                  </div>
+                ) : openaiResult.error ? (
+                  <div className="text-red-500">{openaiResult.error}</div>
+                ) : (
+                  <div>
+                    <div className="mb-2">
+                      <div className="text-sm font-medium mb-1">识别文本</div>
+                      <div className="text-sm bg-gray-50 p-2 rounded">
+                        {openaiResult.text || '无文本内容'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium mb-1">提取URLs</div>
+                      {openaiResult.urls.length > 0 ? (
+                        <div className="space-y-1">
+                          {openaiResult.urls.map((url, idx) => (
+                            <a
+                              key={idx}
+                              href={url.processed}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline text-sm block"
+                            >
+                              {url.processed}
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-gray-500 text-sm">未发现URL</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+         {/* 对比分析 */}
+         {comparisonResult && (
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="w-4 h-4" />
+                  对比分析
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm font-medium mb-1">文本相似度</div>
+                    <ProgressBar value={comparisonResult.textSimilarity * 100} />
+                    <div className="text-xs text-gray-500 mt-1">
+                      {Math.round(comparisonResult.textSimilarity * 100)}%
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium mb-1">URL匹配度</div>
+                    <ProgressBar value={comparisonResult.urlSimilarity * 100} />
+                    <div className="text-xs text-gray-500 mt-1">
+                      {Math.round(comparisonResult.urlSimilarity * 100)}%
+                    </div>
+                  </div>
+                </div>
+                <div className="text-sm">
+                  <span className="font-medium">推荐：</span>
+                  {comparisonResult.recommendedSource === 'openai' && 'OpenAI结果更准确'}
+                  {comparisonResult.recommendedSource === 'local' && '本地结果更准确'}
+                  {comparisonResult.recommendedSource === 'both' && '两个结果都很好'}
+                </div>
+                {comparisonResult.differences.length > 0 && (
+                  <div className="mt-3">
+                    <div className="text-sm font-medium mb-2">文本差异详情</div>
+                    <TextDiffDisplay diffs={comparisonResult.differences} />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 底部操作区 */}
+          <div className="flex gap-2 mt-4 pt-4 border-t">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={handleRetake}
+            >
+              <Camera className="w-4 h-4 mr-2" />
+              {t('retake') || 'Retake'}
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={() => setModalOpen(false)}
+            >
+              <X className="w-4 h-4 mr-2" />
+              {t('close') || 'Close'}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

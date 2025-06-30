@@ -59,7 +59,7 @@ export default function ExtractURLPage() {
         </Popover>
       </div>
       {version === 'v1' && <ExtractURLV1 />}
-      {version === 'v2' && <ExtractURLV2 />}
+      {version === 'v2' && <ExtractURLV2 aiProviders={aiProviders} />}
     </>
   )
 } 
