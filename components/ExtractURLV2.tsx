@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { AlertCircle, Camera, Copy, Link, RefreshCw, X, CheckCircle, Settings, RotateCw, RotateCcw, Star, Clock, Target } from "lucide-react"
+import { AlertCircle, Camera, Copy, Link, RefreshCw, X, CheckCircle, Settings, RotateCw, RotateCcw, Star, Clock, Target, Cpu, Sparkles } from "lucide-react"
 import { useLocale } from "next-intl"
 import { useTranslations } from "next-intl"
 import { useIsMobile, useOrientation } from '@/hooks/use-mobile'
@@ -679,6 +679,15 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
     ctx.save();
     ctx.drawImage(video, 0, 0, vw, vh);
     ctx.restore();
+
+    // 保存原始照片到 state
+    const originalImage = canvas.toDataURL('image/jpeg', 0.8);
+    setState(s => ({
+      ...s,
+      capturedImage: originalImage
+    }));
+
+    // 预处理图片用于OCR
     const processedImage = preprocessCanvas(canvas);
     setModalOpen(true);
     // 清空结果，设置 loading
@@ -847,7 +856,7 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
         )}
       {/* Modal结果卡片 */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-w-md w-full max-h-[90vh] md:max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-md w-full max-h-[90vh] md:max-h-[80vh] overflow-y-auto [&>button]:w-8 [&>button]:h-8 [&>button]:p-1 [&>button]:hover:bg-gray-100 [&>button]:rounded-full [&>button]:transition-colors [&>button>svg]:w-5 [&>button>svg]:h-5">
           <DialogHeader>
             <DialogTitle>{t('result_card_title') || 'Result'}</DialogTitle>
           </DialogHeader>
@@ -863,32 +872,19 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
               <div className="text-xs text-gray-500 mt-1">{state.ocrStatus}</div>
             </div>
           )}
-          {/* 拍摄图片 */}
-          {state.capturedImage && (
-            <img
-              src={state.capturedImage}
-              alt="Captured"
-              className="w-full rounded-lg my-2 border"
-            />
-          )}
- 
+
           {/* 本地识别结果 */}
           {aiProviders.includes('local') && localResult && (
-            <Card className="mt-4">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>本地识别结果</span>
-                  {localResult.confidence && (
-                    <div className="flex items-center gap-2">
-                      <ConfidenceStars confidence={localResult.confidence} />
-                      <span className="text-sm text-gray-500">
-                        {Math.round(localResult.confidence * 100)}%
-                      </span>
-                    </div>
-                  )}
+            <Card className="mt-1">
+              <CardHeader className="bg-blue-50 rounded-t-lg border-b">
+                <CardTitle className="flex items-center gap-2 text-blue-700 text-lg font-bold">
+                  <Cpu className="w-5 h-5" />
+                  本地识别结果
+                  <Badge variant="outline" className="ml-2">Local</Badge>
                 </CardTitle>
-                {localResult.processingTime && (
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                <div className="text-xs text-blue-400 mt-1">Local OCR</div>
+                {typeof localResult.processingTime === 'number' && localResult.processingTime > 0 && (
+                  <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                     <Clock className="w-3 h-3" />
                     {localResult.processingTime}ms
                   </div>
@@ -947,20 +943,15 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
           {/* OpenAI识别结果 */}
           {aiProviders.includes('openai') && openaiResult && (
             <Card className="mt-4">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>OpenAI识别结果</span>
-                  {openaiResult.confidence && (
-                    <div className="flex items-center gap-2">
-                      <ConfidenceStars confidence={openaiResult.confidence} />
-                      <span className="text-sm text-gray-500">
-                        {Math.round(openaiResult.confidence * 100)}%
-                      </span>
-                    </div>
-                  )}
+              <CardHeader className="bg-purple-50 rounded-t-lg border-b">
+                <CardTitle className="flex items-center gap-2 text-purple-700 text-lg font-bold">
+                  <Sparkles className="w-5 h-5" />
+                  OpenAI识别结果
+                  <Badge variant="outline" className="ml-2">OpenAI</Badge>
                 </CardTitle>
-                {openaiResult.processingTime && (
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                <div className="text-xs text-purple-400 mt-1">OpenAI OCR</div>
+                {typeof openaiResult.processingTime === 'number' && openaiResult.processingTime > 0 && (
+                  <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                     <Clock className="w-3 h-3" />
                     {openaiResult.processingTime}ms
                   </div>
@@ -1016,8 +1007,8 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
             </Card>
           )}
 
-         {/* 对比分析 */}
-         {comparisonResult && (
+                   {/* 对比分析 */}
+          {comparisonResult && (
             <Card className="mt-4">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1054,6 +1045,27 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
                     <TextDiffDisplay diffs={comparisonResult.differences} />
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 拍摄照片预览 */}
+          {state.capturedImage && (
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Camera className="w-4 h-4" />
+                  拍摄照片预览
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="relative">
+                  <img
+                    src={state.capturedImage}
+                    alt="Captured"
+                    className="w-full rounded-lg border"
+                  />
+                </div>
               </CardContent>
             </Card>
           )}

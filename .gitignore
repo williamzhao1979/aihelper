@@ -46,4 +46,4 @@ package-lock.json
 *.md
 !README.md
 
-*copy.*
+* copy*
