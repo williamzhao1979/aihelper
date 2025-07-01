@@ -883,7 +883,7 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
                   <Badge variant="outline" className="ml-2">Local</Badge>
                 </CardTitle>
                 <div className="text-xs text-blue-400 mt-1">Local OCR</div>
-                {localResult.processingTime && (
+                {typeof localResult.processingTime === 'number' && localResult.processingTime > 0 && (
                   <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                     <Clock className="w-3 h-3" />
                     {localResult.processingTime}ms
@@ -950,7 +950,7 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
                   <Badge variant="outline" className="ml-2">OpenAI</Badge>
                 </CardTitle>
                 <div className="text-xs text-purple-400 mt-1">OpenAI OCR</div>
-                {openaiResult.processingTime && (
+                {typeof openaiResult.processingTime === 'number' && openaiResult.processingTime > 0 && (
                   <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                     <Clock className="w-3 h-3" />
                     {openaiResult.processingTime}ms
