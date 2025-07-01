@@ -17,3 +17,18 @@ export function useIsMobile() {
 
   return !!isMobile
 }
+
+export function useOrientation() {
+  const [orientation, setOrientation] = React.useState<'portrait' | 'landscape'>('portrait');
+
+  React.useEffect(() => {
+    const getOrientation = () =>
+      window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+    setOrientation(getOrientation());
+    const handleResize = () => setOrientation(getOrientation());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return orientation;
+}

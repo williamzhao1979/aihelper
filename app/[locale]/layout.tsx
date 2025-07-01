@@ -63,12 +63,8 @@ export default async function RootLayout({ children, params }: Props) {
   const messages = await getMessages()
 
   return (
-    <html lang={locale}>
-      <body className="antialiased" suppressHydrationWarning={true}>
-        <AuthProvider>
-          <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
-        </AuthProvider>
-      </body>
-    </html>
+    <AuthProvider>
+      <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+    </AuthProvider>
   )
 }

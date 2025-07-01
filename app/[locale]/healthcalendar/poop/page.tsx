@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,13 @@ import { Badge } from "@/components/ui/badge"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { ArrowLeft, Upload, X, FileText, Image, File, ChevronDown, ChevronUp } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
+import { useSearchParams } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
+import { useHealthDatabase } from "@/hooks/use-health-database"
+import healthDB from "@/lib/health-database"
+import { getLocalDateTimeString, getLocalDateString } from "@/lib/utils"
+import { useUserManagement } from "@/hooks/use-user-management"
+import InlineUserSelector, { type UserProfile } from "@/components/healthcalendar/shared/inline-user-selector"
 
 interface UploadedFile {
   id: string
@@ -23,13 +30,114 @@ interface UploadedFile {
 
 export default function PoopRecordPage() {
   const router = useRouter()
-  const [poopType, setPoopType] = useState<string>("")
-  const [poopColor, setPoopColor] = useState<string>("")
-  const [poopSmell, setPoopSmell] = useState<string>("")
+  const searchParams = useSearchParams()
+  const { toast } = useToast()
+  const { saveRecord, updateRecord, getRecordById, isInitialized, isLoading: dbLoading } = useHealthDatabase()
+  const { getPrimaryUser, users: availableUsers } = useUserManagement()
+  
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [editRecordId, setEditRecordId] = useState<string>("")
+  const [recordDateTime, setRecordDateTime] = useState<string>(getLocalDateTimeString())
+  const [poopType, setPoopType] = useState<string>("type4")
+  const [poopColor, setPoopColor] = useState<string>("brown")
+  const [poopSmell, setPoopSmell] = useState<string>("normal")
   const [notes, setNotes] = useState("")
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isTypeExpanded, setIsTypeExpanded] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
+
+  // 检查是否为编辑模式
+  useEffect(() => {
+    const editId = searchParams.get('edit')
+    console.log("URL参数edit:", editId) // 调试日志
+    
+    if (editId) {
+      setIsEditMode(true)
+      setEditRecordId(editId)
+      console.log("设置为编辑模式，记录ID:", editId) // 调试日志
+      loadRecordForEdit(editId)
+    } else {
+      console.log("新建模式") // 调试日志
+    }
+  }, [searchParams, isInitialized])
+
+  // 加载记录用于编辑
+  const loadRecordForEdit = async (recordId: string) => {
+    if (!isInitialized) {
+      console.log("数据库未初始化，等待...") // 调试日志
+      return
+    }
+    
+    console.log("开始加载记录:", recordId) // 调试日志
+    setIsLoading(true)
+    try {
+      const record = await getRecordById(recordId)
+      console.log("从数据库加载的记录:", record) // 调试日志
+      
+      if (record && record.type === "poop") {
+        console.log("记录类型正确，开始设置表单值") // 调试日志
+        
+        // 使用实际记录的值，只有在值为undefined或null时才使用默认值
+        const newDateTime = record.datetime ?? getLocalDateTimeString()
+        const newPoopType = record.poopType ?? "type4"
+        const newPoopColor = record.poopColor ?? "brown"
+        const newPoopSmell = record.poopSmell ?? "normal"
+        const newNotes = record.notes ?? ""
+        
+        console.log("准备设置的值:", {
+          datetime: newDateTime,
+          poopType: newPoopType,
+          poopColor: newPoopColor,
+          poopSmell: newPoopSmell,
+          notes: newNotes
+        }) // 调试日志
+        
+        setRecordDateTime(newDateTime)
+        setPoopType(newPoopType)
+        setPoopColor(newPoopColor)
+        setPoopSmell(newPoopSmell)
+        setNotes(newNotes)
+        
+        // 设置用户选择
+        if (record.uniqueOwnerId) {
+          const recordUser = availableUsers.find(user => user.uniqueOwnerId === record.uniqueOwnerId)
+          if (recordUser) {
+            setSelectedUser(recordUser)
+          }
+        }
+        
+        console.log("表单值设置完成") // 调试日志
+        
+        // 加载附件信息（如果有的话）
+        if (record.attachments && record.attachments.length > 0) {
+          console.log("发现附件:", record.attachments) // 调试日志
+          // 这里可以加载已存在的附件信息
+          // 暂时不处理，因为附件文件需要从存储中重新获取
+        }
+      } else {
+        console.log("记录不存在或类型不匹配:", record) // 调试日志
+        toast({
+          title: "记录不存在",
+          description: "要编辑的记录不存在或类型不匹配",
+          variant: "destructive",
+        })
+        router.push("/healthcalendar")
+      }
+    } catch (error) {
+      console.error("加载记录失败:", error)
+      toast({
+        title: "加载失败",
+        description: "加载记录时发生错误",
+        variant: "destructive",
+      })
+      router.push("/healthcalendar")
+    } finally {
+      setIsLoading(false)
+      console.log("加载完成") // 调试日志
+    }
+  }
 
   // 布里斯托大便分类法
   const bristolStoolTypes = [
@@ -77,24 +185,23 @@ export default function PoopRecordPage() {
         type: file.type,
         file: file
       }
-
+      
       // 如果是图片，创建预览
       if (file.type.startsWith('image/')) {
         const reader = new FileReader()
         reader.onload = (e) => {
-          setUploadedFiles(prev => 
-            prev.map(f => 
-              f.id === fileId 
-                ? { ...f, preview: e.target?.result as string }
-                : f
-            )
-          )
+          setUploadedFiles(prev => prev.map(f => 
+            f.id === fileId ? { ...f, preview: e.target?.result as string } : f
+          ))
         }
         reader.readAsDataURL(file)
       }
-
+      
       setUploadedFiles(prev => [...prev, uploadedFile])
     })
+    
+    // 清空input值，允许重复选择同一文件
+    event.target.value = ''
   }
 
   const handleRemoveFile = (fileId: string) => {
@@ -102,42 +209,72 @@ export default function PoopRecordPage() {
   }
 
   const handleSubmit = async () => {
-    if (!poopType || !poopColor) {
-      alert("请选择便便类型和颜色")
+    if (!selectedUser) {
+      toast({
+        title: "验证失败",
+        description: "请选择一个用户",
+        variant: "destructive",
+      })
       return
     }
 
     setIsSubmitting(true)
     
     try {
-      // 这里将来会保存到IndexedDB
-      const record = {
-        id: Math.random().toString(36).substr(2, 9),
-        date: new Date().toISOString().split('T')[0],
-        type: "poop",
+      // 准备记录数据
+      const recordData = {
+        date: getLocalDateString(new Date(recordDateTime)),
+        datetime: recordDateTime,
+        type: "poop" as const,
         poopType,
         poopColor,
         poopSmell,
         notes: notes.trim(),
-        attachments: uploadedFiles.map(f => ({
-          id: f.id,
-          name: f.name,
-          type: f.type,
-          size: f.size
+        attachments: uploadedFiles.map(file => ({
+          id: file.id,
+          name: file.name,
+          size: file.size,
+          type: file.type
         })),
-        createdAt: new Date(),
-        updatedAt: new Date()
+        // 多用户字段
+        uniqueOwnerId: selectedUser.uniqueOwnerId,
+        ownerId: selectedUser.ownerId,
+        ownerName: selectedUser.ownerName
       }
 
-      console.log("保存便便记录:", record)
+      let recordId: string
       
-      // 模拟保存延迟
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      if (isEditMode) {
+        // 更新现有记录
+        await updateRecord(editRecordId, recordData)
+        recordId = editRecordId
+        console.log("大便记录更新成功:", recordId)
+        toast({
+          title: "更新成功",
+          description: `已为 ${selectedUser.nickname} 更新大便记录`,
+        })
+      } else {
+        // 创建新记录
+        recordId = await saveRecord(recordData)
+        console.log("大便记录保存成功:", recordId)
+        toast({
+          title: "保存成功",
+          description: `已为 ${selectedUser.nickname} 保存大便记录`,
+        })
+      }
       
-      router.push("/healthcalendar")
+      // 延迟跳转，让用户看到成功提示
+      setTimeout(() => {
+        router.push("/healthcalendar")
+      }, 1000)
+      
     } catch (error) {
       console.error("保存失败:", error)
-      alert("保存失败，请重试")
+      toast({
+        title: "保存失败",
+        description: "保存记录时发生错误，请重试",
+        variant: "destructive",
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -153,12 +290,23 @@ export default function PoopRecordPage() {
 
   const getFileIcon = (type: string) => {
     if (type.startsWith('image/')) return <Image className="h-4 w-4" />
-    if (type.includes('pdf')) return <FileText className="h-4 w-4" />
+    if (type.includes('text') || type.includes('document')) return <FileText className="h-4 w-4" />
     return <File className="h-4 w-4" />
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 p-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">加载记录中...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 p-4">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center space-x-3">
@@ -171,86 +319,108 @@ export default function PoopRecordPage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center space-x-2">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <img
-                src="/poop-detective.png"
-                alt="屁屁侦探"
-                className="w-8 h-8 object-contain"
-                style={{ minWidth: 32, minHeight: 32 }}
-              />
+            <div className="p-2 bg-green-100 rounded-lg">
+              <FileText className="h-6 w-6 text-green-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">便便记录</h1>
-              <p className="text-sm text-gray-600">记录今天的便便状况</p>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {isEditMode ? "编辑大便记录" : "大便记录"}
+              </h1>
+              <p className="text-sm text-gray-600">
+                {isEditMode ? "修改大便记录信息" : "记录今天的大便状况"}
+              </p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* 便便类型 */}
+        {/* 用户选择器 - 内联在页面头部 */}
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
-          <CardHeader>
-            <CardTitle>便便类型（布里斯托大便分类法）</CardTitle>
+          <CardContent className="p-4">
+            <InlineUserSelector
+              selectedUser={selectedUser}
+              onUserChange={setSelectedUser}
+              availableUsers={availableUsers}
+              recordType="poop"
+            />
+          </CardContent>
+        </Card>
+
+        {/* 日期时间 */}
+        <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle>日期时间</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pb-2">
             <div className="space-y-3">
-              <Select value={poopType} onValueChange={setPoopType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="选择便便类型" />
-                </SelectTrigger>
-                <SelectContent>
-                  {bristolStoolTypes.map(type => (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{type.label}</span>
-                        <span className="text-xs text-gray-500">{type.description}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              <Collapsible open={isTypeExpanded} onOpenChange={setIsTypeExpanded}>
-                <CollapsibleTrigger asChild>
-                  <Button variant="outline" className="w-full">
-                    {isTypeExpanded ? (
-                      <>
-                        <ChevronUp className="h-4 w-4 mr-2" />
-                        收起图片参考
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="h-4 w-4 mr-2" />
-                        展开图片参考
-                      </>
-                    )}
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-3">
-                  <div className="w-full flex justify-center">
-                    <img
-                      src="/bristol-stool-chart.png"
-                      alt="布里斯托大便分类法参考图"
-                      className="max-w-full h-auto rounded-lg border shadow"
-                      style={{ background: '#fff' }}
-                    />
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
+              <Input
+                id="record-datetime"
+                type="datetime-local"
+                value={recordDateTime}
+                onChange={(e) => setRecordDateTime(e.target.value)}
+                className="w-full"
+              />
             </div>
           </CardContent>
         </Card>
 
-        {/* 便便颜色 */}
+        {/* 大便类型 */}
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
           <CardHeader>
-            <CardTitle>便便颜色</CardTitle>
+            <CardTitle>大便类型（布里斯托分类法）</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Collapsible open={isTypeExpanded} onOpenChange={setIsTypeExpanded}>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  <span>选择大便类型</span>
+                  {isTypeExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4">
+                <div className="grid grid-cols-1 gap-3">
+                  {bristolStoolTypes.map(type => (
+                    <button
+                      key={type.value}
+                      onClick={() => setPoopType(type.value)}
+                      className={`p-4 rounded-lg border-2 text-left transition-colors ${
+                        poopType === type.value
+                          ? "border-green-500 bg-green-50"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="font-medium">{type.label}</div>
+                      <div className="text-sm text-gray-600 mt-1">{type.description}</div>
+                    </button>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+            
+            {/* 当前选择显示 */}
+            {poopType && (
+              <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="font-medium text-green-800">
+                  当前选择：{bristolStoolTypes.find(t => t.value === poopType)?.label}
+                </div>
+                <div className="text-sm text-green-600 mt-1">
+                  {bristolStoolTypes.find(t => t.value === poopType)?.description}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* 大便颜色 */}
+        <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
+          <CardHeader>
+            <CardTitle>大便颜色</CardTitle>
           </CardHeader>
           <CardContent>
             <Select value={poopColor} onValueChange={setPoopColor}>
               <SelectTrigger>
-                <SelectValue placeholder="选择便便颜色" />
+                <SelectValue placeholder="选择大便颜色" />
               </SelectTrigger>
               <SelectContent>
                 {poopColors.map(color => (
@@ -266,15 +436,15 @@ export default function PoopRecordPage() {
           </CardContent>
         </Card>
 
-        {/* 便便气味与成分 */}
+        {/* 大便气味与成分 */}
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
           <CardHeader>
-            <CardTitle>气味与成分</CardTitle>
+            <CardTitle>大便气味与成分</CardTitle>
           </CardHeader>
           <CardContent>
             <Select value={poopSmell} onValueChange={setPoopSmell}>
               <SelectTrigger>
-                <SelectValue placeholder="选择气味与成分特征" />
+                <SelectValue placeholder="选择大便气味与成分" />
               </SelectTrigger>
               <SelectContent>
                 {poopSmells.map(smell => (
@@ -287,6 +457,59 @@ export default function PoopRecordPage() {
                 ))}
               </SelectContent>
             </Select>
+          </CardContent>
+        </Card>
+
+        {/* 附件上传 */}
+        <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
+          <CardHeader>
+            <CardTitle>附件上传</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                <Label htmlFor="file-upload" className="cursor-pointer">
+                  <span className="text-sm text-gray-600">
+                    点击上传图片或文档
+                  </span>
+                </Label>
+                <Input
+                  id="file-upload"
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx,.txt"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </div>
+              
+              {/* 已上传文件列表 */}
+              {uploadedFiles.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">已上传文件：</h4>
+                  {uploadedFiles.map(file => (
+                    <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        {getFileIcon(file.type)}
+                        <div>
+                          <div className="font-medium text-sm">{file.name}</div>
+                          <div className="text-xs text-gray-500">{formatFileSize(file.size)}</div>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveFile(file.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -305,66 +528,6 @@ export default function PoopRecordPage() {
           </CardContent>
         </Card>
 
-        {/* 文件上传 */}
-        <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
-          <CardHeader>
-            <CardTitle>附件</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <Label htmlFor="file-upload" className="cursor-pointer">
-                  <span className="text-blue-600 hover:text-blue-700">点击上传</span>
-                  <span className="text-gray-500"> 或拖拽文件到此处</span>
-                </Label>
-                <Input
-                  id="file-upload"
-                  type="file"
-                  multiple
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  accept="image/*,.pdf,.doc,.docx"
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  支持图片、PDF、文档等格式，单个文件最大10MB
-                </p>
-              </div>
-
-              {/* 已上传文件列表 */}
-              {uploadedFiles.length > 0 && (
-                <div className="space-y-2">
-                  {uploadedFiles.map(file => (
-                    <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        {file.preview ? (
-                          <img src={file.preview} alt={file.name} className="w-10 h-10 object-cover rounded" />
-                        ) : (
-                          <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
-                            {getFileIcon(file.type)}
-                          </div>
-                        )}
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{file.name}</p>
-                          <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveFile(file.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* 提交按钮 */}
         <div className="flex space-x-4">
           <Button
@@ -376,10 +539,10 @@ export default function PoopRecordPage() {
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || !poopType || !poopColor}
-            className="flex-1 bg-yellow-600 hover:bg-yellow-700"
+            disabled={isSubmitting || !selectedUser}
+            className="flex-1 bg-green-600 hover:bg-green-700"
           >
-            {isSubmitting ? "保存中..." : "保存记录"}
+            {isSubmitting ? "保存中..." : (isEditMode ? "更新记录" : "保存记录")}
           </Button>
         </div>
       </div>

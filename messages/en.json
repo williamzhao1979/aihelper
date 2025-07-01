@@ -149,6 +149,7 @@
     "capturedImage": "Captured Image",
     "original": "Original",
     "processed": "Processed",
+    "requestingPermission": "Requesting camera permission...",
     "permissionGranted": "Camera permission granted",
     "permissionDenied": "Camera permission denied",
     "permissionDeniedHelp": "Please allow camera access in your browser settings, or click the button below to retry",
@@ -169,6 +170,12 @@
     "ocrError": "OCR recognition failed, please retry",
     "reRecognize": "Re-recognize",
     "retryCamera": "Retry Camera",
-    "viewResults": "View Results"
+    "viewResults": "View Results",
+    "ocr_text": "Recognized OCR Text",
+    "ocr_processing": "OCR processing...",
+    "noTextFound": "No text found",
+    "extracted_urls": "URL",
+    "close": "Close",
+    "result_card_title": "Recognition Result"
   }
 }

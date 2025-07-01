@@ -43,4 +43,7 @@ next-env.d.ts
 
 package-lock.json
 
-HealthCalendar.md
+*.md
+!README.md
+
+* copy*
