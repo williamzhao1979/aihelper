@@ -41,7 +41,7 @@ interface OCRResult {
   error?: string
   confidence?: number
   processingTime?: number
-  source: 'local' | 'openai'
+  source: 'local' | 'openai' | 'deepseek'
 }
 
 interface TextDiff {
@@ -55,6 +55,22 @@ interface ComparisonResult {
   urlSimilarity: number
   recommendedSource: 'local' | 'openai' | 'both'
   differences: TextDiff[]
+}
+
+// 三方对比结果类型
+interface ComparisonResult3 {
+  textSimilarity: {
+    local_openai: number;
+    local_deepseek: number;
+    openai_deepseek: number;
+  };
+  urlSimilarity: {
+    local_openai: number;
+    local_deepseek: number;
+    openai_deepseek: number;
+  };
+  recommendedSource: ('local' | 'openai' | 'deepseek' | 'multiple');
+  differences: Array<{ local: string; openai: string; deepseek: string; type: string }>;
 }
 
 const processURLs = (text: string): URLMatch[] => {
@@ -86,8 +102,8 @@ const processURLs = (text: string): URLMatch[] => {
   
   const urlMatches: URLMatch[] = [];
   
-  // 改进的URL正则表达式，更好地处理完整URL
-  const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/gi;
+  // 改进的URL正则表达式，支持多层路径、参数、锚点
+  const urlRegex = /((https?:\/\/|www\.)[a-zA-Z0-9\-._~:/?#@!$&'()*+,;=%]+[a-zA-Z0-9\/#?])/gi;
   let match;
   
   while ((match = urlRegex.exec(cleanText)) !== null) {
@@ -96,10 +112,14 @@ const processURLs = (text: string): URLMatch[] => {
     let end = start + url.length;
     
     // 清理URL末尾的标点符号
-    url = url.replace(/[\.,;:!?)\]]+$/, '');
+    url = url.replace(/[\.,;:!?)\]\["']+$/, '');
     
     // 确保URL有协议
     if (url.startsWith('www.')) {
+      url = 'https://' + url;
+    }
+    // 对于没有协议但像域名/路径的，补全 https://
+    if (!/^https?:\/\//.test(url) && /^[a-zA-Z0-9\-]+(\.[a-zA-Z0-9\-]+)+\//.test(url)) {
       url = 'https://' + url;
     }
     
@@ -126,7 +146,7 @@ const processURLs = (text: string): URLMatch[] => {
     }
   }
   
-  // 模糊匹配：查找可能的域名
+  // 模糊匹配：查找可能的域名（不带路径）
   const domainRegex = /([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}/g;
   let domainMatch;
   
@@ -557,6 +577,45 @@ const TextDiffDisplay = ({ diffs }: { diffs: TextDiff[] }) => {
   );
 };
 
+// 三方对比算法
+const compareThreeResults = (
+  local: OCRResult,
+  openai: OCRResult,
+  deepseek: OCRResult
+): ComparisonResult3 => {
+  const textSimilarity = {
+    local_openai: calculateTextSimilarity(local.text, openai.text),
+    local_deepseek: calculateTextSimilarity(local.text, deepseek.text),
+    openai_deepseek: calculateTextSimilarity(openai.text, deepseek.text),
+  };
+  const urlSimilarity = {
+    local_openai: calculateUrlSimilarity(local.urls, openai.urls),
+    local_deepseek: calculateUrlSimilarity(local.urls, deepseek.urls),
+    openai_deepseek: calculateUrlSimilarity(openai.urls, deepseek.urls),
+  };
+  // 推荐逻辑：置信度最高为主，若相近则推荐多个
+  const confidences = [
+    { key: 'local', value: local.confidence || 0 },
+    { key: 'openai', value: openai.confidence || 0 },
+    { key: 'deepseek', value: deepseek.confidence || 0 },
+  ];
+  confidences.sort((a, b) => b.value - a.value);
+  let recommendedSource: 'local' | 'openai' | 'deepseek' | 'multiple' = confidences[0].key as any;
+  if (
+    confidences[0].value - confidences[1].value < 0.05 &&
+    confidences[1].value - confidences[2].value < 0.05
+  ) {
+    recommendedSource = 'multiple';
+  } else if (confidences[0].value - confidences[1].value < 0.05) {
+    recommendedSource = 'multiple';
+  }
+  // 差异高亮（简单实现：三方文本并列）
+  const differences = [
+    { local: local.text, openai: openai.text, deepseek: deepseek.text, type: 'all' },
+  ];
+  return { textSimilarity, urlSimilarity, recommendedSource, differences };
+};
+
 export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
   const t = useTranslations('extracturl');
   const locale = useLocale();
@@ -581,7 +640,9 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
   const [localResult, setLocalResult] = useState<OCRResult | null>(null);
   const [openaiResult, setOpenaiResult] = useState<OCRResult | null>(null);
   const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null);
+  const [comparisonResult3, setComparisonResult3] = useState<ComparisonResult3 | null>(null);
   const [currentCamera, setCurrentCamera] = useState<'environment' | 'user'>('environment');
+  const [deepseekResult, setDeepseekResult] = useState<OCRResult | null>(null);
 
   // 拷贝URL函数
   const handleCopyUrl = async (url: string) => {
@@ -693,6 +754,7 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
     // 清空结果，设置 loading
     if (aiProviders.includes('local')) setLocalResult({ text: '', urls: [], loading: true, source: 'local' });
     if (aiProviders.includes('openai')) setOpenaiResult({ text: '', urls: [], loading: true, source: 'openai' });
+    if (aiProviders.includes('deepseek')) setDeepseekResult({ text: '', urls: [], loading: true, source: 'deepseek' });
     // 本地识别
     if (aiProviders.includes('local')) {
       (async () => {
@@ -744,7 +806,43 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
         } catch (e) {
           setOpenaiResult({ text: '', urls: [], loading: false, error: t('ocrError'), source: 'openai' });
         }
-              })();
+      })();
+    }
+    // DeepSeek识别
+    if (aiProviders.includes('deepseek')) {
+      (async () => {
+        try {
+          // processedImage 可能为 data:image/jpeg;base64,xxxx
+          let base64 = '';
+          if (processedImage.startsWith('data:')) {
+            base64 = processedImage.split(',')[1];
+          } else {
+            base64 = processedImage;
+          }
+          let lang = 'zh';
+          if (locale === 'en') lang = 'en';
+          else if (locale === 'ja') lang = 'ja';
+          const res = await fetch('/api/ocr/deepseek', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageBase64: base64, language: lang }),
+          });
+          const data = await res.json();
+          if (data.success && data.result?.text) {
+            const text = data.result.text;
+            const startTime = Date.now();
+            const urls = processURLs(text);
+            const processingTime = Date.now() - startTime;
+            const result: OCRResult = { text, urls, loading: false, source: 'deepseek', processingTime };
+            result.confidence = calculateConfidence(result);
+            setDeepseekResult(result);
+          } else {
+            setDeepseekResult({ text: '', urls: [], loading: false, error: data.error || t('ocrError'), source: 'deepseek' });
+          }
+        } catch (e) {
+          setDeepseekResult({ text: '', urls: [], loading: false, error: t('ocrError'), source: 'deepseek' });
+        }
+      })();
     }
   };
 
@@ -756,12 +854,24 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
     }
   }, [localResult, openaiResult]);
 
+  // 三方对比分析
+  useEffect(() => {
+    if (
+      localResult && !localResult.loading &&
+      openaiResult && !openaiResult.loading &&
+      deepseekResult && !deepseekResult.loading
+    ) {
+      setComparisonResult3(compareThreeResults(localResult, openaiResult, deepseekResult));
+    }
+  }, [localResult, openaiResult, deepseekResult]);
+
   // 重新拍摄
   const handleRetake = () => {
     setModalOpen(false);
     setLocalResult(null);
     setOpenaiResult(null);
     setComparisonResult(null);
+    setComparisonResult3(null);
     setCurrentCamera('environment'); // 重置为后置摄像头
     setState(s => ({
       ...s,
@@ -1007,7 +1117,74 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
             </Card>
           )}
 
-                   {/* 对比分析 */}
+          {/* DeepSeek识别结果 */}
+          {aiProviders.includes('deepseek') && deepseekResult && (
+            <Card className="mt-4">
+              <CardHeader className="bg-green-50 rounded-t-lg border-b">
+                <CardTitle className="flex items-center gap-2 text-green-700 text-lg font-bold">
+                  <Sparkles className="w-5 h-5" />
+                  DeepSeek识别结果
+                  <Badge variant="outline" className="ml-2">DeepSeek</Badge>
+                </CardTitle>
+                <div className="text-xs text-green-400 mt-1">DeepSeek OCR</div>
+                {typeof deepseekResult.processingTime === 'number' && deepseekResult.processingTime > 0 && (
+                  <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                    <Clock className="w-3 h-3" />
+                    {deepseekResult.processingTime}ms
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent>
+                {deepseekResult.loading ? (
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    识别中...
+                  </div>
+                ) : deepseekResult.error ? (
+                  <div className="text-red-500">{deepseekResult.error}</div>
+                ) : (
+                  <div>
+                    <div className="mb-2">
+                      <div className="text-sm font-medium mb-1">识别文本</div>
+                      <div className="text-sm bg-gray-50 p-2 rounded">
+                        {deepseekResult.text || '无文本内容'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium mb-1">提取URLs</div>
+                      {deepseekResult.urls.length > 0 ? (
+                        <div className="space-y-1">
+                          {deepseekResult.urls.map((url, idx) => (
+                            <div key={idx} className="flex items-center justify-between group">
+                              <a
+                                href={url.processed}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline text-sm flex-1"
+                              >
+                                {url.processed}
+                              </a>
+                              <button
+                                onClick={() => handleCopyUrl(url.processed)}
+                                className="p-1 hover:bg-gray-100 rounded transition-colors opacity-0 group-hover:opacity-100"
+                                title="Copy URL"
+                              >
+                                <Copy className="w-3 h-3 text-gray-500 hover:text-gray-700" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-gray-500 text-sm">未发现URL</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 对比分析 */}
           {comparisonResult && (
             <Card className="mt-4">
               <CardHeader>
@@ -1048,6 +1225,79 @@ export default function ExtractURLV2({ aiProviders }: ExtractURLV2Props) {
               </CardContent>
             </Card>
           )}
+
+          {/* 三方对比分析 */}
+          {aiProviders.includes('local') && aiProviders.includes('openai') && aiProviders.includes('deepseek') &&
+            localResult && openaiResult && deepseekResult && comparisonResult3 && (
+              <Card className="mt-4">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="w-4 h-4" />
+                    三方对比分析
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <div className="text-sm font-medium mb-1">本地-OpenAI 文本相似度</div>
+                      <ProgressBar value={comparisonResult3.textSimilarity.local_openai * 100} />
+                      <div className="text-xs text-gray-500 mt-1">{Math.round(comparisonResult3.textSimilarity.local_openai * 100)}%</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium mb-1">本地-DeepSeek 文本相似度</div>
+                      <ProgressBar value={comparisonResult3.textSimilarity.local_deepseek * 100} />
+                      <div className="text-xs text-gray-500 mt-1">{Math.round(comparisonResult3.textSimilarity.local_deepseek * 100)}%</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium mb-1">OpenAI-DeepSeek 文本相似度</div>
+                      <ProgressBar value={comparisonResult3.textSimilarity.openai_deepseek * 100} />
+                      <div className="text-xs text-gray-500 mt-1">{Math.round(comparisonResult3.textSimilarity.openai_deepseek * 100)}%</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 mt-2">
+                    <div>
+                      <div className="text-sm font-medium mb-1">本地-OpenAI URL相似度</div>
+                      <ProgressBar value={comparisonResult3.urlSimilarity.local_openai * 100} />
+                      <div className="text-xs text-gray-500 mt-1">{Math.round(comparisonResult3.urlSimilarity.local_openai * 100)}%</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium mb-1">本地-DeepSeek URL相似度</div>
+                      <ProgressBar value={comparisonResult3.urlSimilarity.local_deepseek * 100} />
+                      <div className="text-xs text-gray-500 mt-1">{Math.round(comparisonResult3.urlSimilarity.local_deepseek * 100)}%</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium mb-1">OpenAI-DeepSeek URL相似度</div>
+                      <ProgressBar value={comparisonResult3.urlSimilarity.openai_deepseek * 100} />
+                      <div className="text-xs text-gray-500 mt-1">{Math.round(comparisonResult3.urlSimilarity.openai_deepseek * 100)}%</div>
+                    </div>
+                  </div>
+                  <div className="text-sm mt-2">
+                    <span className="font-medium">推荐：</span>
+                    {comparisonResult3.recommendedSource === 'multiple' && '多个结果都很接近'}
+                    {comparisonResult3.recommendedSource === 'local' && '本地结果更优'}
+                    {comparisonResult3.recommendedSource === 'openai' && 'OpenAI结果更优'}
+                    {comparisonResult3.recommendedSource === 'deepseek' && 'DeepSeek结果更优'}
+                  </div>
+                  <div className="mt-3">
+                    <div className="text-sm font-medium mb-2">三方文本对比</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <div className="text-xs text-blue-700 font-bold mb-1">本地</div>
+                        <div className="bg-blue-50 p-2 rounded text-xs whitespace-pre-wrap">{comparisonResult3.differences[0].local}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-purple-700 font-bold mb-1">OpenAI</div>
+                        <div className="bg-purple-50 p-2 rounded text-xs whitespace-pre-wrap">{comparisonResult3.differences[0].openai}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-green-700 font-bold mb-1">DeepSeek</div>
+                        <div className="bg-green-50 p-2 rounded text-xs whitespace-pre-wrap">{comparisonResult3.differences[0].deepseek}</div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
           {/* 拍摄照片预览 */}
           {state.capturedImage && (
