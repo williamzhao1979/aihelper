@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
@@ -16,20 +16,26 @@ interface HealthCalendarProps {
   onUserSelectionChange?: (users: UserProfile[]) => void
   availableUsers?: UserProfile[]
   userSelectionVersion?: number
+  records?: HealthRecord[] // <-- add this line
+  onCloudSync?: () => void // Supabase云同步
+  isSyncing?: boolean // 云同步loading
 }
 
 export default function HealthCalendar({ 
   selectedUsers = [], 
   onUserSelectionChange,
   availableUsers = [],
-  userSelectionVersion
+  userSelectionVersion,
+  records: externalRecords, // <-- accept records prop
+  onCloudSync,
+  isSyncing = false
 }: HealthCalendarProps) {
   const router = useRouter()
-  const { getAllRecords, isInitialized, isLoading } = useHealthDatabase()
+  // const { getAllRecords, isInitialized, isLoading } = useHealthDatabase() // REMOVE IndexedDB hooks
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [records, setRecords] = useState<HealthRecord[]>([])
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [records, setRecords] = useState<HealthRecord[]>(externalRecords || [])
+  // const [isRefreshing, setIsRefreshing] = useState(false) // REMOVE local refresh
+  // const [refreshTrigger, setRefreshTrigger] = useState(0) // REMOVE local refresh
 
   // 获取当前月份的第一天和最后一天
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
@@ -185,68 +191,75 @@ export default function HealthCalendar({
   }
 
   // 刷新数据
-  const refreshData = useCallback(async () => {
-    if (!isInitialized) return
-    
-    setIsRefreshing(true)
-    try {
-      console.log("正在刷新日历数据...")
-      const allRecords = await getAllRecords()
-      console.log("加载到的所有记录:", allRecords)
-      console.log("选中的用户:", selectedUsers)
-      
-      // 根据选中的用户过滤记录
-      const filteredRecords = getFilteredRecords(allRecords)
-      console.log("过滤后的记录:", filteredRecords)
-      
-      // 检查6月29日的记录
-      const currentYear = new Date().getFullYear()
-      const june29Date = `${currentYear}-06-29`
-      const june29Records = allRecords.filter(record => record.date === june29Date)
-      console.log("6月29日的所有记录:", june29Records)
-      
-      const june29FilteredRecords = filteredRecords.filter(record => record.date === june29Date)
-      console.log("6月29日过滤后的记录:", june29FilteredRecords)
-      
-      // 检查今天的记录
-      const today = getLocalDateString(new Date())
-      const todayRecords = allRecords.filter(record => record.date === today)
-      console.log(`今天的记录 (${today}):`, todayRecords)
-      
-      const todayFilteredRecords = filteredRecords.filter(record => record.date === today)
-      console.log(`今天过滤后的记录 (${today}):`, todayFilteredRecords)
-      
-      setRecords(filteredRecords)
-    } catch (error) {
-      console.error("Failed to refresh records:", error)
-    } finally {
-      setIsRefreshing(false)
-    }
-  }, [getAllRecords, isInitialized, selectedUsers])
+  // const refreshData = useCallback(async () => {
+  //   if (!isInitialized) return
+  //   
+  //   setIsRefreshing(true)
+  //   try {
+  //     console.log("正在刷新日历数据...")
+  //     const allRecords = await getAllRecords()
+  //     console.log("加载到的所有记录:", allRecords)
+  //     console.log("选中的用户:", selectedUsers)
+  //     
+  //     // 根据选中的用户过滤记录
+  //     const filteredRecords = getFilteredRecords(allRecords)
+  //     console.log("过滤后的记录:", filteredRecords)
+  //     
+  //     // 检查6月29日的记录
+  //     const currentYear = new Date().getFullYear()
+  //     const june29Date = `${currentYear}-06-29`
+  //     const june29Records = allRecords.filter(record => record.date === june29Date)
+  //     console.log("6月29日的所有记录:", june29Records)
+  //     
+  //     const june29FilteredRecords = filteredRecords.filter(record => record.date === june29Date)
+  //     console.log("6月29日过滤后的记录:", june29FilteredRecords)
+  //     
+  //     // 检查今天的记录
+  //     const today = getLocalDateString(new Date())
+  //     const todayRecords = allRecords.filter(record => record.date === today)
+  //     console.log(`今天的记录 (${today}):`, todayRecords)
+  //     
+  //     const todayFilteredRecords = filteredRecords.filter(record => record.date === today)
+  //     console.log(`今天过滤后的记录 (${today}):`, todayFilteredRecords)
+  //     
+  //     setRecords(filteredRecords)
+  //   } catch (error) {
+  //     console.error("Failed to refresh records:", error)
+  //   } finally {
+  //     setIsRefreshing(false)
+  //   }
+  // }, [getAllRecords, isInitialized, selectedUsers])
 
   // 从IndexedDB加载数据
+  // useEffect(() => {
+  //   if (isInitialized && !isLoading) {
+  //     refreshData()
+  //   }
+  // }, [isInitialized, isLoading, refreshTrigger, selectedUsers, userSelectionVersion])
+
+  // Use external records only
   useEffect(() => {
-    if (isInitialized && !isLoading) {
-      refreshData()
+    if (externalRecords) {
+      setRecords(externalRecords)
     }
-  }, [isInitialized, isLoading, refreshTrigger, selectedUsers, userSelectionVersion])
+  }, [externalRecords])
 
   // 添加页面可见性监听，当用户从其他页面返回时刷新数据
-  useEffect(() => {
-    if (!isInitialized) return
+  // useEffect(() => {
+  //   if (!isInitialized) return
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log("页面变为可见，触发刷新")
-        setRefreshTrigger(prev => prev + 1)
-      }
-    }
+  //   const handleVisibilityChange = () => {
+  //     if (document.visibilityState === 'visible') {
+  //       console.log("页面变为可见，触发刷新")
+  //       setRefreshTrigger(prev => prev + 1)
+  //     }
+  //   }
 
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [isInitialized])
+  //   document.addEventListener('visibilitychange', handleVisibilityChange)
+  //   return () => {
+  //     document.removeEventListener('visibilitychange', handleVisibilityChange)
+  //   }
+  // }, [isInitialized])
 
   return (
     <div className="w-full">
@@ -256,8 +269,8 @@ export default function HealthCalendar({
         onPreviousMonth={goToPreviousMonth}
         onNextMonth={goToNextMonth}
         onToday={goToToday}
-        onRefresh={() => setRefreshTrigger(prev => prev + 1)}
-        isRefreshing={isRefreshing}
+        onRefresh={onCloudSync}
+        isRefreshing={isSyncing}
         selectedUsers={selectedUsers}
         onUserSelectionChange={onUserSelectionChange}
         availableUsers={availableUsers}
@@ -320,4 +333,4 @@ export default function HealthCalendar({
       </div>
     </div>
   )
-} 
+}

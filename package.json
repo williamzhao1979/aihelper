@@ -40,6 +40,7 @@
     "@radix-ui/react-toggle-group": "latest",
     "@radix-ui/react-tooltip": "latest",
     "@stripe/stripe-js": "latest",
+    "@supabase/supabase-js": "^2.50.3",
     "ai": "latest",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",

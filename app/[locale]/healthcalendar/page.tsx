@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus, Calendar, Heart, Activity, Users, Settings } from "lucide-react"
@@ -14,6 +14,8 @@ import { useToast } from "@/hooks/use-toast"
 import { StorageProviderSelector } from "@/components/storage-provider-selector"
 import { GoogleDriveSyncStatus } from "@/components/google-drive-sync-status"
 import { useGoogleDriveAuth } from "@/hooks/use-google-drive-auth"
+import { usePoopRecords } from "@/hooks/use-poop-records"
+import type { HealthRecord } from "@/lib/health-database"
 
 export default function HealthCalendarPage() {
   const router = useRouter()
@@ -26,6 +28,8 @@ export default function HealthCalendarPage() {
     healthDays: 0,
     periodCycle: "28天"
   })
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [refreshVersion, setRefreshVersion] = useState(0)
   
   const { users: availableUsers, isLoading: usersLoading, getPrimaryUser } = useUserManagement()
   const { getAllRecords, isInitialized, getMigrationStatus, migrateToMultiUser } = useHealthDatabase()
@@ -72,8 +76,63 @@ export default function HealthCalendarPage() {
     checkAndMigrateData()
   }, [isInitialized, getMigrationStatus, migrateToMultiUser])
 
-  // 计算统计数据
-  const calculateStats = useCallback(async () => {
+  // 获取当前用户（主用户或唯一选中用户），并 memoize
+  const currentUser = useMemo(() => {
+    if (selectedUsers.length === 1) return selectedUsers[0]
+    return getPrimaryUser()
+  }, [selectedUsers, getPrimaryUser])
+
+  // Call usePoopRecords at the top level, always
+  const poopRecordsApi = usePoopRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
+  const { records: poopRecords } = poopRecordsApi
+
+  // Map PoopRecord[] to HealthRecord[] for calendar/stats
+  const mappedPoopRecords: HealthRecord[] = useMemo(() => {
+    console.log('[mappedPoopRecords] mapping records, refreshVersion:', refreshVersion, 'poopRecords:', poopRecords)
+    return poopRecords.map((r) => ({
+      id: r.id,
+      recordId: r.id,
+      uniqueOwnerId: currentUser?.uniqueOwnerId || "",
+      ownerId: currentUser?.uniqueOwnerId || "",
+      ownerName: currentUser?.nickname || "",
+      date: r.date,
+      type: "poop",
+      content: r.content,
+      tags: r.tags,
+      attachments: r.attachments?.map(a => ({
+        id: a.id,
+        name: a.name,
+        type: a.type,
+        size: a.size,
+      })) || [],
+      poopType: r.poopType,
+      poopColor: r.poopColor,
+      poopSmell: r.poopSmell,
+      createdAt: new Date(r.createdAt),
+      updatedAt: new Date(r.updatedAt),
+    }))
+  }, [poopRecords, currentUser, refreshVersion])
+
+  // Sync from cloud on mount and when currentUser changes
+  useEffect(() => {
+    if (!currentUser?.uniqueOwnerId) return
+    console.log('[useEffect] Cloud sync triggered. currentUser:', currentUser)
+    console.log('[useEffect] poopRecordsApi at effect start:', poopRecordsApi)
+    console.log('[useEffect] records before sync:', poopRecordsApi.records)
+    const doSync = async () => {
+      try {
+        console.log('[useEffect] Starting cloud sync for user:', currentUser?.uniqueOwnerId)
+        await poopRecordsApi.syncFromCloud()
+        console.log('[useEffect] Cloud sync complete. records after sync:', poopRecordsApi.records)
+      } catch (err) {
+        console.error('[useEffect] Cloud sync failed:', err)
+      }
+    }
+    doSync()
+  }, [currentUser?.uniqueOwnerId])
+
+  // 计算统计数据（使用mappedPoopRecords）
+  const calculateStats = useCallback(() => {
     if (!isInitialized || selectedUsers.length === 0) {
       setStats({
         monthlyRecords: 0,
@@ -82,42 +141,25 @@ export default function HealthCalendarPage() {
       })
       return
     }
-
-    try {
-      const allRecords = await getAllRecords()
-      
-      // 根据选中的用户过滤记录
-      const selectedUserIds = selectedUsers.map(user => user.uniqueOwnerId)
-      const filteredRecords = allRecords.filter(record => 
-        selectedUserIds.includes(record.ownerId || record.uniqueOwnerId || '')
-      )
-
-      // 计算本月记录数
-      const currentMonth = new Date().getMonth()
-      const currentYear = new Date().getFullYear()
-      const monthlyRecords = filteredRecords.filter(record => {
-        const recordDate = new Date(record.date)
-        return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear
-      }).length
-
-      // 计算健康天数（有记录的天数）
-      const uniqueDates = new Set(filteredRecords.map(record => record.date))
-      const healthDays = uniqueDates.size
-
-      setStats({
-        monthlyRecords,
-        healthDays,
-        periodCycle: "28天"
-      })
-    } catch (error) {
-      console.error("计算统计数据失败:", error)
-      setStats({
-        monthlyRecords: 0,
-        healthDays: 0,
-        periodCycle: "28天"
-      })
-    }
-  }, [isInitialized, selectedUsers, getAllRecords])
+    const allRecords = mappedPoopRecords
+    const selectedUserIds = selectedUsers.map(user => user.uniqueOwnerId)
+    const filteredRecords = allRecords.filter(record => 
+      selectedUserIds.includes(record.ownerId || record.uniqueOwnerId || '')
+    )
+    const currentMonth = new Date().getMonth()
+    const currentYear = new Date().getFullYear()
+    const monthlyRecords = filteredRecords.filter(record => {
+      const recordDate = new Date(record.date)
+      return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear
+    }).length
+    const uniqueDates = new Set(filteredRecords.map(record => record.date))
+    const healthDays = uniqueDates.size
+    setStats({
+      monthlyRecords,
+      healthDays,
+      periodCycle: "28天"
+    })
+  }, [isInitialized, selectedUsers, mappedPoopRecords])
 
   // 当用户选择或数据变化时重新计算统计
   useEffect(() => {
@@ -174,6 +216,24 @@ export default function HealthCalendarPage() {
       description: "已切换到显示所有用户的记录",
     })
   }
+
+  // 手动触发云同步，带详细调试日志
+  const handleCloudSync = useCallback(async () => {
+    if (!currentUser?.uniqueOwnerId) return
+    setIsSyncing(true)
+    try {
+      console.log('[handleCloudSync] Manual cloud sync triggered. currentUser:', currentUser)
+      console.log('[handleCloudSync] poopRecordsApi at start:', poopRecordsApi)
+      console.log('[handleCloudSync] records before sync:', poopRecordsApi.records)
+      await poopRecordsApi.syncFromCloud()
+      console.log('[handleCloudSync] Cloud sync complete. records after sync:', poopRecordsApi.records)
+      setRefreshVersion(v => v + 1)
+    } catch (err) {
+      console.error('[handleCloudSync] Cloud sync failed:', err)
+    } finally {
+      setIsSyncing(false)
+    }
+  }, [currentUser, poopRecordsApi])
 
   // 获取当前显示的用户信息
   const getDisplayUsersText = () => {
@@ -285,14 +345,25 @@ export default function HealthCalendarPage() {
               availableUsers={availableUsers}
               className="w-32"
             />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleShowAllUsers}
-              className="text-xs"
-            >
-              显示所有
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleShowAllUsers}
+                className="text-xs"
+              >
+                显示所有
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCloudSync}
+                className="text-xs ml-2"
+                disabled={isSyncing}
+              >
+                {isSyncing ? '同步中...' : '刷新'}
+              </Button>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -301,6 +372,9 @@ export default function HealthCalendarPage() {
             onUserSelectionChange={handleUserSelectionChange}
             availableUsers={availableUsers}
             userSelectionVersion={userSelectionVersion}
+            records={mappedPoopRecords}
+            onCloudSync={handleCloudSync}
+            isSyncing={isSyncing}
           />
         </CardContent>
       </Card>
@@ -411,4 +485,4 @@ export default function HealthCalendarPage() {
       />
     </div>
   )
-} 
+}

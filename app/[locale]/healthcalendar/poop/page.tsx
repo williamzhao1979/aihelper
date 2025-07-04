@@ -18,6 +18,8 @@ import healthDB from "@/lib/health-database"
 import { getLocalDateTimeString, getLocalDateString } from "@/lib/utils"
 import { useUserManagement } from "@/hooks/use-user-management"
 import InlineUserSelector, { type UserProfile } from "@/components/healthcalendar/shared/inline-user-selector"
+import { usePoopRecords } from '@/hooks/use-poop-records'
+import type { FileAttachment } from '@/hooks/use-poop-records'
 
 interface UploadedFile {
   id: string
@@ -34,7 +36,11 @@ export default function PoopRecordPage() {
   const { toast } = useToast()
   const { saveRecord, updateRecord, getRecordById, isInitialized, isLoading: dbLoading } = useHealthDatabase()
   const { getPrimaryUser, users: availableUsers } = useUserManagement()
-  
+
+  // 先声明 selectedUser
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
+
+  // 其他 useState
   const [isEditMode, setIsEditMode] = useState(false)
   const [editRecordId, setEditRecordId] = useState<string>("")
   const [recordDateTime, setRecordDateTime] = useState<string>(getLocalDateTimeString())
@@ -46,7 +52,12 @@ export default function PoopRecordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isTypeExpanded, setIsTypeExpanded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
+
+  // poopRecordsApi 必须在 selectedUser 声明后
+  const poopRecordsApi = usePoopRecords(
+    selectedUser?.ownerId || '',
+    selectedUser?.uniqueOwnerId || ''
+  )
 
   // 检查是否为编辑模式
   useEffect(() => {
@@ -217,62 +228,80 @@ export default function PoopRecordPage() {
       })
       return
     }
-
-    setIsSubmitting(true)
     
+    setIsSubmitting(true)
     try {
-      // 准备记录数据
-      const recordData = {
+      console.log('[Poop] handleSubmit start, isEditMode:', isEditMode, 'uploadedFiles:', uploadedFiles)
+      // 构造 PoopRecord
+      const newRecord = {
+        id: isEditMode ? editRecordId : Math.random().toString(36).substr(2, 9),
         date: getLocalDateString(new Date(recordDateTime)),
-        datetime: recordDateTime,
-        type: "poop" as const,
+        type: 'poop' as const,
+        content: notes.trim(),
+        attachments: [] as FileAttachment[],
+        tags: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         poopType,
         poopColor,
         poopSmell,
-        notes: notes.trim(),
-        attachments: uploadedFiles.map(file => ({
-          id: file.id,
-          name: file.name,
-          size: file.size,
-          type: file.type
-        })),
-        // 多用户字段
-        uniqueOwnerId: selectedUser.uniqueOwnerId,
-        ownerId: selectedUser.ownerId,
-        ownerName: selectedUser.ownerName
       }
-
-      let recordId: string
-      
-      if (isEditMode) {
-        // 更新现有记录
-        await updateRecord(editRecordId, recordData)
-        recordId = editRecordId
-        console.log("大便记录更新成功:", recordId)
-        toast({
-          title: "更新成功",
-          description: `已为 ${selectedUser.nickname} 更新大便记录`,
-        })
-      } else {
-        // 创建新记录
-        recordId = await saveRecord(recordData)
-        console.log("大便记录保存成功:", recordId)
-        toast({
-          title: "保存成功",
-          description: `已为 ${selectedUser.nickname} 保存大便记录`,
-        })
+      console.log('[Poop] newRecord:', newRecord)
+      console.log('[Poop] poopRecordsApi:', poopRecordsApi)
+      let attachments: FileAttachment[] = []
+      if (uploadedFiles.length > 0 && poopRecordsApi) {
+        for (const file of uploadedFiles) {
+          console.log('[Poop] 准备上传文件:', file)
+          if ((file as any).url) {
+            attachments.push(file as FileAttachment)
+            console.log('[Poop] 已存在的附件，直接保留:', file)
+          } else {
+            try {
+              const url = await poopRecordsApi.uploadImage(file.file)
+              console.log('[Poop] 上传成功，url:', url)
+              attachments.push({
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                url,
+              })
+            } catch (e) {
+              console.error('[Poop] Supabase 上传失败:', e)
+              toast({
+                title: '文件上传失败',
+                description: (e as Error).message,
+                variant: 'destructive',
+              })
+              setIsSubmitting(false)
+              return
+            }
+          }
+        }
       }
-      
-      // 延迟跳转，让用户看到成功提示
+      newRecord.attachments = attachments
+      console.log('[Poop] 最终 attachments:', attachments)
+      if (poopRecordsApi) {
+        if (isEditMode) {
+          console.log('[Poop] 调用 updateRecord', newRecord)
+          await poopRecordsApi.updateRecord(newRecord)
+        } else {
+          console.log('[Poop] 调用 addRecord', newRecord, uploadedFiles[0]?.file)
+          await poopRecordsApi.addRecord(newRecord, uploadedFiles[0]?.file)
+        }
+      }
+      toast({
+        title: "保存成功",
+        description: `已为 ${selectedUser.nickname} 保存大便记录（含云端同步）`,
+      })
       setTimeout(() => {
         router.push("/healthcalendar")
       }, 1000)
-      
     } catch (error) {
       console.error("保存失败:", error)
       toast({
         title: "保存失败",
-        description: "保存记录时发生错误，请重试",
+        description: poopRecordsApi?.error || '保存记录时发生错误，请重试',
         variant: "destructive",
       })
     } finally {
@@ -548,4 +577,4 @@ export default function PoopRecordPage() {
       </div>
     </div>
   )
-} 
+}
