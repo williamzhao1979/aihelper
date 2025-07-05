@@ -39,6 +39,9 @@ export default function ViewPage() {
 
   // Call usePoopRecords at the top level, always
   const poopRecordsApi = usePoopRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
+  console.log("[ViewPage] currentUser?.uniqueOwnerId:", currentUser?.uniqueOwnerId)
+  console.log("[ViewPage] selectedUsers:", selectedUsers)
+  // console.log("[ViewPage] globalSelectedUsers:", globalSelectedUsers)
   const { records: poopRecords } = poopRecordsApi
 
   // Map PoopRecord[] to HealthRecord[] for calendar/stats

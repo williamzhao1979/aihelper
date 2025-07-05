@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ArrowLeft, Upload, X, FileText, Image, File, ChevronDown, ChevronUp } from "lucide-react"
+import { ArrowLeft, Upload, X, FileText, Image, File, ChevronDown, ChevronUp, Users } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
 import { useSearchParams } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -21,6 +21,7 @@ import InlineUserSelector, { type UserProfile } from "@/components/healthcalenda
 import { usePoopRecords } from '@/hooks/use-poop-records'
 import type { FileAttachment } from '@/hooks/use-poop-records'
 import { useGlobalUserSelection } from "@/hooks/use-global-user-selection"
+import { SingleUserSelector } from "@/components/healthcalendar/shared/single-user-selector"
 
 interface UploadedFile {
   id: string
@@ -36,11 +37,11 @@ export default function PoopRecordPage() {
   const searchParams = useSearchParams()
   const { toast } = useToast()
   const { saveRecord, updateRecord, getRecordById, isInitialized, isLoading: dbLoading } = useHealthDatabase()
-  const { getPrimaryUser, users: availableUsers } = useUserManagement()
+  // const { getPrimaryUser, users: availableUsers } = useUserManagement()
   const { updateSelectedUsers } = useGlobalUserSelection();
 
   // 先声明 selectedUser
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
+  // const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
 
   // 其他 useState
   const [isEditMode, setIsEditMode] = useState(false)
@@ -55,7 +56,27 @@ export default function PoopRecordPage() {
   const [isTypeExpanded, setIsTypeExpanded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingRecord, setIsLoadingRecord] = useState(false) // 添加记录加载状态
+  const { users: availableUsers, isLoading: usersLoading, getPrimaryUser } = useUserManagement()
 
+  // 使用全局用户选择状态
+  const { selectedUsers } = useGlobalUserSelection()
+  // 获取当前用户（主用户或唯一选中用户），并 memoize
+  const currentUser = useMemo(() => {
+    if (selectedUsers.length === 1) return selectedUsers[0]
+  }, [selectedUsers])
+
+  const selectedUser = currentUser
+
+  console.log("[PoopPage] selectedUser?.uniqueOwnerId:", selectedUser?.uniqueOwnerId)
+  console.log("[PoopPage] selectedUser:", selectedUser)
+  console.log("[PoopPage] currentUser?.uniqueOwnerId:", currentUser?.uniqueOwnerId)
+
+  const handleUserSelectionChange = (user: UserProfile) => {
+    console.log('[PoopPage] User selection changed to:', user)
+    // 用户选择变化会通过全局状态自动同步
+  }
+
+  // console.log("[PoopPage] globalSelectedUsers:", globalSelectedUsers)
   // poopRecordsApi 必须在 selectedUser 声明后
   const poopRecordsApi = usePoopRecords(
     selectedUser?.ownerId || '',
@@ -121,6 +142,7 @@ export default function PoopRecordPage() {
   useEffect(() => {
     const editId = searchParams.get('edit')
     console.log("URL参数edit:", editId) // 调试日志
+    console.log("selectedUser?.uniqueOwnerId:", selectedUser?.uniqueOwnerId)
     
     if (editId) {
       setIsEditMode(true)
@@ -543,7 +565,7 @@ export default function PoopRecordPage() {
         {/* 用户选择器 - 内联在页面头部 */}
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
           <CardContent className="p-4">
-            <InlineUserSelector
+            {/* <InlineUserSelector
               selectedUser={selectedUser}
               onUserChange={(user) => {
                 // 在加载记录时不允许切换用户
@@ -553,7 +575,19 @@ export default function PoopRecordPage() {
               }}
               availableUsers={availableUsers}
               recordType="poop"
+            /> */}
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Users className="h-4 w-4 text-gray-600" />
+              <span className="text-sm text-gray-600">当前用户:</span>
+            </div>
+            <SingleUserSelector
+              users={availableUsers}
+              selectedUser={selectedUsers[0] || availableUsers[0]}
+              onChange={handleUserSelectionChange}
             />
+          </div>
           </CardContent>
         </Card>
 
