@@ -47,6 +47,7 @@
     "clsx": "^2.1.1",
     "cmdk": "latest",
     "date-fns": "4.1.0",
+    "dayjs": "^1.11.13",
     "embla-carousel-react": "latest",
     "input-otp": "latest",
     "lamejs-121-bug": "latest",

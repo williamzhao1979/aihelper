@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -20,6 +20,7 @@ import { useUserManagement } from "@/hooks/use-user-management"
 import InlineUserSelector, { type UserProfile } from "@/components/healthcalendar/shared/inline-user-selector"
 import { usePoopRecords } from '@/hooks/use-poop-records'
 import type { FileAttachment } from '@/hooks/use-poop-records'
+import { useGlobalUserSelection } from "@/hooks/use-global-user-selection"
 
 interface UploadedFile {
   id: string
@@ -36,6 +37,7 @@ export default function PoopRecordPage() {
   const { toast } = useToast()
   const { saveRecord, updateRecord, getRecordById, isInitialized, isLoading: dbLoading } = useHealthDatabase()
   const { getPrimaryUser, users: availableUsers } = useUserManagement()
+  const { updateSelectedUsers } = useGlobalUserSelection();
 
   // 先声明 selectedUser
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
@@ -52,6 +54,7 @@ export default function PoopRecordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isTypeExpanded, setIsTypeExpanded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingRecord, setIsLoadingRecord] = useState(false) // 添加记录加载状态
 
   // poopRecordsApi 必须在 selectedUser 声明后
   const poopRecordsApi = usePoopRecords(
@@ -59,7 +62,62 @@ export default function PoopRecordPage() {
     selectedUser?.uniqueOwnerId || ''
   )
 
-  // 检查是否为编辑模式
+  // 使用与view页面完全一致的映射逻辑
+  const mappedPoopRecords = useMemo(() => {
+    console.log('[mappedPoopRecords] useMemo triggered')
+    console.log('[mappedPoopRecords] poopRecords length:', poopRecordsApi.records.length)
+    console.log('[mappedPoopRecords] selectedUser:', selectedUser)
+    console.log('[mappedPoopRecords] mapping records, poopRecords:', poopRecordsApi.records)
+    return poopRecordsApi.records.map((r) => ({
+      id: r.id,
+      recordId: r.id,
+      uniqueOwnerId: selectedUser?.uniqueOwnerId || "",
+      ownerId: selectedUser?.uniqueOwnerId || "",
+      ownerName: selectedUser?.nickname || "",
+      date: r.date,
+      datetime: r.datetime, // 映射datetime字段
+      type: "poop",
+      content: r.content,
+      tags: r.tags,
+      attachments: r.attachments?.map(a => ({
+        id: a.id,
+        name: a.name,
+        type: a.type,
+        size: a.size,
+      })) || [],
+      poopType: r.poopType,
+      poopColor: r.poopColor,
+      poopSmell: r.poopSmell,
+      createdAt: new Date(r.createdAt),
+      updatedAt: new Date(r.updatedAt),
+    }))
+  }, [poopRecordsApi.records, selectedUser])
+
+  // 强制获取最新数据 - 每次进入poop页面时都强制刷新云端数据（与view页面保持一致）
+  useEffect(() => {
+    if (!selectedUser?.uniqueOwnerId) return
+    console.log('[useEffect] Poop页面强制云端刷新触发. selectedUser:', selectedUser)
+    
+    const doForceRefresh = async () => {
+      try {
+        console.log('[useEffect] Poop页面开始强制云端刷新，用户:', selectedUser?.uniqueOwnerId)
+        // 使用forceRefresh确保清除所有缓存并获取最新数据
+        await poopRecordsApi.forceRefresh()
+        console.log('[useEffect] Poop页面强制云端刷新完成')
+      } catch (err) {
+        console.error('[useEffect] Poop页面强制云端刷新失败，尝试syncFromCloud:', err)
+        try {
+          await poopRecordsApi.syncFromCloud()
+          console.log('[useEffect] Poop页面syncFromCloud完成')
+        } catch (syncErr) {
+          console.error('[useEffect] Poop页面syncFromCloud也失败:', syncErr)
+        }
+      }
+    }
+    doForceRefresh()
+  }, [selectedUser?.uniqueOwnerId])
+
+  // 检查是否为编辑模式 - 使用与view页面相同的数据加载方法
   useEffect(() => {
     const editId = searchParams.get('edit')
     console.log("URL参数edit:", editId) // 调试日志
@@ -68,42 +126,138 @@ export default function PoopRecordPage() {
       setIsEditMode(true)
       setEditRecordId(editId)
       console.log("设置为编辑模式，记录ID:", editId) // 调试日志
-      loadRecordForEdit(editId)
+      
+      // 使用与view页面相同的数据加载逻辑
+      const loadRecordFromMappedData = async () => {
+        console.log("开始从mappedPoopRecords中查找记录:", editId)
+        console.log("当前mappedPoopRecords数量:", mappedPoopRecords.length)
+        
+        // 从mappedPoopRecords中查找记录（与view页面使用相同的数据源）
+        const record = mappedPoopRecords.find(r => r.id === editId || r.recordId === editId)
+        
+        if (record && record.type === "poop") {
+          console.log("从mappedPoopRecords找到记录:", record)
+          await loadRecordForEdit(editId)
+        } else {
+          console.log("在mappedPoopRecords中未找到记录，等待数据加载...")
+          // 如果当前没有找到记录，可能是数据还在加载中，等待一下再试
+          setTimeout(() => {
+            const retryRecord = mappedPoopRecords.find(r => r.id === editId || r.recordId === editId)
+            if (retryRecord && retryRecord.type === "poop") {
+              console.log("重试找到记录:", retryRecord)
+              loadRecordForEdit(editId)
+            } else {
+              console.log("重试后仍未找到记录")
+              toast({
+                title: "记录不存在",
+                description: `要编辑的记录 (${editId}) 不存在或类型不匹配。`,
+                variant: "destructive",
+              })
+            }
+          }, 1000)
+        }
+      }
+      
+      // 延迟执行，确保组件完全初始化
+      setTimeout(() => {
+        loadRecordFromMappedData()
+      }, 100)
     } else {
       console.log("新建模式") // 调试日志
     }
-  }, [searchParams, isInitialized])
+  }, [searchParams, mappedPoopRecords]) // 使用mappedPoopRecords作为依赖项
 
-  // 加载记录用于编辑
+  // 加载记录用于编辑 - 使用与view页面相同的数据源
   const loadRecordForEdit = async (recordId: string) => {
-    if (!isInitialized) {
-      console.log("数据库未初始化，等待...") // 调试日志
-      return
-    }
-    
     console.log("开始加载记录:", recordId) // 调试日志
-    setIsLoading(true)
+    console.log("当前用户:", selectedUser)
+    console.log("mappedPoopRecords数量:", mappedPoopRecords.length)
+    setIsLoadingRecord(true) // 使用专门的记录加载状态
+    
     try {
-      const record = await getRecordById(recordId)
-      console.log("从数据库加载的记录:", record) // 调试日志
+      // 从mappedPoopRecords中查找记录（与view页面使用相同的数据源）
+      console.log("从mappedPoopRecords中查找:", recordId)
+      console.log("当前mappedPoopRecords:", mappedPoopRecords)
       
-      if (record && record.type === "poop") {
-        console.log("记录类型正确，开始设置表单值") // 调试日志
+      let record = mappedPoopRecords.find(r => r.id === recordId || r.recordId === recordId)
+      
+      if (record) {
+        console.log("从mappedPoopRecords找到记录:", record)
+      } else {
+        console.log("在mappedPoopRecords中未找到记录")
+        // 如果mappedPoopRecords中没有找到，尝试从IndexedDB查找作为备用
+        if (isInitialized) {
+          console.log("数据库已初始化，尝试从IndexedDB查找")
+          const dbRecord = await getRecordById(recordId)
+          console.log("从IndexedDB加载的记录:", dbRecord)
+          if (dbRecord) {
+                         // 将数据库记录转换为mappedPoopRecords格式
+             const mappedRecord = {
+               id: dbRecord.id,
+               recordId: dbRecord.recordId || dbRecord.id,
+               uniqueOwnerId: dbRecord.uniqueOwnerId || selectedUser?.uniqueOwnerId || "",
+               ownerId: dbRecord.ownerId || selectedUser?.uniqueOwnerId || "",
+               ownerName: dbRecord.ownerName || selectedUser?.nickname || "",
+               date: dbRecord.date,
+               datetime: dbRecord.datetime,
+               type: dbRecord.type,
+               content: dbRecord.content || "",
+               tags: dbRecord.tags || [],
+               attachments: dbRecord.attachments || [],
+               poopType: dbRecord.poopType || "type4",
+               poopColor: dbRecord.poopColor || "brown",
+               poopSmell: dbRecord.poopSmell || "normal",
+               createdAt: dbRecord.createdAt,
+               updatedAt: dbRecord.updatedAt,
+             }
+            // 使用数据库记录
+            record = mappedRecord
+          }
+        } else {
+          console.log("数据库未初始化，无法从IndexedDB查找")
+        }
+      }
+      
+              if (record && record.type === "poop") {
+          console.log("记录类型正确，开始设置表单值") // 调试日志
+          
+          // 使用实际记录的值，只有在值为undefined或null时才使用默认值
+          // 优先使用datetime字段，如果没有则使用createdAt
+          let newDateTime: string
+          if (record.datetime) {
+            // 优先使用datetime字段
+            const recordDate = new Date(record.datetime)
+            newDateTime = getLocalDateTimeString(recordDate)
+          } else if (record.createdAt) {
+            // 如果没有datetime字段，则使用createdAt
+            let recordDate: Date
+            if (typeof record.createdAt === 'string') {
+              // 云端记录：createdAt是ISO字符串
+              recordDate = new Date(record.createdAt)
+            } else {
+              // 数据库记录：createdAt是Date对象
+              recordDate = record.createdAt
+            }
+            newDateTime = getLocalDateTimeString(recordDate)
+          } else {
+            newDateTime = getLocalDateTimeString()
+          }
+          
+          const newPoopType = record.poopType || "type4"
+          const newPoopColor = record.poopColor || "brown"
+          const newPoopSmell = record.poopSmell || "normal"
+          const newNotes = record.content || ""
         
-        // 使用实际记录的值，只有在值为undefined或null时才使用默认值
-        const newDateTime = record.datetime ?? getLocalDateTimeString()
-        const newPoopType = record.poopType ?? "type4"
-        const newPoopColor = record.poopColor ?? "brown"
-        const newPoopSmell = record.poopSmell ?? "normal"
-        const newNotes = record.notes ?? ""
-        
-        console.log("准备设置的值:", {
-          datetime: newDateTime,
-          poopType: newPoopType,
-          poopColor: newPoopColor,
-          poopSmell: newPoopSmell,
-          notes: newNotes
-        }) // 调试日志
+                  console.log("准备设置的值:", {
+            recordDatetime: record.datetime,
+            recordCreatedAt: record.createdAt,
+            recordCreatedAtType: typeof record.createdAt,
+            newDateTime: newDateTime,
+            poopType: newPoopType,
+            poopColor: newPoopColor,
+            poopSmell: newPoopSmell,
+            notes: newNotes
+          }) // 调试日志
         
         setRecordDateTime(newDateTime)
         setPoopType(newPoopType)
@@ -111,13 +265,15 @@ export default function PoopRecordPage() {
         setPoopSmell(newPoopSmell)
         setNotes(newNotes)
         
-        // 设置用户选择
-        if (record.uniqueOwnerId) {
-          const recordUser = availableUsers.find(user => user.uniqueOwnerId === record.uniqueOwnerId)
-          if (recordUser) {
-            setSelectedUser(recordUser)
+                  // 设置用户选择 - 只在当前用户不匹配时才设置
+          if (record.uniqueOwnerId) {
+            const recordUser = availableUsers.find(user => user.uniqueOwnerId === record.uniqueOwnerId)
+            if (recordUser && (!selectedUser || selectedUser.uniqueOwnerId !== recordUser.uniqueOwnerId)) {
+              console.log("设置用户选择:", recordUser)
+              setSelectedUser(recordUser)
+              updateSelectedUsers([recordUser]) // 同步全局用户选择
+            }
           }
-        }
         
         console.log("表单值设置完成") // 调试日志
         
@@ -129,12 +285,20 @@ export default function PoopRecordPage() {
         }
       } else {
         console.log("记录不存在或类型不匹配:", record) // 调试日志
+        console.log("mappedPoopRecords ID列表:", mappedPoopRecords.map(r => r.id))
+        console.log("查找的记录ID:", recordId)
+        
+        // 不要立即跳转，而是显示错误信息
         toast({
           title: "记录不存在",
-          description: "要编辑的记录不存在或类型不匹配",
+          description: `要编辑的记录 (${recordId}) 不存在或类型不匹配。请检查记录ID是否正确。`,
           variant: "destructive",
         })
-        router.push("/healthcalendar")
+        
+        // 延迟跳转，让用户看到错误信息
+        // setTimeout(() => {
+        //   router.push("/healthcalendar")
+        // }, 3000)
       }
     } catch (error) {
       console.error("加载记录失败:", error)
@@ -143,9 +307,13 @@ export default function PoopRecordPage() {
         description: "加载记录时发生错误",
         variant: "destructive",
       })
-      router.push("/healthcalendar")
+      
+      // 延迟跳转，让用户看到错误信息
+      setTimeout(() => {
+        router.push("/healthcalendar")
+      }, 3000)
     } finally {
-      setIsLoading(false)
+      setIsLoadingRecord(false) // 使用专门的记录加载状态
       console.log("加载完成") // 调试日志
     }
   }
@@ -236,6 +404,7 @@ export default function PoopRecordPage() {
       const newRecord = {
         id: isEditMode ? editRecordId : Math.random().toString(36).substr(2, 9),
         date: getLocalDateString(new Date(recordDateTime)),
+        datetime: new Date(recordDateTime).toISOString(), // 设置datetime字段，格式与updatedAt相同
         type: 'poop' as const,
         content: notes.trim(),
         attachments: [] as FileAttachment[],
@@ -253,7 +422,14 @@ export default function PoopRecordPage() {
         for (const file of uploadedFiles) {
           console.log('[Poop] 准备上传文件:', file)
           if ((file as any).url) {
-            attachments.push(file as FileAttachment)
+            // 如果文件已经有URL，说明是已存在的附件
+            attachments.push({
+              id: file.id,
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              url: (file as any).url,
+            })
             console.log('[Poop] 已存在的附件，直接保留:', file)
           } else {
             try {
@@ -369,7 +545,12 @@ export default function PoopRecordPage() {
           <CardContent className="p-4">
             <InlineUserSelector
               selectedUser={selectedUser}
-              onUserChange={setSelectedUser}
+              onUserChange={(user) => {
+                // 在加载记录时不允许切换用户
+                if (!isLoadingRecord) {
+                  setSelectedUser(user)
+                }
+              }}
               availableUsers={availableUsers}
               recordType="poop"
             />

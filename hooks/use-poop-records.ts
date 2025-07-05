@@ -14,6 +14,7 @@ export type FileAttachment = {
 export interface PoopRecord {
   id: string;
   date: string;
+  datetime?: string; // 添加datetime字段，对应大便记录页面的日期时间
   type: 'poop';
   content: string;
   attachments: FileAttachment[];
@@ -41,6 +42,7 @@ interface UsePoopRecordsResult {
   uploadImage: (file: File) => Promise<string>;
   syncToCloud: () => Promise<void>;
   syncFromCloud: () => Promise<void>;
+  forceRefresh: () => Promise<void>; // 强制刷新数据
   loading: boolean;
   error: string | null;
 }
@@ -68,18 +70,26 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load from localStorage only on client
+  // Load from localStorage only on client - 强制获取最新数据
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && uniqueOwnerId) {
+      console.log('[useEffect] 初始化时强制获取本地数据，uniqueOwnerId:', uniqueOwnerId);
+      
       const raw = localStorage.getItem(LOCAL_KEY_PREFIX + uniqueOwnerId);
       if (raw) {
         try {
           const parsed: RecordsFile = JSON.parse(raw);
-          setRecords(parsed.records || []);
-        } catch {
+          console.log('[useEffect] 从localStorage获取到数据，记录数量:', parsed.records?.length || 0);
+          console.log('[useEffect] 最后更新时间:', parsed.lastUpdated);
+          
+          // 强制更新状态
+          setRecords([...parsed.records || []]);
+        } catch (error) {
+          console.error('[useEffect] 解析localStorage数据失败:', error);
           setRecords([]);
         }
       } else {
+        console.log('[useEffect] localStorage中没有找到数据');
         setRecords([]);
       }
     }
@@ -106,7 +116,7 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
     return data.signedUrl;
   }, [uniqueOwnerId]);
 
-  // 保存到 localStorage
+  // 保存到 localStorage - 强制更新
   const saveLocal = useCallback((newRecords: PoopRecord[]) => {
     const now = new Date().toISOString();
     const recordsFile: RecordsFile = {
@@ -116,8 +126,17 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
       version: RECORDS_VERSION,
       checksum: calcChecksum(JSON.stringify(newRecords)),
     };
+    
+    console.log('[saveLocal] 强制更新本地存储，记录数量:', newRecords.length);
+    console.log('[saveLocal] 更新时间:', now);
+    
+    // 强制更新localStorage
     localStorage.setItem(LOCAL_KEY_PREFIX + uniqueOwnerId, JSON.stringify(recordsFile));
-    setRecords(newRecords);
+    
+    // 强制更新状态
+    setRecords([...newRecords]);
+    
+    console.log('[saveLocal] 本地存储和状态已强制更新');
   }, [uniqueOwnerId]);
 
   // 上传 records.json 到 Supabase Storage
@@ -142,27 +161,40 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
     setLoading(false);
   }, [uniqueOwnerId]);
 
-  // 从 Supabase Storage 拉取 records.json
+  // 从 Supabase Storage 拉取 records.json - 强制获取最新数据
   const syncFromCloud = useCallback(async () => {
     setLoading(true);
     setError(null);
     const filePath = `users/user_${uniqueOwnerId}/records.json`;
+    
+    // 使用更强的时间戳和随机数确保每次都获取最新数据
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
+    const cacheBuster = `?t=${timestamp}&r=${random}&sync=true`;
+    
+    console.log('[syncFromCloud] 开始强制获取最新数据，cacheBuster:', cacheBuster);
+    
     const { data, error } = await supabase.storage
       .from('healthcalendar')
-      .download(`${filePath}?t=${Date.now()}`);
+      .download(`${filePath}${cacheBuster}`);
+      
     if (error) {
+      console.error('[syncFromCloud] 获取数据失败:', error);
       setLoading(false);
       setError(error.message);
       return;
     }
+    
     const text = await data.text();
-    console.log('[syncFromCloud] Fetched records.json text:', text); // 调试输出原始内容
+    console.log('[syncFromCloud] 获取到的最新数据:', text); // 调试输出原始内容
     try {
       const parsed: RecordsFile = JSON.parse(text);
-      console.log('[syncFromCloud] Parsed records.json:', parsed); // 调试输出解析内容
-      // 最后写入为准策略
+      console.log('[syncFromCloud] 解析后的数据:', parsed); // 调试输出解析内容
+      // 强制更新本地数据
       saveLocal(parsed.records);
+      console.log('[syncFromCloud] 本地数据已强制更新');
     } catch (e) {
+      console.error('[syncFromCloud] 解析数据失败:', e);
       setError('Failed to parse records.json');
     }
     setLoading(false);
@@ -220,6 +252,60 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
     setLoading(false);
   }, [records, saveLocal, syncToCloud]);
 
+  // 强制刷新数据 - 清除缓存并重新获取
+  const forceRefresh = useCallback(async () => {
+    console.log('[forceRefresh] 开始强制刷新数据');
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // 清除localStorage缓存
+      localStorage.removeItem(LOCAL_KEY_PREFIX + uniqueOwnerId);
+      console.log('[forceRefresh] 已清除localStorage缓存');
+      
+      // 清除内存中的记录状态
+      setRecords([]);
+      console.log('[forceRefresh] 已清除内存中的记录状态');
+      
+      // 强制从云端获取最新数据，使用更强的缓存破坏
+      const filePath = `users/user_${uniqueOwnerId}/records.json`;
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(7);
+      const cacheBuster = `?t=${timestamp}&r=${random}&force=true`;
+      
+      console.log('[forceRefresh] 使用强制缓存破坏参数:', cacheBuster);
+      
+      const { data, error } = await supabase.storage
+        .from('healthcalendar')
+        .download(`${filePath}${cacheBuster}`);
+        
+      if (error) {
+        console.error('[forceRefresh] 获取数据失败:', error);
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+      
+      const text = await data.text();
+      console.log('[forceRefresh] 获取到的最新数据:', text);
+      try {
+        const parsed: RecordsFile = JSON.parse(text);
+        console.log('[forceRefresh] 解析后的数据:', parsed);
+        // 强制更新本地数据
+        saveLocal(parsed.records);
+        console.log('[forceRefresh] 强制刷新完成，记录数量:', parsed.records.length);
+      } catch (e) {
+        console.error('[forceRefresh] 解析数据失败:', e);
+        setError('Failed to parse records.json');
+      }
+    } catch (error) {
+      console.error('[forceRefresh] 强制刷新失败:', error);
+      setError('强制刷新失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [uniqueOwnerId, saveLocal]);
+
   return {
     records,
     addRecord,
@@ -228,6 +314,7 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
     uploadImage,
     syncToCloud,
     syncFromCloud,
+    forceRefresh,
     loading,
     error,
   };

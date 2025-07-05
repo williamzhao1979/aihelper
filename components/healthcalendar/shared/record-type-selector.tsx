@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -21,6 +21,7 @@ import PoopDetectiveIcon from "./poop-detective-icon"
 interface RecordTypeSelectorProps {
   isOpen: boolean
   onClose: () => void
+  date?: string
 }
 
 interface RecordType {
@@ -32,9 +33,20 @@ interface RecordType {
   route: string
 }
 
-export default function RecordTypeSelector({ isOpen, onClose }: RecordTypeSelectorProps) {
+export default function RecordTypeSelector({ isOpen, onClose, date }: RecordTypeSelectorProps) {
   const router = useRouter()
   const [selectedType, setSelectedType] = useState<string | null>(null)
+  const [isNavigating, setIsNavigating] = useState(false)
+
+  // 调试日志：组件状态变化
+  useEffect(() => {
+    console.log("RecordTypeSelector - isOpen changed:", isOpen)
+  }, [isOpen])
+
+  // 调试日志：导航状态变化
+  useEffect(() => {
+    console.log("RecordTypeSelector - isNavigating changed:", isNavigating)
+  }, [isNavigating])
 
   const recordTypes: RecordType[] = [
     {
@@ -104,27 +116,83 @@ export default function RecordTypeSelector({ isOpen, onClose }: RecordTypeSelect
   ]
 
   const handleTypeSelect = (type: RecordType) => {
+    console.log("handleTypeSelect called with type:", type.id)
+    console.log("Current isNavigating state:", isNavigating)
+    
+    if (isNavigating) {
+      console.log("Navigation already in progress, ignoring selection")
+      return
+    }
+
     setSelectedType(type.id)
-    // 延迟跳转，让用户看到选中效果
+    setIsNavigating(true)
+    
     setTimeout(() => {
-      router.push(type.route as any)
-      onClose()
-      setSelectedType(null)
+      let targetRoute = type.route
+      if (date) {
+        if (targetRoute.startsWith('/healthcalendar/')) {
+          targetRoute += `?date=${date}`
+        }
+      }
+      console.log("Navigating to:", targetRoute)
+      
+      try {
+        router.push(targetRoute as any)
+        console.log("Navigation initiated successfully")
+      } catch (error) {
+        console.error("Navigation error:", error)
+        setIsNavigating(false)
+        setSelectedType(null)
+      }
     }, 200)
   }
 
   const handleClose = () => {
+    console.log("handleClose called")
+    console.log("Current isNavigating state:", isNavigating)
+    console.log("Current selectedType:", selectedType)
+    
+    // 如果正在导航中，不执行关闭操作
+    if (isNavigating) {
+      console.log("Navigation in progress, skipping close operation")
+      return
+    }
+    
     setSelectedType(null)
+    console.log("Calling onClose callback")
     onClose()
   }
 
+  const handleOpenChange = (open: boolean) => {
+    console.log("Dialog onOpenChange called with:", open)
+    console.log("Current isOpen prop:", isOpen)
+    console.log("Current isNavigating state:", isNavigating)
+    
+    if (!open && !isNavigating) {
+      handleClose()
+    }
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent 
+        className="max-w-2xl max-h-[80vh] overflow-y-auto" 
+        onEscapeKeyDown={() => {
+          console.log("ESC key pressed")
+          if (!isNavigating) handleClose()
+        }} 
+        onInteractOutside={() => {
+          console.log("Interact outside detected")
+          if (!isNavigating) handleClose()
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <Plus className="h-5 w-5 text-blue-600" />
             <span>选择记录类型</span>
+            {isNavigating && (
+              <span className="text-sm text-gray-500">(导航中...)</span>
+            )}
           </DialogTitle>
         </DialogHeader>
         
@@ -136,7 +204,7 @@ export default function RecordTypeSelector({ isOpen, onClose }: RecordTypeSelect
                 selectedType === type.id 
                   ? 'ring-2 ring-blue-500 shadow-lg' 
                   : type.color
-              }`}
+              } ${isNavigating ? 'opacity-50 pointer-events-none' : ''}`}
               onClick={() => handleTypeSelect(type)}
             >
               <CardContent className="p-4 text-center">
@@ -161,7 +229,14 @@ export default function RecordTypeSelector({ isOpen, onClose }: RecordTypeSelect
         </div>
 
         <div className="flex justify-end mt-6 pt-4 border-t">
-          <Button variant="outline" onClick={handleClose}>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              console.log("Cancel button clicked")
+              if (!isNavigating) handleClose()
+            }}
+            disabled={isNavigating}
+          >
             取消
           </Button>
         </div>
