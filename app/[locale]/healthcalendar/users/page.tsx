@@ -29,103 +29,67 @@ import {
   Settings, 
   Shield,
   Users,
-  User
+  User,
+  Cloud,
+  RefreshCw
 } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
+import { useUserManagement } from "@/hooks/use-user-management"
 import type { UserProfile } from "@/components/healthcalendar/shared/user-selector"
 
-// 模拟用户数据
-const mockUsers: UserProfile[] = [
-  {
-    uniqueOwnerId: "user_001",
-    ownerId: "device_001",
-    ownerName: "本人",
-    nickname: "本人",
-    role: "primary",
-    isActive: true
-  },
-  {
-    uniqueOwnerId: "user_002",
-    ownerId: "device_002",
-    ownerName: "孩子妈妈",
-    nickname: "妈妈",
-    role: "family",
-    relationship: "孩子妈妈",
-    isActive: true
-  },
-  {
-    uniqueOwnerId: "user_003",
-    ownerId: "device_003",
-    ownerName: "大女儿",
-    nickname: "大女儿",
-    role: "family",
-    relationship: "大女儿",
-    isActive: true
-  },
-  {
-    uniqueOwnerId: "user_004",
-    ownerId: "device_004",
-    ownerName: "小女儿",
-    nickname: "小女儿",
-    role: "family",
-    relationship: "小女儿",
-    isActive: true
-  },
-  {
-    uniqueOwnerId: "user_005",
-    ownerId: "device_005",
-    ownerName: "爸爸",
-    nickname: "爸爸",
-    role: "family",
-    relationship: "爸爸",
-    isActive: true
-  },
-  {
-    uniqueOwnerId: "user_006",
-    ownerId: "device_006",
-    ownerName: "妈妈",
-    nickname: "妈妈",
-    role: "family",
-    relationship: "妈妈",
-    isActive: true
-  }
-]
+// 用户数据现在由useUserManagement hook管理
 
 export default function UserManagementPage() {
   const router = useRouter()
-  const [users, setUsers] = useState<UserProfile[]>(mockUsers)
+  const { users, addUser, deleteUser, isLoading, forceRefresh } = useUserManagement()
+  const [isSyncing, setIsSyncing] = useState(false)
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false)
-  const [editingUser, setEditingUser] = useState<UserProfile | null>(null)
   const [newUser, setNewUser] = useState({
     nickname: "",
     relationship: "",
     role: "family" as const
   })
 
-  const handleAddUser = () => {
+  // 页面首次加载时强制从云端拉取最新用户数据
+  useEffect(() => {
+    setIsSyncing(true)
+    forceRefresh().finally(() => setIsSyncing(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleAddUser = async () => {
     if (newUser.nickname.trim()) {
-      const user: UserProfile = {
-        uniqueOwnerId: `user_${Date.now()}`,
-        ownerId: `device_${Date.now()}`,
+      await addUser({
         ownerName: newUser.nickname,
         nickname: newUser.nickname,
         role: newUser.role,
         relationship: newUser.relationship || undefined,
         isActive: true
-      }
-      setUsers([...users, user])
+      })
       setNewUser({ nickname: "", relationship: "", role: "family" })
       setIsAddUserDialogOpen(false)
     }
   }
 
   const handleEditUser = (user: UserProfile) => {
-    setEditingUser(user)
+    // 跳转到用户编辑页面
+    router.push(`/healthcalendar/users/${user.uniqueOwnerId}/edit` as any)
   }
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     if (confirm("确定要删除这个用户吗？")) {
-      setUsers(users.filter(user => user.uniqueOwnerId !== userId))
+      await deleteUser(userId)
+    }
+  }
+
+  const handleForceRefresh = async () => {
+    setIsSyncing(true)
+    try {
+      await forceRefresh()
+    } catch (error) {
+      console.error('强制刷新失败:', error)
+    } finally {
+      setIsSyncing(false)
     }
   }
 
@@ -155,28 +119,49 @@ export default function UserManagementPage() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">加载用户数据中...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="p-2"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Users className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">用户管理</h1>
-              <p className="text-sm text-gray-600">管理家庭成员和权限设置</p>
-            </div>
+        <div className="flex items-center space-x-3 mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+            className="p-2"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <Users className="h-6 w-6 text-blue-600" />
           </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">用户管理</h1>
+            <p className="text-sm text-gray-600">管理家庭成员和权限设置</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-end space-x-2">
+          {/* 只保留强制刷新按钮 */}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleForceRefresh}
+            disabled={isSyncing}
+          >
+            <RefreshCw className={`h-5 w-5 ${isSyncing ? 'animate-spin' : ''}`} />
+          </Button>
+          {/* 添加用户按钮 */}
           <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
             <DialogTrigger asChild>
               <Button className="flex items-center space-x-1 bg-blue-600 hover:bg-blue-700">
@@ -248,17 +233,17 @@ export default function UserManagementPage() {
         {users.map((user) => (
           <Card key={user.uniqueOwnerId} className="bg-white/90 backdrop-blur-sm shadow-lg">
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-12 w-12">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center space-x-4 min-w-0 flex-1">
+                  <Avatar className="h-12 w-12 flex-shrink-0">
                     <AvatarImage src={user.avatar} alt={user.nickname} />
                     <AvatarFallback className="text-lg">
                       {getAvatarFallback(user)}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-lg font-semibold text-gray-900 truncate">
                         {user.nickname}
                       </h3>
                       <Badge className={getRoleColor(user.role)}>
@@ -271,37 +256,52 @@ export default function UserManagementPage() {
                       )}
                     </div>
                     {user.relationship && (
-                      <p className="text-sm text-gray-600">{user.relationship}</p>
+                      <p className="text-sm text-gray-600 truncate">{user.relationship}</p>
                     )}
-                    <p className="text-xs text-gray-500">ID: {user.uniqueOwnerId}</p>
+                    {(user as any).notes && (
+                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">{(user as any).notes}</p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <p className="text-xs text-gray-500">ID: {user.uniqueOwnerId}</p>
+                      {(user as any).updatedAt && (
+                        <p className="text-xs text-gray-400">
+                          更新: {new Date((user as any).updatedAt).toLocaleDateString('zh-CN')}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center justify-end space-x-1 sm:space-x-2 flex-shrink-0">
                   {user.role !== "primary" && (
                     <>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleEditUser(user)}
+                        className="h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
                       >
                         <Edit className="h-4 w-4" />
+                        <span className="hidden sm:inline ml-1">编辑</span>
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteUser(user.uniqueOwnerId)}
-                        className="text-red-600 hover:text-red-700"
+                        className="h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3 text-red-600 hover:text-red-700"
                       >
                         <Trash2 className="h-4 w-4" />
+                        <span className="hidden sm:inline ml-1">删除</span>
                       </Button>
                     </>
                   )}
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => router.push(`/healthcalendar/users/${user.uniqueOwnerId}/permissions`)}
+                    onClick={() => router.push(`/healthcalendar/users/${user.uniqueOwnerId}/permissions` as any)}
+                    className="h-8 w-8 p-0 sm:h-9 sm:w-auto sm:px-3"
                   >
                     <Shield className="h-4 w-4" />
+                    <span className="hidden sm:inline ml-1">权限</span>
                   </Button>
                 </div>
               </div>
