@@ -31,7 +31,7 @@ export default function HealthCalendarPage() {
   const [isSyncing, setIsSyncing] = useState(false)
   const [refreshVersion, setRefreshVersion] = useState(0)
   
-  const { users: availableUsers, isLoading: usersLoading, getPrimaryUser } = useUserManagement()
+  const { users: availableUsers, isLoading: usersLoading, getPrimaryUser, forceRefresh: forceRefreshUsers } = useUserManagement()
   const { getAllRecords, isInitialized, getMigrationStatus, migrateToMultiUser } = useHealthDatabase()
 
   // 使用全局用户选择状态
@@ -227,15 +227,34 @@ const handleAddRecord = () => {
     try {
       console.log('[handleCloudSync] 手动强制云端同步触发. currentUser:', currentUser)
       console.log('[handleCloudSync] 同步前记录数量:', poopRecordsApi.records.length)
-      await poopRecordsApi.syncFromCloud()
-      console.log('[handleCloudSync] 手动强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length)
+      
+      // 同时刷新用户数据和健康记录数据
+      const [userRefreshResult, recordsRefreshResult] = await Promise.allSettled([
+        forceRefreshUsers(),
+        poopRecordsApi.syncFromCloud()
+      ])
+      
+      // 检查用户数据刷新结果
+      if (userRefreshResult.status === 'fulfilled') {
+        console.log('[handleCloudSync] 用户数据刷新成功')
+      } else {
+        console.error('[handleCloudSync] 用户数据刷新失败:', userRefreshResult.reason)
+      }
+      
+      // 检查健康记录数据刷新结果
+      if (recordsRefreshResult.status === 'fulfilled') {
+        console.log('[handleCloudSync] 健康记录数据刷新成功，同步后记录数量:', poopRecordsApi.records.length)
+      } else {
+        console.error('[handleCloudSync] 健康记录数据刷新失败:', recordsRefreshResult.reason)
+      }
+      
       setRefreshVersion(v => v + 1)
     } catch (err) {
       console.error('[handleCloudSync] 手动强制云端同步失败:', err)
     } finally {
       setIsSyncing(false)
     }
-  }, [currentUser, poopRecordsApi])
+  }, [currentUser, poopRecordsApi, forceRefreshUsers])
 
   // 获取当前显示的用户信息
   const getDisplayUsersText = () => {

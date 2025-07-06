@@ -46,7 +46,7 @@ export function SingleUserSelector({ users, selectedUser, onChange }: SingleUser
 
   return (
     <Select value={currentSelectedUser?.uniqueOwnerId} onValueChange={handleUserChange}>
-      <SelectTrigger className="w-[140px]">
+      <SelectTrigger className="w-[120px]">
         <SelectValue placeholder="选择用户" />
       </SelectTrigger>
       <SelectContent>
