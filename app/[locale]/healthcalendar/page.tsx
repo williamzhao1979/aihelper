@@ -34,6 +34,11 @@ export default function HealthCalendarPage() {
   })
   const [isSyncing, setIsSyncing] = useState(false)
   const [refreshVersion, setRefreshVersion] = useState(0)
+
+  useEffect(() => {
+    // 页面加载时执行一次
+    forceRefreshUsers();
+  }, []);
   
   const { users: availableUsers, isLoading: usersLoading, getPrimaryUser, forceRefresh: forceRefreshUsers } = useUserManagement()
   const { getAllRecords, isInitialized, getMigrationStatus, migrateToMultiUser } = useHealthDatabase()

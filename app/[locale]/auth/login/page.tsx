@@ -76,7 +76,8 @@ export default function EnvLoginPage() {
       }
     } catch (error) {
       console.error('[Login] 登录失败:', error)
-      // 错误处理由 LoginForm 组件处理
+      // 重新抛出错误，让 LoginForm 组件处理
+      throw error
     }
   }
 
