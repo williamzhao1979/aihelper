@@ -1,5 +1,6 @@
 "use client"
 
+import { useUserManagement } from "@/hooks/use-user-management"
 import React, { createContext, useContext, useEffect, useState } from "react"
 
 interface User {
@@ -88,6 +89,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(data.user)
       
       console.log('[AuthContext] 用户状态已更新:', data.user)
+
+      // Clear user list cache and trigger refresh
+      console.log('[AuthContext] 清除用户列表缓存并触发刷新')
+      localStorage.removeItem('healthcalendar_users')
+      localStorage.setItem('user_list_refresh_needed', Date.now().toString())
+      
+      // Trigger custom event for same-tab refresh
+      window.dispatchEvent(new Event('userListRefreshNeeded'))
+      
     } catch (error) {
       console.error('[AuthContext] 登录请求异常:', error)
       
