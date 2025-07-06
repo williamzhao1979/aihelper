@@ -13,9 +13,12 @@ export default async function middleware(request: NextRequest) {
   const userAgent = request.headers.get("user-agent") || ""
 
   // 检查是否需要认证 - 只对 /healthcalendar 路径进行认证
-  if (pathname.includes('/healthcalendar') && process.env.AUTH_ENABLED === 'true') {
+  // 如果AUTH_ENABLED不存在，默认设置为true
+  const authEnabled = process.env.AUTH_ENABLED !== 'false'
+  
+  if (pathname.includes('/healthcalendar') && authEnabled) {
     console.log('[Middleware] 检测到 healthcalendar 路径:', pathname)
-    console.log('[Middleware] AUTH_ENABLED:', process.env.AUTH_ENABLED)
+    console.log('[Middleware] AUTH_ENABLED:', process.env.AUTH_ENABLED, '实际启用:', authEnabled)
     
     const token = request.cookies.get('auth-token')?.value
     console.log('[Middleware] 读取到的token:', token ? `${token.substring(0, 20)}...` : 'null')
