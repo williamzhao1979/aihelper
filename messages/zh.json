@@ -177,5 +177,19 @@
     "extracted_urls": "URL",
     "close": "关闭",
     "result_card_title": "识别结果"
+  },
+  "auth": {
+    "title": "健康日历",
+    "subtitle": "登录",
+    "username": "用户名",
+    "password": "密码",
+    "usernamePlaceholder": "请输入用户名",
+    "passwordPlaceholder": "请输入密码",
+    "login": "登录",
+    "loggingIn": "登录中...",
+    "loginFailed": "登录失败",
+    "loginFailedRetry": "登录失败，请重试",
+    "usernamePasswordError": "用户名或密码错误",
+    "accountLocked": "账户被锁定，请 {time} 秒后重试"
   }
 }

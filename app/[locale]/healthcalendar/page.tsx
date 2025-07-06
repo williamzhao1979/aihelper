@@ -7,6 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Calendar, Heart, Activity, Plus, Users, Droplets, Stethoscope, Pill, Camera, FileText, RefreshCw } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
 import { useToast } from "@/hooks/use-toast"
+import { usePathname } from "next/navigation"
 import { usePoopRecords } from "@/hooks/use-poop-records"
 import { usePeriodRecords } from "@/hooks/use-period-records"
 import { useUserManagement } from "@/hooks/use-user-management"
@@ -23,6 +24,7 @@ import dayjs from 'dayjs'
 export default function HealthCalendarPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const pathname = usePathname()
   const [isRecordSelectorOpen, setIsRecordSelectorOpen] = useState(false)
   const [userSelectionVersion, setUserSelectionVersion] = useState(0)
   const [stats, setStats] = useState({
@@ -38,6 +40,44 @@ export default function HealthCalendarPage() {
 
   // 使用全局用户选择状态
   const { selectedUsers, updateSelectedUsers } = useGlobalUserSelection()
+
+  // 退出登录功能
+  const handleLogout = async () => {
+    try {
+      // 调用logout API清除cookie
+      const response = await fetch('/api/auth/env-logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (response.ok) {
+        toast({
+          title: "退出成功",
+          description: "您已成功退出登录",
+        })
+        
+        // 获取当前locale
+        const locale = pathname.split('/')[1] || 'zh'
+        const currentPath = pathname
+        
+        // 跳转到登录页面，设置callbackUrl为当前页面
+        const loginUrl = `/${locale}/auth/login?callbackUrl=${encodeURIComponent(currentPath)}`
+        console.log('[Logout] 跳转到登录页:', loginUrl)
+        window.location.href = loginUrl
+      } else {
+        throw new Error('Logout failed')
+      }
+    } catch (error) {
+      console.error('[Logout] 退出失败:', error)
+      toast({
+        title: "退出失败",
+        description: "退出登录时发生错误，请重试",
+        variant: "destructive",
+      })
+    }
+  }
 
   // 初始化全局用户选择状态
   useEffect(() => {
@@ -607,6 +647,19 @@ const handleAddRecord = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* 退出按钮 */}
+        <div className="mt-4">
+          <Button
+            onClick={handleLogout}
+            variant="destructive"
+            size="sm"
+            className="w-full flex items-center justify-center space-x-2"
+          >
+            <span>退出</span>
+          </Button>
+        </div>
+
         {/* Management Accordion Card */}
         <div className="mt-4">
           <Accordion type="single" collapsible defaultValue="">
@@ -644,6 +697,7 @@ const handleAddRecord = () => {
             </AccordionItem>
           </Accordion>
         </div>
+        
       </div>
 
       {/* Record Type Selector */}

@@ -177,5 +177,19 @@
     "extracted_urls": "URL",
     "close": "閉じる",
     "result_card_title": "認識結果"
+  },
+  "auth": {
+    "title": "健康カレンダー",
+    "subtitle": "ログイン",
+    "username": "ユーザー名",
+    "password": "パスワード",
+    "usernamePlaceholder": "ユーザー名を入力してください",
+    "passwordPlaceholder": "パスワードを入力してください",
+    "login": "ログイン",
+    "loggingIn": "ログイン中...",
+    "loginFailed": "ログインに失敗しました",
+    "loginFailedRetry": "ログインに失敗しました。再試行してください",
+    "usernamePasswordError": "ユーザー名またはパスワードが無効です",
+    "accountLocked": "アカウントがロックされました。{time}秒後に再試行してください"
   }
 }

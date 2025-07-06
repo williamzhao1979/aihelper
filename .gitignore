@@ -50,3 +50,7 @@ package-lock.json
 
 app/*/testsupabase/
 components/SupabaseStorageTest.tsx
+
+/docs
+
+/scripts
