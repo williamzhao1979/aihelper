@@ -4,11 +4,22 @@ import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { ArrowLeft, Edit, Trash2, Plus, Calendar, Heart, Activity, Users, Clock, Tag } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
 import { useParams } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { usePoopRecords } from "@/hooks/use-poop-records"
+import { usePeriodRecords } from "@/hooks/use-period-records"
 import { useUserManagement } from "@/hooks/use-user-management"
 import { useGlobalUserSelection } from "@/hooks/use-global-user-selection"
 import { HealthRecord } from "@/lib/health-database"
@@ -25,6 +36,9 @@ export default function ViewPage() {
   const [isRecordSelectorOpen, setIsRecordSelectorOpen] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
   const [refreshVersion, setRefreshVersion] = useState(0)
+  const [deletingRecordId, setDeletingRecordId] = useState<string | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [recordToDelete, setRecordToDelete] = useState<HealthRecord | null>(null)
   
   const { users: availableUsers, isLoading: usersLoading, getPrimaryUser } = useUserManagement()
   
@@ -37,12 +51,14 @@ export default function ViewPage() {
     return getPrimaryUser()
   }, [selectedUsers, getPrimaryUser])
 
-  // Call usePoopRecords at the top level, always
+  // Call usePoopRecords and usePeriodRecords at the top level, always
   const poopRecordsApi = usePoopRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
+  const periodRecordsApi = usePeriodRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   console.log("[ViewPage] currentUser?.uniqueOwnerId:", currentUser?.uniqueOwnerId)
   console.log("[ViewPage] selectedUsers:", selectedUsers)
   // console.log("[ViewPage] globalSelectedUsers:", globalSelectedUsers)
   const { records: poopRecords } = poopRecordsApi
+  const { records: periodRecords } = periodRecordsApi
 
   // Map PoopRecord[] to HealthRecord[] for calendar/stats
   const mappedPoopRecords: HealthRecord[] = useMemo(() => {
@@ -72,17 +88,50 @@ export default function ViewPage() {
     }))
   }, [poopRecords, currentUser, refreshVersion])
 
+  // Map PeriodRecord[] to HealthRecord[] for calendar/stats
+  const mappedPeriodRecords: HealthRecord[] = useMemo(() => {
+    console.log('[mappedPeriodRecords] mapping records, refreshVersion:', refreshVersion, 'periodRecords:', periodRecords)
+    return periodRecords.map((r) => ({
+      id: r.id,
+      recordId: r.id,
+      uniqueOwnerId: currentUser?.uniqueOwnerId || "",
+      ownerId: currentUser?.uniqueOwnerId || "",
+      ownerName: currentUser?.nickname || "",
+      date: r.date,
+      datetime: r.datetime, // 映射datetime字段
+      type: "period",
+      content: r.content,
+      tags: r.tags,
+      attachments: r.attachments?.map(a => ({
+        id: a.id,
+        name: a.name,
+        type: a.type,
+        size: a.size,
+      })) || [],
+      flow: r.flow,
+      pain: r.pain,
+      mood: r.mood,
+      symptoms: r.symptoms,
+      notes: r.notes,
+      createdAt: new Date(r.createdAt),
+      updatedAt: new Date(r.updatedAt),
+    }))
+  }, [periodRecords, currentUser, refreshVersion])
+
   // Sync from cloud on mount and when currentUser changes - 强制获取最新数据
   useEffect(() => {
     if (!currentUser?.uniqueOwnerId) return
     console.log('[useEffect] 强制云端同步触发. currentUser:', currentUser)
-    console.log('[useEffect] 同步前记录数量:', poopRecordsApi.records.length)
+    console.log('[useEffect] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length)
     
     const doSync = async () => {
       try {
         console.log('[useEffect] 开始强制云端同步，用户:', currentUser?.uniqueOwnerId)
-        await poopRecordsApi.syncFromCloud()
-        console.log('[useEffect] 强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length)
+        await Promise.all([
+          poopRecordsApi.syncFromCloud(),
+          periodRecordsApi.syncFromCloud()
+        ])
+        console.log('[useEffect] 强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length)
       } catch (err) {
         console.error('[useEffect] 强制云端同步失败:', err)
       }
@@ -97,10 +146,12 @@ export default function ViewPage() {
   // 获取指定日期的记录
   const dayRecords = useMemo(() => {
     console.log('[dayRecords] Filtering records for date:', date)
-    console.log('[dayRecords] Available records:', mappedPoopRecords.length)
+    console.log('[dayRecords] Available records:', mappedPoopRecords.length, 'periodRecords:', mappedPeriodRecords.length)
     console.log('[dayRecords] Current user:', currentUser)
     
-    const filtered = mappedPoopRecords.filter(record => {
+    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords]
+    
+    const filtered = allRecords.filter(record => {
       const recordDate = dayjs(record.date).format('YYYY-MM-DD')
       const matchesDate = recordDate === date
       const matchesUser = record.ownerId === currentUser?.uniqueOwnerId || 
@@ -113,7 +164,7 @@ export default function ViewPage() {
     
     console.log('[dayRecords] Filtered records:', filtered.length)
     return filtered
-  }, [mappedPoopRecords, date, currentUser])
+  }, [mappedPoopRecords, mappedPeriodRecords, date, currentUser])
 
   const handleBack = () => {
     router.push("/healthcalendar")
@@ -134,16 +185,19 @@ export default function ViewPage() {
     setIsSyncing(true)
     try {
       console.log('[handleCloudSync] 手动强制云端同步触发. currentUser:', currentUser)
-      console.log('[handleCloudSync] 同步前记录数量:', poopRecordsApi.records.length)
-      await poopRecordsApi.syncFromCloud()
-      console.log('[handleCloudSync] 手动强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length)
+      console.log('[handleCloudSync] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length)
+      await Promise.all([
+        poopRecordsApi.syncFromCloud(),
+        periodRecordsApi.syncFromCloud()
+      ])
+      console.log('[handleCloudSync] 手动强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length)
       setRefreshVersion(v => v + 1)
     } catch (err) {
       console.error('[handleCloudSync] 手动强制云端同步失败:', err)
     } finally {
       setIsSyncing(false)
     }
-  }, [currentUser, poopRecordsApi])
+  }, [currentUser, poopRecordsApi, periodRecordsApi])
 
   // Poop类型映射
   const getPoopTypeLabel = (type: string) => {
@@ -182,8 +236,37 @@ export default function ViewPage() {
     return smellMap[smell as keyof typeof smellMap] || smell
   }
 
+  // Period类型映射
+  const getPeriodFlowLabel = (flow: string) => {
+    const flowMap = {
+      light: "轻量",
+      medium: "中等",
+      heavy: "大量"
+    }
+    return flowMap[flow as keyof typeof flowMap] || flow
+  }
+
+  const getPeriodPainLabel = (pain: string) => {
+    const painMap = {
+      none: "无疼痛",
+      mild: "轻微疼痛",
+      moderate: "中等疼痛",
+      severe: "严重疼痛"
+    }
+    return painMap[pain as keyof typeof painMap] || pain
+  }
+
+  const getPeriodMoodLabel = (mood: string) => {
+    const moodMap = {
+      good: "心情好",
+      normal: "一般",
+      bad: "心情差"
+    }
+    return moodMap[mood as keyof typeof moodMap] || mood
+  }
+
   const handleEditRecord = (record: HealthRecord) => {
-    // 跳转到编辑页面，便便类型跳转到/poop，例假到/period，其他到/record
+    // 跳转到编辑页面，便便类型跳转到/poop，生理到/period，其他到/record
     if (record.type === "poop") {
       router.push(`/healthcalendar/poop?date=${record.date}&edit=${record.id}` as any)
     } else if (record.type === "period") {
@@ -192,12 +275,62 @@ export default function ViewPage() {
       router.push(`/healthcalendar/record?date=${record.date}&edit=${record.id}` as any)
     }
   }
-  const handleDeleteRecord = async (recordId: string) => {
-    if (window.confirm("确定要删除这条记录吗？")) {
-      // 这里只做本地删除，后续可接API
-      // TODO: 这里应该用 setRecords，如果有全局状态也要同步
-      alert("删除功能请接入API后完善");
+  const handleDeleteClick = (record: HealthRecord) => {
+    setRecordToDelete(record);
+    setDeleteDialogOpen(true);
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!recordToDelete) return;
+
+    const recordId = recordToDelete.id;
+    setDeletingRecordId(recordId);
+    setDeleteDialogOpen(false);
+
+    try {
+      // 根据记录类型调用相应的删除API
+      if (poopRecordsApi.records.find(r => r.id === recordId)) {
+        // 删除便便记录
+        await poopRecordsApi.deleteRecord(recordId);
+        toast({
+          title: "删除成功",
+          description: "便便记录已删除并同步到云端",
+        });
+      } else if (periodRecordsApi.records.find(r => r.id === recordId)) {
+        // 删除生理记录
+        await periodRecordsApi.deleteRecord(recordId);
+        toast({
+          title: "删除成功",
+          description: "生理记录已删除并同步到云端",
+        });
+      } else {
+        toast({
+          title: "删除失败",
+          description: "未找到要删除的记录",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // 强制刷新数据以确保UI更新
+      setRefreshVersion(v => v + 1);
+      
+    } catch (error) {
+      console.error('[handleDeleteConfirm] 删除记录失败:', error);
+      toast({
+        title: "删除失败",
+        description: error instanceof Error ? error.message : "删除记录时发生错误",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingRecordId(null);
+      setRecordToDelete(null);
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setRecordToDelete(null);
   }
 
   if (usersLoading) {
@@ -231,7 +364,6 @@ export default function ViewPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">{formattedDate}</h1>
-              <p className="text-sm text-gray-600">{dayOfWeek}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -283,8 +415,12 @@ export default function ViewPage() {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <span>{record.type === 'poop' ? '便便记录' : '健康记录'}</span>
+                    <div className={`w-3 h-3 rounded-full ${
+                      record.type === 'period' ? 'bg-red-500' : 
+                      record.type === 'poop' ? 'bg-yellow-500' : 
+                      'bg-blue-500'
+                    }`}></div>
+                    <span>{record.type === 'period' ? '生理记录' : record.type === 'poop' ? '排便记录' : '健康记录'}</span>
                   </CardTitle>
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4 text-gray-400" />
@@ -294,8 +430,18 @@ export default function ViewPage() {
                     <Button variant="ghost" size="sm" onClick={() => handleEditRecord(record)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDeleteRecord(record.id)} className="text-red-600 hover:text-red-700">
-                      <Trash2 className="h-4 w-4" />
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleDeleteClick(record)} 
+                      className="text-red-600 hover:text-red-700"
+                      disabled={deletingRecordId === record.id}
+                    >
+                      {deletingRecordId === record.id ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -341,6 +487,42 @@ export default function ViewPage() {
                   </div>
                 )}
 
+                {/* Period specific details */}
+                {record.type === 'period' && (
+                  <div className="space-y-2">
+                    {record.flow && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium text-gray-600">流量:</span>
+                        <Badge variant="outline">{getPeriodFlowLabel(record.flow)}</Badge>
+                      </div>
+                    )}
+                    {record.pain && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium text-gray-600">疼痛:</span>
+                        <Badge variant="outline">{getPeriodPainLabel(record.pain)}</Badge>
+                      </div>
+                    )}
+                    {record.mood && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium text-gray-600">心情:</span>
+                        <Badge variant="outline">{getPeriodMoodLabel(record.mood)}</Badge>
+                      </div>
+                    )}
+                    {record.symptoms && record.symptoms.length > 0 && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium text-gray-600">症状:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {record.symptoms.map((symptom, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {symptom}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Attachments */}
                 {record.attachments && record.attachments.length > 0 && (
                   <div className="mt-4">
@@ -372,6 +554,37 @@ export default function ViewPage() {
           date={date}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除</AlertDialogTitle>
+            <AlertDialogDescription>
+              确定要删除这条{recordToDelete?.type === 'poop' ? '便便' : recordToDelete?.type === 'period' ? '生理' : '健康'}记录吗？
+              <br />
+              <span className="text-red-600 font-medium">此操作无法撤销。</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeleteCancel}>取消</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deletingRecordId === recordToDelete?.id}
+            >
+              {deletingRecordId === recordToDelete?.id ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>删除中...</span>
+                </div>
+              ) : (
+                "确认删除"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

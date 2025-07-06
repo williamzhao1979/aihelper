@@ -34,18 +34,18 @@ export default function CalendarHeader({
   ]
 
   return (
-    <div className="flex items-center justify-between p-4 bg-white border-b">
-      <div className="flex items-center space-x-2">
+    <div className="flex items-center justify-between pr-4 pl-0 pt-4 pb-4 bg-white border-b">
+      <div className="flex items-center space-x-1">
         <Button
           variant="ghost"
           size="sm"
           onClick={onPreviousMonth}
-          className="p-2"
+          className="p-1 h-8 w-8"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         
-        <h2 className="text-lg font-semibold text-gray-900 min-w-[120px] text-center">
+        <h2 className="text-base font-semibold text-gray-900 px-2">
           {currentDate.getFullYear()}年 {monthNames[currentDate.getMonth()]}
         </h2>
         
@@ -53,20 +53,20 @@ export default function CalendarHeader({
           variant="ghost"
           size="sm"
           onClick={onNextMonth}
-          className="p-2"
+          className="p-1 h-8 w-8"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
       
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-1">
         {onRefresh && (
           <Button
             variant="ghost"
             size="sm"
             onClick={onRefresh}
             disabled={isRefreshing}
-            className="p-2"
+            className="p-1 h-8 w-8"
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
@@ -76,19 +76,10 @@ export default function CalendarHeader({
           variant="outline"
           size="sm"
           onClick={onToday}
-          className="text-sm"
+          className="text-xs px-2 h-8"
         >
           今天
         </Button>
-
-        {/* {onUserSelectionChange && (
-          <UserSelector
-            selectedUsers={selectedUsers}
-            onUserSelectionChange={onUserSelectionChange}
-            availableUsers={availableUsers}
-            className="w-32"
-          />
-        )} */}
       </div>
     </div>
   )
