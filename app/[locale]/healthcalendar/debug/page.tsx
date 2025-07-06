@@ -377,6 +377,42 @@ export default function DebugPage() {
     }
   }
 
+  const checkJuly5Records = async () => {
+    try {
+      const allRecords = await getAllRecords()
+      const july5Records = allRecords.filter(record => record.date === "2025-07-05")
+      
+      console.log("7月5日的所有记录:", july5Records)
+      
+      // 检查记录的拥有者信息
+      july5Records.forEach((record, index) => {
+        console.log(`记录 ${index + 1}:`, {
+          id: record.id,
+          date: record.date,
+          type: record.type,
+          ownerId: record.ownerId,
+          uniqueOwnerId: record.uniqueOwnerId,
+          ownerName: record.ownerName
+        })
+      })
+      
+      toast({
+        title: "7月5日记录检查",
+        description: `找到 ${july5Records.length} 条记录`,
+      })
+      
+      // 更新记录显示
+      setRecords(july5Records)
+    } catch (error) {
+      console.error("检查7月5日记录失败:", error)
+      toast({
+        title: "检查失败",
+        description: "无法检查7月5日记录",
+        variant: "destructive",
+      })
+    }
+  }
+
   const checkUserAndRecords = async () => {
     try {
       // 获取所有用户
@@ -608,6 +644,9 @@ export default function DebugPage() {
               </Button>
               <Button onClick={checkLatestRecords} disabled={!isInitialized}>
                 检查最新记录
+              </Button>
+              <Button onClick={checkJuly5Records} disabled={!isInitialized}>
+                检查7月5日记录
               </Button>
               <Button onClick={checkUserAndRecords} disabled={!isInitialized}>
                 检查用户和记录

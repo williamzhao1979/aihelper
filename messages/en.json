@@ -177,5 +177,19 @@
     "extracted_urls": "URL",
     "close": "Close",
     "result_card_title": "Recognition Result"
+  },
+  "auth": {
+    "title": "Health Calendar",
+    "subtitle": "Login",
+    "username": "Username",
+    "password": "Password",
+    "usernamePlaceholder": "Please enter username",
+    "passwordPlaceholder": "Please enter password",
+    "login": "Login",
+    "loggingIn": "Logging in...",
+    "loginFailed": "Login failed",
+    "loginFailedRetry": "Login failed, please try again",
+    "usernamePasswordError": "Invalid username or password",
+    "accountLocked": "Account locked, please try again in {time} seconds"
   }
 }

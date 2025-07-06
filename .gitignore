@@ -47,3 +47,10 @@ package-lock.json
 !README.md
 
 * copy*
+
+app/*/testsupabase/
+components/SupabaseStorageTest.tsx
+
+/docs
+
+/scripts

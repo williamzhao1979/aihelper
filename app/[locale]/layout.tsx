@@ -5,6 +5,7 @@ import { getMessages } from "next-intl/server"
 import { notFound } from "next/navigation"
 import { routing } from "@/i18n/routing"
 import AuthProvider from "@/components/auth-provider"
+import { AuthProvider as CustomAuthProvider } from "@/components/auth/auth-context"
 import "../globals.css"
 
 type Props = {
@@ -64,7 +65,11 @@ export default async function RootLayout({ children, params }: Props) {
 
   return (
     <AuthProvider>
-      <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+      <NextIntlClientProvider messages={messages}>
+        <CustomAuthProvider>
+          {children}
+        </CustomAuthProvider>
+      </NextIntlClientProvider>
     </AuthProvider>
   )
 }
