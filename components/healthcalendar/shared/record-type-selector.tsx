@@ -13,7 +13,10 @@ import {
   Pill,
   Camera,
   Plus,
-  X
+  X,
+  Utensils,
+  Dumbbell,
+  MoreHorizontal
 } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
 import PoopDetectiveIcon from "./poop-detective-icon"
@@ -50,20 +53,12 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
 
   const recordTypes: RecordType[] = [
     {
-      id: "general",
-      title: "一般健康记录",
-      description: "记录身体状况、症状等",
-      icon: <FileText className="h-6 w-6 text-blue-600" />,
-      color: "bg-blue-50 hover:bg-blue-100 border-blue-200",
+      id: "meals",
+      title: "一日三餐",
+      description: "记录每日饮食情况",
+      icon: <Utensils className="h-6 w-6 text-emerald-600" />,
+      color: "bg-emerald-50 hover:bg-emerald-100 border-emerald-200",
       route: "/healthcalendar/record"
-    },
-    {
-      id: "period",
-      title: "例假记录",
-      description: "记录月经周期和症状",
-      icon: <Activity className="h-6 w-6 text-red-600" />,
-      color: "bg-red-50 hover:bg-red-100 border-red-200",
-      route: "/healthcalendar/period"
     },
     {
       id: "poop",
@@ -74,12 +69,36 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       route: "/healthcalendar/poop"
     },
     {
-      id: "symptom",
-      title: "症状记录",
-      description: "记录身体不适和症状",
-      icon: <Thermometer className="h-6 w-6 text-orange-600" />,
-      color: "bg-orange-50 hover:bg-orange-100 border-orange-200",
+      id: "general",
+      title: "健康记录",
+      description: "记录身体状况、症状等",
+      icon: <FileText className="h-6 w-6 text-blue-600" />,
+      color: "bg-blue-50 hover:bg-blue-100 border-blue-200",
       route: "/healthcalendar/record"
+    },
+    {
+      id: "exercise",
+      title: "运动记录",
+      description: "记录运动锻炼情况",
+      icon: <Dumbbell className="h-6 w-6 text-cyan-600" />,
+      color: "bg-cyan-50 hover:bg-cyan-100 border-cyan-200",
+      route: "/healthcalendar/record"
+    },
+    {
+      id: "mood",
+      title: "心情记录",
+      description: "记录情绪和心理健康",
+      icon: <Heart className="h-6 w-6 text-pink-600" />,
+      color: "bg-pink-50 hover:bg-pink-100 border-pink-200",
+      route: "/healthcalendar/record"
+    },
+    {
+      id: "period",
+      title: "生理记录",
+      description: "记录生理周期和症状",
+      icon: <Activity className="h-6 w-6 text-red-600" />,
+      color: "bg-red-50 hover:bg-red-100 border-red-200",
+      route: "/healthcalendar/period"
     },
     {
       id: "medication",
@@ -100,17 +119,17 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
     {
       id: "photo",
       title: "照片记录",
-      description: "上传健康相关照片",
+      description: "上传照片",
       icon: <Camera className="h-6 w-6 text-indigo-600" />,
       color: "bg-indigo-50 hover:bg-indigo-100 border-indigo-200",
       route: "/healthcalendar/record"
     },
     {
-      id: "mood",
-      title: "心情记录",
-      description: "记录情绪和心理健康",
-      icon: <Heart className="h-6 w-6 text-pink-600" />,
-      color: "bg-pink-50 hover:bg-pink-100 border-pink-200",
+      id: "other",
+      title: "其他记录",
+      description: "记录其他信息",
+      icon: <MoreHorizontal className="h-6 w-6 text-gray-600" />,
+      color: "bg-gray-50 hover:bg-gray-100 border-gray-200",
       route: "/healthcalendar/record"
     }
   ]

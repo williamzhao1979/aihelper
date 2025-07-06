@@ -300,8 +300,8 @@ export default function UserPermissionsPage({
             
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
               <div>
-                <Label className="text-sm font-medium">例假提醒</Label>
-                <p className="text-xs text-gray-600">接收例假周期提醒</p>
+                <Label className="text-sm font-medium">生理提醒</Label>
+                <p className="text-xs text-gray-600">接收生理周期提醒</p>
               </div>
               <Switch
                 checked={permissions.notifications.periodReminders}
