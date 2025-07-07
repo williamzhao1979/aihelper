@@ -150,7 +150,11 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       let targetRoute = type.route
       if (date) {
         if (targetRoute.startsWith('/healthcalendar/')) {
+          // 添加日期参数
           targetRoute += `?date=${date}`
+          // 添加当前时间参数
+          const currentTime = new Date().toTimeString().slice(0, 5) // HH:MM格式
+          targetRoute += `&time=${currentTime}`
         }
       }
       console.log("Navigating to:", targetRoute)

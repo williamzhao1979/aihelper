@@ -354,7 +354,7 @@ const handleAddRecord = () => {
     return `${selectedUsers.length}个用户`
   }
 
-  // 获取最近记录（按创建时间排序，取最新的5条）
+  // 获取最近记录（按发生时间排序，取最新的5条）
   const recentRecords = useMemo(() => {
     const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords]
     const selectedUserIds = selectedUsers.map(user => user.uniqueOwnerId)
@@ -362,9 +362,13 @@ const handleAddRecord = () => {
       selectedUserIds.includes(record.ownerId || record.uniqueOwnerId || '')
     )
     
-    // 按创建时间排序，取最新的5条
+    // 按发生时间排序，取最新的5条
     const sortedRecords = filteredRecords
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort((a, b) => {
+        const aTime = new Date(a.datetime || a.date).getTime()
+        const bTime = new Date(b.datetime || b.date).getTime()
+        return bTime - aTime
+      })
       .slice(0, 5)
     
     console.log('[recentRecords] 最近记录计算:', {
@@ -446,12 +450,13 @@ const handleAddRecord = () => {
   // 处理查看记录
   const handleViewRecord = (record: HealthRecord) => {
     if (record.type === "period") {
-      router.push("/healthcalendar/period" as any)
+      router.push("/healthcalendar/period?date=${record.date}&edit=${record.id}` as any" as any)
       // 使用 localStorage 传递编辑信息
       localStorage.setItem('editRecordId', record.id)
     } else if (record.type === "poop") {
       // 排便记录跳转到排便记录页面
-      router.push("/healthcalendar/poop" as any)
+      // router.push("/healthcalendar/poop" as any)
+      router.push(`/healthcalendar/poop?date=${record.date}&edit=${record.id}` as any)
       // 使用 localStorage 传递编辑信息
       localStorage.setItem('editRecordId', record.id)
     } else {
@@ -605,7 +610,7 @@ const handleAddRecord = () => {
                 {recentRecords.map((record) => {
                   const typeInfo = getRecordTypeInfo(record)
                   const summary = getRecordSummary(record)
-                  const timeAgo = formatTimeAgo(record.createdAt)
+                  const timeAgo = formatTimeAgo(new Date(record.datetime || record.date))
                   
                   return (
                     <div 
