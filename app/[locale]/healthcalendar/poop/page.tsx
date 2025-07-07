@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { ArrowLeft, Upload, X, FileText, Image, File, ChevronDown, ChevronUp, Users } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
@@ -47,7 +48,23 @@ export default function PoopRecordPage() {
   // 其他 useState
   const [isEditMode, setIsEditMode] = useState(false)
   const [editRecordId, setEditRecordId] = useState<string>("")
-  const [recordDateTime, setRecordDateTime] = useState<string>(getLocalDateTimeString())
+  const [recordDateTime, setRecordDateTime] = useState<string>(() => {
+    // 检查URL参数中的日期和时间
+    const dateParam = searchParams.get('date')
+    const timeParam = searchParams.get('time')
+    
+    if (dateParam && timeParam) {
+      // 如果有日期和时间参数，组合使用
+      return `${dateParam}T${timeParam}`
+    } else if (dateParam) {
+      // 如果只有日期参数，使用当前时间
+      const currentTime = new Date().toTimeString().slice(0, 5)
+      return `${dateParam}T${currentTime}`
+    } else {
+      // 默认使用当前日期时间
+      return getLocalDateTimeString()
+    }
+  })
   const [poopType, setPoopType] = useState<string>("type4")
   const [poopColor, setPoopColor] = useState<string>("brown")
   const [poopSmell, setPoopSmell] = useState<string>("normal")
@@ -57,6 +74,7 @@ export default function PoopRecordPage() {
   const [isTypeExpanded, setIsTypeExpanded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingRecord, setIsLoadingRecord] = useState(false) // 添加记录加载状态
+  const [enableImageCompression, setEnableImageCompression] = useState(true) // 图片压缩选项，默认开启
   const { users: availableUsers, isLoading: usersLoading, getPrimaryUser } = useUserManagement()
 
   // 使用全局用户选择状态
@@ -346,17 +364,86 @@ export default function PoopRecordPage() {
 
   // 使用共享的选项定义（从 @/lib/poop-options 导入）
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // 图片压缩函数
+  const compressImage = (file: File, quality: number = 0.8): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      const img = document.createElement('img')
+      
+      img.onload = () => {
+        // 设置最大尺寸
+        const maxWidth = 1920
+        const maxHeight = 1920
+        let { width, height } = img
+        
+        // 计算压缩后的尺寸
+        if (width > height) {
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width
+            width = maxWidth
+          }
+        } else {
+          if (height > maxHeight) {
+            width = (width * maxHeight) / height
+            height = maxHeight
+          }
+        }
+        
+        canvas.width = width
+        canvas.height = height
+        
+        // 绘制压缩后的图片
+        ctx?.drawImage(img, 0, 0, width, height)
+        
+        // 转换为Blob
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              // 创建压缩后的文件
+              const compressedFile = Object.assign(blob, {
+                name: file.name,
+                lastModified: Date.now(),
+              }) as File
+              resolve(compressedFile)
+            } else {
+              resolve(file) // 如果压缩失败，返回原文件
+            }
+          },
+          file.type,
+          quality
+        )
+      }
+      
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
     
-    files.forEach(file => {
+    for (const file of files) {
       const fileId = Math.random().toString(36).substr(2, 9)
+      let processedFile = file
+      
+      // 如果是图片且启用了压缩，则进行压缩
+      if (file.type.startsWith('image/') && enableImageCompression) {
+        try {
+          console.log(`[压缩] 原始文件大小: ${(file.size / 1024 / 1024).toFixed(2)}MB`)
+          processedFile = await compressImage(file, 0.8)
+          console.log(`[压缩] 压缩后文件大小: ${(processedFile.size / 1024 / 1024).toFixed(2)}MB`)
+        } catch (error) {
+          console.error('图片压缩失败，使用原文件:', error)
+          processedFile = file
+        }
+      }
+      
       const uploadedFile: UploadedFile = {
         id: fileId,
         name: file.name,
-        size: file.size,
+        size: processedFile.size,
         type: file.type,
-        file: file
+        file: processedFile
       }
       
       // 如果是图片，创建预览
@@ -367,11 +454,11 @@ export default function PoopRecordPage() {
             f.id === fileId ? { ...f, preview: e.target?.result as string } : f
           ))
         }
-        reader.readAsDataURL(file)
+        reader.readAsDataURL(processedFile)
       }
       
       setUploadedFiles(prev => [...prev, uploadedFile])
-    })
+    }
     
     // 清空input值，允许重复选择同一文件
     event.target.value = ''
@@ -679,7 +766,19 @@ export default function PoopRecordPage() {
         {/* 附件上传 */}
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
           <CardHeader>
-            <CardTitle>附件上传</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>附件上传</CardTitle>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="image-compression"
+                  checked={enableImageCompression}
+                  onCheckedChange={(checked) => setEnableImageCompression(checked as boolean)}
+                />
+                <Label htmlFor="image-compression" className="text-sm text-gray-600 cursor-pointer">
+                  图片压缩
+                </Label>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -689,6 +788,11 @@ export default function PoopRecordPage() {
                   <span className="text-sm text-gray-600">
                     点击上传图片或文档
                   </span>
+                  {enableImageCompression && (
+                    <div className="text-xs text-green-600 mt-1">
+                      图片将自动压缩至适合上传的大小
+                    </div>
+                  )}
                 </Label>
                 <Input
                   id="file-upload"
@@ -704,25 +808,48 @@ export default function PoopRecordPage() {
               {uploadedFiles.length > 0 && (
                 <div className="space-y-2">
                   <h4 className="font-medium">已上传文件：</h4>
-                  {uploadedFiles.map(file => (
-                    <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        {getFileIcon(file.type)}
-                        <div>
-                          <div className="font-medium text-sm">{file.name}</div>
-                          <div className="text-xs text-gray-500">{formatFileSize(file.size)}</div>
+                  <div className="grid grid-cols-1 gap-3">
+                    {uploadedFiles.map(file => (
+                      <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-3 flex-1">
+                          {file.preview ? (
+                            // 图片预览
+                            <div className="flex-shrink-0">
+                              <img 
+                                src={file.preview} 
+                                alt={file.name}
+                                className="w-12 h-12 object-cover rounded border"
+                              />
+                            </div>
+                          ) : (
+                            // 非图片文件图标
+                            <div className="flex-shrink-0">
+                              {getFileIcon(file.type)}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">{file.name}</div>
+                            <div className="text-xs text-gray-500 flex items-center space-x-2">
+                              <span>{formatFileSize(file.size)}</span>
+                              {file.type.startsWith('image/') && enableImageCompression && (
+                                <Badge variant="secondary" className="text-xs">
+                                  已压缩
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveFile(file.id)}
+                          className="text-red-500 hover:text-red-700 flex-shrink-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveFile(file.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
