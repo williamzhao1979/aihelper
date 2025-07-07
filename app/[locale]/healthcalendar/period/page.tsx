@@ -81,7 +81,23 @@ export default function PeriodRecordPage() {
     }))
   }, [periodRecords, selectedUser])
   
-  const [recordDateTime, setRecordDateTime] = useState<string>(getLocalDateTimeString())
+  const [recordDateTime, setRecordDateTime] = useState<string>(() => {
+    // 检查URL参数中的日期和时间
+    const dateParam = searchParams.get('date')
+    const timeParam = searchParams.get('time')
+    
+    if (dateParam && timeParam) {
+      // 如果有日期和时间参数，组合使用
+      return `${dateParam}T${timeParam}`
+    } else if (dateParam) {
+      // 如果只有日期参数，使用当前时间
+      const currentTime = new Date().toTimeString().slice(0, 5)
+      return `${dateParam}T${currentTime}`
+    } else {
+      // 默认使用当前日期时间
+      return getLocalDateTimeString()
+    }
+  })
   const [flow, setFlow] = useState<string>("")
   const [pain, setPain] = useState<string>("")
   const [mood, setMood] = useState<string>("")

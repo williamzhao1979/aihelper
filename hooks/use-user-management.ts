@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import type { UserProfile } from '@/components/healthcalendar/shared/user-selector'
+import { setGlobalSelectedUsers } from './use-global-user-selection';
 
 // Supabase配置
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -135,11 +136,86 @@ export function useUserManagement() {
     setUsers([...newUsers]);
     
     console.log('[saveLocal] 本地存储和状态已更新');
+    // 设置全局用户选择    
+    try {
+      const saved = localStorage.getItem('globalSelectedUsers')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        console.log('[useGlobalUserSelection] Restoring from localStorage:', parsed)
+        
+        // 检查parsed中的用户是否还存在于当前users中
+        const validUsers = parsed.filter((savedUser: ExtendedUserProfile) => 
+          newUsers.some(user => user.uniqueOwnerId === savedUser.uniqueOwnerId)
+        )
+        
+        if (validUsers.length > 0) {
+          console.log('[useGlobalUserSelection] 使用有效的已保存用户:', validUsers)
+          setGlobalSelectedUsers(validUsers)
+        } else {
+          console.log('[useGlobalUserSelection] 已保存用户不存在，使用第一个用户:', newUsers[0])
+          setGlobalSelectedUsers([newUsers[0]])
+        }
+      }
+    } catch (error) {
+      console.error('Error restoring global selected users from localStorage:', error)
+    }
   }, []);
 
-  // 从localStorage加载用户数据
-  const loadUsers = useCallback(() => {
+  // 内部强制刷新函数，不修改loading状态
+  const forceRefreshInternal = useCallback(async () => {
+    console.log('[forceRefreshInternal] 开始内部强制刷新用户数据');
+    
+    // 强制从云端获取最新数据
+    const filePath = `users/system/users.json`;
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
+    const cacheBuster = `?t=${timestamp}&r=${random}&force=true`;
+    
+    console.log('[forceRefreshInternal] 使用强制缓存破坏参数:', cacheBuster);
+    
+    const { data, error } = await supabase.storage
+      .from('healthcalendar')
+      .download(`${filePath}${cacheBuster}`);
+      
+    if (error) {
+      console.error('[forceRefreshInternal] 获取用户数据失败:', error);
+      throw new Error(error.message);
+    }
+    
+    const text = await data.text();
+    console.log('[forceRefreshInternal] 获取到的最新用户数据:', text);
+    
     try {
+      const parsed: UsersFile = JSON.parse(text);
+      console.log('[forceRefreshInternal] 解析后的用户数据:', parsed);
+      // 强制更新本地数据
+      saveLocal(parsed.users);
+      console.log('[forceRefreshInternal] 内部强制刷新完成，用户数量:', parsed.users.length);
+    } catch (e) {
+      console.error('[forceRefreshInternal] 解析用户数据失败:', e);
+      throw new Error('Failed to parse users.json');
+    }
+  }, [saveLocal]);
+
+  // 从localStorage加载用户数据
+  const loadUsers = useCallback(async () => {
+    try {
+      console.log('[loadUsers] 开始加载用户数据，优先从云端获取');
+      
+      // 首先尝试从云端强制刷新数据
+      try {
+        console.log('[loadUsers] 尝试从云端强制刷新数据');
+        await forceRefreshInternal();
+        console.log('[loadUsers] 从云端加载数据成功');
+      
+        return; // 如果云端加载成功，直接返回
+      } catch (cloudError) {
+        console.warn('[loadUsers] 从云端加载数据失败，回退到本地存储:', cloudError);
+        setError(null); // 清除云端错误，准备尝试本地存储
+      }
+      
+      // 如果云端加载失败，回退到localStorage
+      console.log('[loadUsers] 尝试从localStorage加载用户数据');
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
         const parsed: UsersFile = JSON.parse(stored)
@@ -157,7 +233,7 @@ export function useUserManagement() {
     } finally {
       setIsLoading(false)
     }
-  }, [saveLocal])
+  }, [saveLocal, forceRefreshInternal])
 
   // 上传用户数据到Supabase Storage
   const syncToCloud = useCallback(async () => {
@@ -362,4 +438,4 @@ export function useUserManagement() {
     syncFromCloud,
     forceRefresh
   }
-} 
+}
