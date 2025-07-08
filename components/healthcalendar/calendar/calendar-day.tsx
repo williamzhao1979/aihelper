@@ -34,6 +34,9 @@ export default function CalendarDay({
         case "poop":
           indicators.push("bg-yellow-500")
           break
+        case "meal":
+          indicators.push("bg-orange-500")
+          break
       }
     })
     
