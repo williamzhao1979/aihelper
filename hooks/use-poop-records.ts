@@ -187,7 +187,7 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
       setLoading(false);
       return;
     }
-    const filePath = `users/user_${uniqueOwnerId}/records.json`;
+    const filePath = `users/${uniqueOwnerId}/records.json`;
     console.log('Uploading records.json to:', filePath);
     const blob = new Blob([raw], { type: 'application/json' });
     const { error } = await supabase.storage.from('healthcalendar').upload(filePath, blob, { upsert: true });
@@ -204,7 +204,7 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
   const syncFromCloud = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const filePath = `users/user_${uniqueOwnerId}/records.json`;
+    const filePath = `users/${uniqueOwnerId}/records.json`;
     
     // 使用更强的时间戳和随机数确保每次都获取最新数据
     const timestamp = Date.now();
@@ -293,7 +293,7 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
       console.log('[forceRefresh] 已清除内存中的记录状态');
       
       // 强制从云端获取最新数据，使用更强的缓存破坏
-      const filePath = `users/user_${uniqueOwnerId}/records.json`;
+      const filePath = `users/${uniqueOwnerId}/records.json`;
       const timestamp = Date.now();
       const random = Math.random().toString(36).substring(7);
       const cacheBuster = `?t=${timestamp}&r=${random}&force=true`;
