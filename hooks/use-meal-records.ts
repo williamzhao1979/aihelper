@@ -338,62 +338,6 @@ export function useMealRecords(currentUserId: string, uniqueOwnerId: string): Us
 
 
 
-  // 更新记录
-  const updateRecord = useCallback(async (updatedRecord: MealRecord) => {
-    console.log('[updateRecord] 开始更新记录:', updatedRecord);
-    
-    // 使用函数形式更新状态，确保获取最新状态
-    let newRecords: MealRecord[] = [];
-    setRecords(prevRecords => {
-      newRecords = prevRecords.map(r => 
-        r.id === updatedRecord.id ? updatedRecord : r
-      );
-      return newRecords;
-    });
-    
-    // 保存到本地
-    saveToLocal(newRecords);
-    console.log('[updateRecord] 本地保存完成，记录数:', newRecords.length);
-    
-    // 自动同步到云端
-    try {
-      console.log('[updateRecord] 开始同步到云端');
-      await syncToCloud();
-      console.log('[updateRecord] 云端同步完成');
-    } catch (error) {
-      console.error('[updateRecord] 云端同步失败，但本地已保存:', error);
-    }
-    
-    console.log('[updateRecord] 记录更新完成');
-  }, [saveToLocal, syncToCloud]);
-
-  // 删除记录
-  const deleteRecord = useCallback(async (recordId: string) => {
-    console.log('[deleteRecord] 开始删除记录:', recordId);
-    
-    // 使用函数形式更新状态，确保获取最新状态
-    let newRecords: MealRecord[] = [];
-    setRecords(prevRecords => {
-      newRecords = prevRecords.filter(r => r.id !== recordId);
-      return newRecords;
-    });
-    
-    // 保存到本地
-    saveToLocal(newRecords);
-    console.log('[deleteRecord] 本地保存完成，记录数:', newRecords.length);
-    
-    // 自动同步到云端
-    try {
-      console.log('[deleteRecord] 开始同步到云端');
-      await syncToCloud();
-      console.log('[deleteRecord] 云端同步完成');
-    } catch (error) {
-      console.error('[deleteRecord] 云端同步失败，但本地已保存:', error);
-    }
-    
-    console.log('[deleteRecord] 记录删除完成');
-  }, [saveToLocal, syncToCloud]);
-
   // 直接同步指定记录到云端（不依赖组件状态）
   const directSyncToCloud = useCallback(async (recordsToSync: MealRecord[]) => {
     if (!uniqueOwnerId) return;
@@ -471,6 +415,95 @@ export function useMealRecords(currentUserId: string, uniqueOwnerId: string): Us
       setLoading(false);
     }
   }, [uniqueOwnerId]);
+
+  // 更新记录
+  const updateRecord = useCallback(async (updatedRecord: MealRecord) => {
+    console.log('[updateRecord] 开始更新记录:', updatedRecord);
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // 使用函数形式更新状态，确保获取最新状态
+      let newRecords: MealRecord[] = [];
+      setRecords(prevRecords => {
+        console.log('[updateRecord] 更新前的记录数量:', prevRecords.length);
+        newRecords = prevRecords.map(r => 
+          r.id === updatedRecord.id ? updatedRecord : r
+        );
+        console.log('[updateRecord] 更新后的记录数量:', newRecords.length);
+        return newRecords;
+      });
+      
+      // 等待状态更新
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      // 保存到本地
+      saveToLocal(newRecords);
+      console.log('[updateRecord] 本地保存完成，记录数:', newRecords.length);
+      
+      // 使用直接同步方法，确保同步的是最新的数据
+      try {
+        console.log('[updateRecord] 使用directSyncToCloud同步到云端');
+        await directSyncToCloud(newRecords);
+        console.log('[updateRecord] 云端同步完成');
+      } catch (error) {
+        console.error('[updateRecord] 云端同步失败，但本地已保存:', error);
+        // 即使云端同步失败，本地更新仍然有效
+      }
+      
+      console.log('[updateRecord] 记录更新完成');
+    } catch (error) {
+      console.error('[updateRecord] 更新记录过程中出错:', error);
+      setError(error instanceof Error ? error.message : '更新记录失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [saveToLocal, directSyncToCloud]);
+
+  // 删除记录
+  const deleteRecord = useCallback(async (recordId: string) => {
+    console.log('[deleteRecord] 开始删除记录:', recordId);
+    console.log('[deleteRecord] 删除前记录数量:', records.length);
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // 使用函数形式更新状态，确保获取最新状态
+      let newRecords: MealRecord[] = [];
+      setRecords(prevRecords => {
+        console.log('[deleteRecord] 更新前的记录数量:', prevRecords.length);
+        newRecords = prevRecords.filter(r => r.id !== recordId);
+        console.log('[deleteRecord] 过滤后的记录数量:', newRecords.length);
+        return newRecords;
+      });
+      
+      // 等待状态更新
+      await new Promise(resolve => setTimeout(resolve, 10));
+      
+      // 保存到本地
+      saveToLocal(newRecords);
+      console.log('[deleteRecord] 本地保存完成，记录数:', newRecords.length);
+      
+      // 使用直接同步方法，确保同步的是最新的数据
+      try {
+        console.log('[deleteRecord] 使用directSyncToCloud同步到云端');
+        await directSyncToCloud(newRecords);
+        console.log('[deleteRecord] 云端同步完成');
+      } catch (error) {
+        console.error('[deleteRecord] 云端同步失败，但本地已保存:', error);
+        // 即使云端同步失败，本地删除仍然有效
+      }
+      
+      console.log('[deleteRecord] 记录删除完成');
+    } catch (error) {
+      console.error('[deleteRecord] 删除记录过程中出错:', error);
+      setError(error instanceof Error ? error.message : '删除记录失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [records, saveToLocal, directSyncToCloud]);
   
   // 添加记录
   const addRecord = useCallback(async (record: MealRecord) => {
