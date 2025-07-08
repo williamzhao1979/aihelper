@@ -19,6 +19,16 @@ export default function FeatureMenu() {
               <span className="text-lg font-semibold">{t("chat.moreFeatures")}</span>
             </div>
             <div className="flex gap-4 justify-center flex-wrap">
+              <Link href={`/${locale}/healthcalendar`}>
+                <Button className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white">
+                  健康日历
+                </Button>
+              </Link>
+              <Link href={`/${locale}/healthcalendar/meal`}>
+                <Button className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white">
+                  用餐记录
+                </Button>
+              </Link>
               <Link href={`/${locale}/textreview`}>
                 <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white">
                   {t("chat.goToTextReview")}

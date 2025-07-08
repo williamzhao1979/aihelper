@@ -10,7 +10,7 @@ export interface HealthRecord {
   groupId?: string         // Family/group identifier (optional for single user)
   date: string
   datetime?: string
-  type: "health" | "period" | "poop"
+  type: "health" | "period" | "poop" | "meal"
   content?: string
   tags?: string[]
   attachments?: Array<{
@@ -18,6 +18,7 @@ export interface HealthRecord {
     name: string
     type: string
     size: number
+    url?: string  // 添加 url 字段，可选，因为有些记录可能没有URL
   }>
   // Period specific fields
   flow?: string
@@ -28,6 +29,11 @@ export interface HealthRecord {
   poopType?: string
   poopColor?: string
   poopSmell?: string
+  // Meal specific fields
+  mealType?: string
+  foodTypes?: string[]
+  mealPortion?: string
+  mealCondition?: string
   notes?: string
   createdAt: Date
   updatedAt: Date

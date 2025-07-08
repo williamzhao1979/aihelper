@@ -36,7 +36,7 @@ interface RecordsFile {
 
 interface UsePoopRecordsResult {
   records: PoopRecord[];
-  addRecord: (record: PoopRecord, imageFile?: File) => Promise<void>;
+  addRecord: (record: PoopRecord) => Promise<void>;
   updateRecord: (record: PoopRecord) => Promise<void>;
   deleteRecord: (recordId: string) => Promise<void>;
   uploadImage: (file: File) => Promise<string>;
@@ -97,23 +97,64 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
 
   // 上传图片到 Supabase Storage
   const uploadImage = useCallback(async (file: File) => {
+    if (!file) {
+      throw new Error('文件不能为空')
+    }
+    
+    if (!uniqueOwnerId) {
+      throw new Error('用户ID不能为空')
+    }
+    
     setLoading(true);
     setError(null);
-    const filePath = `users/user_${uniqueOwnerId}/attachments/${Date.now()}_${file.name}`;
-    const { error } = await supabase.storage.from('healthcalendar').upload(filePath, file, { upsert: true });
-    if (error) {
+    
+    console.log('[uploadImage] 开始上传文件:', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      uniqueOwnerId
+    });
+    
+    try {
+      // 清理文件名，移除特殊字符，避免上传问题
+      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+      
+      // 统一用户ID格式，确保只有一个 user_ 前缀
+      const cleanUserId = uniqueOwnerId.replace(/^user_/, ''); // 移除现有的 user_ 前缀
+      const userPrefix = `user_${cleanUserId}`; // 添加统一的 user_ 前缀
+      const filePath = `users/${userPrefix}/attachments/${Date.now()}_${cleanFileName}`;
+      
+      console.log('[uploadImage] 统一后的用户ID:', userPrefix);
+      console.log('[uploadImage] 上传路径:', filePath);
+      
+      const { error } = await supabase.storage.from('healthcalendar').upload(filePath, file, { upsert: true });
+      if (error) {
+        console.error('[uploadImage] 上传失败:', error);
+        setLoading(false);
+        setError(error.message);
+        throw error;
+      }
+      
+      console.log('[uploadImage] 上传成功，获取访问URL');
+      
+      // 获取受控访问URL
+      const { data, error: urlError } = await supabase.storage.from('healthcalendar').createSignedUrl(filePath, 60 * 60 * 24 * 7); // 7天有效
+      
       setLoading(false);
-      setError(error.message);
+      
+      if (urlError || !data?.signedUrl) {
+        console.error('[uploadImage] 获取URL失败:', urlError);
+        setError(urlError?.message || 'Failed to get image URL');
+        throw urlError || new Error('Failed to get image URL');
+      }
+      
+      console.log('[uploadImage] 上传完成，URL:', data.signedUrl);
+      return data.signedUrl;
+    } catch (error) {
+      console.error('[uploadImage] 上传过程中出错:', error);
+      setLoading(false);
       throw error;
     }
-    // 获取受控访问URL
-    const { data, error: urlError } = await supabase.storage.from('healthcalendar').createSignedUrl(filePath, 60 * 60 * 24 * 7); // 7天有效
-    setLoading(false);
-    if (urlError || !data?.signedUrl) {
-      setError(urlError?.message || 'Failed to get image URL');
-      throw urlError || new Error('Failed to get image URL');
-    }
-    return data.signedUrl;
   }, [uniqueOwnerId]);
 
   // 保存到 localStorage - 强制更新
@@ -148,7 +189,7 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
       setLoading(false);
       return;
     }
-    const filePath = `users/user_${uniqueOwnerId}/records.json`;
+    const filePath = `users/${uniqueOwnerId}/records.json`;
     console.log('Uploading records.json to:', filePath);
     const blob = new Blob([raw], { type: 'application/json' });
     const { error } = await supabase.storage.from('healthcalendar').upload(filePath, blob, { upsert: true });
@@ -165,7 +206,7 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
   const syncFromCloud = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const filePath = `users/user_${uniqueOwnerId}/records.json`;
+    const filePath = `users/${uniqueOwnerId}/records.json`;
     
     // 使用更强的时间戳和随机数确保每次都获取最新数据
     const timestamp = Date.now();
@@ -201,29 +242,15 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
   }, [uniqueOwnerId, saveLocal]);
 
   // 新增记录
-  const addRecord = useCallback(async (record: PoopRecord, imageFile?: File) => {
+  const addRecord = useCallback(async (record: PoopRecord) => {
     setLoading(true);
     setError(null);
-    let attachments = record.attachments || [];
-    if (imageFile) {
-      const url = await uploadImage(imageFile);
-      attachments = [
-        ...attachments,
-        {
-          id: Date.now().toString(),
-          name: imageFile.name,
-          type: imageFile.type,
-          size: imageFile.size,
-          url,
-        },
-      ];
-    }
-    const newRecord = { ...record, attachments, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    const newRecord = { ...record, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     const newRecords = [...records, newRecord];
     saveLocal(newRecords);
     await syncToCloud();
     setLoading(false);
-  }, [records, uploadImage, saveLocal, syncToCloud]);
+  }, [records, saveLocal, syncToCloud]);
 
   // 更新记录
   const updateRecord = useCallback(async (record: PoopRecord) => {
@@ -268,7 +295,7 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
       console.log('[forceRefresh] 已清除内存中的记录状态');
       
       // 强制从云端获取最新数据，使用更强的缓存破坏
-      const filePath = `users/user_${uniqueOwnerId}/records.json`;
+      const filePath = `users/${uniqueOwnerId}/records.json`;
       const timestamp = Date.now();
       const random = Math.random().toString(36).substring(7);
       const cacheBuster = `?t=${timestamp}&r=${random}&force=true`;
