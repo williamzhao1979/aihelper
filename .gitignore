@@ -53,4 +53,5 @@ components/SupabaseStorageTest.tsx
 
 /docs
 
-/scripts
+/scripts/*auth*
+/scripts/*login*
