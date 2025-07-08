@@ -3,11 +3,12 @@
 import React, { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Calendar, Heart, Activity, Plus, Users, Droplets, Stethoscope, Pill, Camera, FileText, RefreshCw, ArrowLeft } from "lucide-react"
+import { Calendar, Heart, Activity, Plus, Users, Droplets, Stethoscope, Pill, Camera, FileText, RefreshCw, ArrowLeft, Utensils } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
 import { useToast } from "@/hooks/use-toast"
 import { usePoopRecords } from "@/hooks/use-poop-records"
 import { usePeriodRecords } from "@/hooks/use-period-records"
+import { useMealRecords } from "@/hooks/use-meal-records"
 import { useUserManagement } from "@/hooks/use-user-management"
 import { useGlobalUserSelection, initializeGlobalUserSelection } from "@/hooks/use-global-user-selection"
 import { useHealthDatabase } from "@/hooks/use-health-database"
@@ -15,6 +16,7 @@ import { HealthRecord } from "@/lib/health-database"
 import { SingleUserSelector } from "@/components/healthcalendar/shared/single-user-selector"
 import type { UserProfile } from "@/components/healthcalendar/shared/user-selector"
 import { generatePoopSummary } from "@/lib/poop-options"
+import { getMealTypeLabel, getFoodTypeLabel, getMealPortionLabel, getMealConditionLabel } from "@/lib/meal-options"
 
 export default function TestRecentRecordsPage() {
   const router = useRouter()
@@ -44,11 +46,13 @@ export default function TestRecentRecordsPage() {
     return getPrimaryUser()
   }, [selectedUsers, getPrimaryUser])
 
-  // Call usePoopRecords and usePeriodRecords at the top level, always
+  // Call usePoopRecords, usePeriodRecords, and useMealRecords at the top level, always
   const poopRecordsApi = usePoopRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const periodRecordsApi = usePeriodRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
+  const mealRecordsApi = useMealRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const { records: poopRecords } = poopRecordsApi
   const { records: periodRecords } = periodRecordsApi
+  const { records: mealRecords } = mealRecordsApi
 
   // Map PoopRecord[] to HealthRecord[] for calendar/stats
   const mappedPoopRecords: HealthRecord[] = useMemo(() => {
@@ -108,9 +112,38 @@ export default function TestRecentRecordsPage() {
     }))
   }, [periodRecords, currentUser, refreshVersion])
 
+  // Map MealRecord[] to HealthRecord[] for testing
+  const mappedMealRecords: HealthRecord[] = useMemo(() => {
+    console.log('[mappedMealRecords] mapping records, refreshVersion:', refreshVersion, 'mealRecords:', mealRecords)
+    return mealRecords.map((r) => ({
+      id: r.id,
+      recordId: r.id,
+      uniqueOwnerId: currentUser?.uniqueOwnerId || "",
+      ownerId: currentUser?.uniqueOwnerId || "",
+      ownerName: currentUser?.nickname || "",
+      date: r.date,
+      datetime: r.datetime,
+      type: "meal",
+      content: r.content,
+      tags: r.tags,
+      attachments: r.attachments?.map(a => ({
+        id: a.id,
+        name: a.name,
+        type: a.type,
+        size: a.size,
+      })) || [],
+      mealType: r.mealType,
+      foodTypes: r.foodTypes,
+      mealPortion: r.mealPortion,
+      mealCondition: r.mealCondition,
+      createdAt: new Date(r.createdAt),
+      updatedAt: new Date(r.updatedAt),
+    }))
+  }, [mealRecords, currentUser, refreshVersion])
+
   // 获取最近记录（按创建时间排序，取最新的10条用于测试）
   const recentRecords = useMemo(() => {
-    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords]
+    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords]
     const selectedUserIds = selectedUsers.map(user => user.uniqueOwnerId)
     const filteredRecords = allRecords.filter(record => 
       selectedUserIds.includes(record.ownerId || record.uniqueOwnerId || '')
@@ -129,7 +162,7 @@ export default function TestRecentRecordsPage() {
     })
     
     return sortedRecords
-  }, [mappedPoopRecords, mappedPeriodRecords, selectedUsers])
+  }, [mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, selectedUsers])
 
   // 获取记录类型图标和颜色
   const getRecordTypeInfo = (record: HealthRecord) => {
@@ -155,6 +188,13 @@ export default function TestRecentRecordsPage() {
           dotColor: "bg-blue-500",
           title: "健康记录"
         }
+      case "meal":
+        return {
+          icon: <Utensils className="h-4 w-4" />,
+          color: "bg-orange-50",
+          dotColor: "bg-orange-500",
+          title: "用餐记录"
+        }
       default:
         return {
           icon: <FileText className="h-4 w-4" />,
@@ -174,6 +214,16 @@ export default function TestRecentRecordsPage() {
     }
     if (record.type === "poop") {
       return generatePoopSummary(record.poopType, record.poopColor, record.poopSmell)
+    }
+    if (record.type === "meal") {
+      const mealTypeText = record.mealType ? getMealTypeLabel(record.mealType) : ''
+      const portionText = record.mealPortion ? getMealPortionLabel(record.mealPortion) : ''
+      const foodTypesText = record.foodTypes && record.foodTypes.length > 0 
+        ? record.foodTypes.map(type => getFoodTypeLabel(type)).join('、') 
+        : ''
+      
+      const summaryParts = [mealTypeText, foodTypesText, portionText].filter(Boolean)
+      return summaryParts.length > 0 ? summaryParts.join(' · ') : '用餐记录'
     }
     return record.content?.slice(0, 20) + (record.content && record.content.length > 20 ? '...' : '') || '健康记录'
   }
@@ -206,6 +256,9 @@ export default function TestRecentRecordsPage() {
     } else if (record.type === "poop") {
       router.push("/healthcalendar/poop" as any)
       localStorage.setItem('editRecordId', record.id)
+    } else if (record.type === "meal") {
+      router.push("/healthcalendar/meal" as any)
+      localStorage.setItem('editRecordId', record.id)
     } else {
       router.push(`/healthcalendar/view/${record.date}` as any)
     }
@@ -217,16 +270,18 @@ export default function TestRecentRecordsPage() {
     try {
       console.log('[handleCloudSync] 手动强制云端同步触发. currentUser:', currentUser)
       
-      const [userRefreshResult, poopRecordsRefreshResult, periodRecordsRefreshResult] = await Promise.allSettled([
+      const [userRefreshResult, poopRecordsRefreshResult, periodRecordsRefreshResult, mealRecordsRefreshResult] = await Promise.allSettled([
         forceRefreshUsers(),
         poopRecordsApi.syncFromCloud(),
-        periodRecordsApi.syncFromCloud()
+        periodRecordsApi.syncFromCloud(),
+        mealRecordsApi.syncFromCloud()
       ])
       
       console.log('[handleCloudSync] 同步结果:', {
         users: userRefreshResult.status,
         poop: poopRecordsRefreshResult.status,
-        period: periodRecordsRefreshResult.status
+        period: periodRecordsRefreshResult.status,
+        meal: mealRecordsRefreshResult.status
       })
       
       setRefreshVersion(v => v + 1)

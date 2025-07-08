@@ -58,7 +58,7 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       description: "记录每日饮食情况",
       icon: <Utensils className="h-6 w-6 text-emerald-600" />,
       color: "bg-emerald-50 hover:bg-emerald-100 border-emerald-200",
-      route: "/healthcalendar/record"
+      route: "/healthcalendar/meal"
     },
     {
       id: "poop",

@@ -4,12 +4,13 @@ import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Calendar, Heart, Activity, Plus, Users, Droplets, Stethoscope, Pill, Camera, FileText, RefreshCw } from "lucide-react"
+import { Calendar, Heart, Activity, Plus, Users, Droplets, Stethoscope, Pill, Camera, FileText, RefreshCw, Utensils } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
 import { useToast } from "@/hooks/use-toast"
 import { usePathname } from "next/navigation"
 import { usePoopRecords } from "@/hooks/use-poop-records"
 import { usePeriodRecords } from "@/hooks/use-period-records"
+import { useMealRecords } from "@/hooks/use-meal-records"
 import { useUserManagement } from "@/hooks/use-user-management"
 import { useGlobalUserSelection, initializeGlobalUserSelection } from "@/hooks/use-global-user-selection"
 import { useHealthDatabase } from "@/hooks/use-health-database"
@@ -19,6 +20,7 @@ import { SingleUserSelector } from "@/components/healthcalendar/shared/single-us
 import RecordTypeSelector from "@/components/healthcalendar/shared/record-type-selector"
 import type { UserProfile } from "@/components/healthcalendar/shared/user-selector"
 import { generatePoopSummary } from "@/lib/poop-options"
+import { getMealTypeLabel, getFoodTypeLabel, getMealPortionLabel, getMealConditionLabel } from "@/lib/meal-options"
 import dayjs from 'dayjs'
 
 export default function HealthCalendarPage() {
@@ -132,11 +134,13 @@ export default function HealthCalendarPage() {
     return getPrimaryUser()
   }, [selectedUsers, getPrimaryUser])
 
-  // Call usePoopRecords and usePeriodRecords at the top level, always
+  // Call usePoopRecords, usePeriodRecords, and useMealRecords at the top level, always
   const poopRecordsApi = usePoopRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const periodRecordsApi = usePeriodRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
+  const mealRecordsApi = useMealRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const { records: poopRecords } = poopRecordsApi
   const { records: periodRecords } = periodRecordsApi
+  const { records: mealRecords } = mealRecordsApi
 
   // Map PoopRecord[] to HealthRecord[] for calendar/stats
   const mappedPoopRecords: HealthRecord[] = useMemo(() => {
@@ -198,20 +202,51 @@ export default function HealthCalendarPage() {
     }))
   }, [periodRecords, currentUser, refreshVersion])
 
+  // Map MealRecord[] to HealthRecord[] for calendar/stats
+  const mappedMealRecords: HealthRecord[] = useMemo(() => {
+    console.log('[mappedMealRecords] mapping records, refreshVersion:', refreshVersion, 'mealRecords:', mealRecords)
+    return mealRecords.map((r) => ({
+      id: r.id,
+      recordId: r.id,
+      uniqueOwnerId: currentUser?.uniqueOwnerId || "",
+      ownerId: currentUser?.uniqueOwnerId || "",
+      ownerName: currentUser?.nickname || "",
+      date: r.date,
+      datetime: r.datetime, // 映射datetime字段
+      type: "meal",
+      content: r.content,
+      tags: r.tags,
+      attachments: r.attachments?.map(a => ({
+        id: a.id,
+        name: a.name,
+        type: a.type,
+        size: a.size,
+        url: a.url, // 添加 url 字段
+      })) || [],
+      mealType: r.mealType,
+      foodTypes: r.foodTypes,
+      mealPortion: r.mealPortion,
+      mealCondition: r.mealCondition,
+      createdAt: new Date(r.createdAt),
+      updatedAt: new Date(r.updatedAt),
+    }))
+  }, [mealRecords, currentUser, refreshVersion])
+
   // Sync from cloud on mount and when currentUser changes - 强制获取最新数据
   useEffect(() => {
     if (!currentUser?.uniqueOwnerId) return
     console.log('[useEffect] 强制云端同步触发. currentUser:', currentUser)
-    console.log('[useEffect] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length)
+    console.log('[useEffect] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length)
     
     const doSync = async () => {
       try {
         console.log('[useEffect] 开始强制云端同步，用户:', currentUser?.uniqueOwnerId)
         await Promise.all([
           poopRecordsApi.syncFromCloud(),
-          periodRecordsApi.syncFromCloud()
+          periodRecordsApi.syncFromCloud(),
+          mealRecordsApi.syncFromCloud()
         ])
-        console.log('[useEffect] 强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length)
+        console.log('[useEffect] 强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length)
       } catch (err) {
         console.error('[useEffect] 强制云端同步失败:', err)
       }
@@ -229,7 +264,7 @@ export default function HealthCalendarPage() {
       })
       return
     }
-    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords]
+    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords]
     const selectedUserIds = selectedUsers.map(user => user.uniqueOwnerId)
     const filteredRecords = allRecords.filter(record => 
       selectedUserIds.includes(record.ownerId || record.uniqueOwnerId || '')
@@ -247,7 +282,7 @@ export default function HealthCalendarPage() {
       healthDays,
       periodCycle: "28天"
     })
-  }, [isInitialized, selectedUsers, mappedPoopRecords, mappedPeriodRecords])
+  }, [isInitialized, selectedUsers, mappedPoopRecords, mappedPeriodRecords, mappedMealRecords])
 
   // 当用户选择或数据变化时重新计算统计
   useEffect(() => {
@@ -310,13 +345,14 @@ const handleAddRecord = () => {
     setIsSyncing(true)
     try {
       console.log('[handleCloudSync] 手动强制云端同步触发. currentUser:', currentUser)
-      console.log('[handleCloudSync] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length)
+      console.log('[handleCloudSync] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length)
       
       // 同时刷新用户数据和健康记录数据
-      const [userRefreshResult, poopRecordsRefreshResult, periodRecordsRefreshResult] = await Promise.allSettled([
+      const [userRefreshResult, poopRecordsRefreshResult, periodRecordsRefreshResult, mealRecordsRefreshResult] = await Promise.allSettled([
         forceRefreshUsers(),
         poopRecordsApi.syncFromCloud(),
-        periodRecordsApi.syncFromCloud()
+        periodRecordsApi.syncFromCloud(),
+        mealRecordsApi.syncFromCloud()
       ])
       
       // 检查用户数据刷新结果
@@ -340,13 +376,20 @@ const handleAddRecord = () => {
         console.error('[handleCloudSync] 生理记录数据刷新失败:', periodRecordsRefreshResult.reason)
       }
       
+      // 检查饮食记录数据刷新结果
+      if (mealRecordsRefreshResult.status === 'fulfilled') {
+        console.log('[handleCloudSync] 饮食记录数据刷新成功，同步后记录数量:', mealRecordsApi.records.length)
+      } else {
+        console.error('[handleCloudSync] 饮食记录数据刷新失败:', mealRecordsRefreshResult.reason)
+      }
+      
       setRefreshVersion(v => v + 1)
     } catch (err) {
       console.error('[handleCloudSync] 手动强制云端同步失败:', err)
     } finally {
       setIsSyncing(false)
     }
-  }, [currentUser, poopRecordsApi, periodRecordsApi, forceRefreshUsers])
+  }, [currentUser, poopRecordsApi, periodRecordsApi, mealRecordsApi, forceRefreshUsers])
 
   // 获取当前显示的用户信息
   const getDisplayUsersText = () => {
@@ -358,7 +401,7 @@ const handleAddRecord = () => {
 
   // 获取最近记录（按发生时间排序，取最新的5条）
   const recentRecords = useMemo(() => {
-    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords]
+    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords]
     const selectedUserIds = selectedUsers.map(user => user.uniqueOwnerId)
     const filteredRecords = allRecords.filter(record => 
       selectedUserIds.includes(record.ownerId || record.uniqueOwnerId || '')
@@ -381,7 +424,7 @@ const handleAddRecord = () => {
     })
     
     return sortedRecords
-  }, [mappedPoopRecords, mappedPeriodRecords, selectedUsers])
+  }, [mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, selectedUsers])
 
   // 获取记录类型图标和颜色
   const getRecordTypeInfo = (record: HealthRecord) => {
@@ -407,6 +450,13 @@ const handleAddRecord = () => {
           dotColor: "bg-blue-500",
           title: "健康记录"
         }
+      case "meal":
+        return {
+          icon: <Utensils className="h-4 w-4" />,
+          color: "bg-orange-50",
+          dotColor: "bg-orange-500",
+          title: "用餐记录"
+        }
       default:
         return {
           icon: <FileText className="h-4 w-4" />,
@@ -426,6 +476,16 @@ const handleAddRecord = () => {
     }
     if (record.type === "poop") {
       return generatePoopSummary(record.poopType, record.poopColor, record.poopSmell)
+    }
+    if (record.type === "meal") {
+      const mealTypeText = record.mealType ? getMealTypeLabel(record.mealType) : ''
+      const portionText = record.mealPortion ? getMealPortionLabel(record.mealPortion) : ''
+      const foodTypesText = record.foodTypes && record.foodTypes.length > 0 
+        ? record.foodTypes.map(type => getFoodTypeLabel(type)).join('、') 
+        : ''
+      
+      const summaryParts = [mealTypeText, foodTypesText, portionText].filter(Boolean)
+      return summaryParts.length > 0 ? summaryParts.join(' · ') : '用餐记录'
     }
     return record.content?.slice(0, 20) + (record.content && record.content.length > 20 ? '...' : '') || '健康记录'
   }
@@ -459,6 +519,11 @@ const handleAddRecord = () => {
       // 排便记录跳转到排便记录页面
       // router.push("/healthcalendar/poop" as any)
       router.push(`/healthcalendar/poop?date=${record.date}&edit=${record.id}` as any)
+      // 使用 localStorage 传递编辑信息
+      localStorage.setItem('editRecordId', record.id)
+    } else if (record.type === "meal") {
+      // 饮食记录跳转到饮食记录页面
+      router.push(`/healthcalendar/meal?date=${record.date}&edit=${record.id}` as any)
       // 使用 localStorage 传递编辑信息
       localStorage.setItem('editRecordId', record.id)
     } else {
@@ -569,7 +634,7 @@ const handleAddRecord = () => {
             onUserSelectionChange={handleUserSelectionChange}
             availableUsers={availableUsers}
             userSelectionVersion={userSelectionVersion}
-            records={[...mappedPoopRecords, ...mappedPeriodRecords]}
+            records={[...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords]}
             onCloudSync={handleCloudSync}
             isSyncing={isSyncing}
           />
