@@ -30,8 +30,9 @@ interface UploadedFile {
   name: string
   size: number
   type: string
-  file: File
+  file: File | null // 允许为 null，用于已存在的文件
   preview?: string
+  url?: string // 添加 url 字段，用于已存在的文件
 }
 
 export default function PoopRecordPage() {
@@ -75,6 +76,7 @@ export default function PoopRecordPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingRecord, setIsLoadingRecord] = useState(false) // 添加记录加载状态
   const [enableImageCompression, setEnableImageCompression] = useState(true) // 图片压缩选项，默认开启
+  const [imageModalUrl, setImageModalUrl] = useState<string | null>(null) // 图片放大模态框
   const { users: availableUsers, isLoading: usersLoading, getPrimaryUser } = useUserManagement()
 
   // 使用全局用户选择状态
@@ -124,6 +126,7 @@ export default function PoopRecordPage() {
         name: a.name,
         type: a.type,
         size: a.size,
+        url: a.url, // 添加 url 字段
       })) || [],
       poopType: r.poopType,
       poopColor: r.poopColor,
@@ -169,6 +172,10 @@ export default function PoopRecordPage() {
       setIsEditMode(true)
       setEditRecordId(editId)
       console.log("设置为编辑模式，记录ID:", editId) // 调试日志
+      
+      // 初始化时清空文件列表
+      setUploadedFiles([])
+      
       // 清除localStorage中的编辑记录ID
       localStorage.removeItem('editRecordId')
       
@@ -248,7 +255,13 @@ export default function PoopRecordPage() {
                type: dbRecord.type,
                content: dbRecord.content || "",
                tags: dbRecord.tags || [],
-               attachments: dbRecord.attachments || [],
+               attachments: dbRecord.attachments?.map(a => ({
+                 id: a.id,
+                 name: a.name,
+                 type: a.type,
+                 size: a.size,
+                 url: (a as any).url || '', // 使用 any 类型断言，因为数据库记录可能有 url 字段
+               })) || [],
                poopType: dbRecord.poopType || "type4",
                poopColor: dbRecord.poopColor || "brown",
                poopSmell: dbRecord.poopSmell || "normal",
@@ -324,13 +337,31 @@ export default function PoopRecordPage() {
         // 加载附件信息（如果有的话）
         if (record.attachments && record.attachments.length > 0) {
           console.log("发现附件:", record.attachments) // 调试日志
-          // 这里可以加载已存在的附件信息
-          // 暂时不处理，因为附件文件需要从存储中重新获取
+          
+          // 将现有附件转换为 UploadedFile 格式
+          const existingFiles: UploadedFile[] = record.attachments.map(attachment => ({
+            id: attachment.id,
+            name: attachment.name,
+            size: attachment.size,
+            type: attachment.type,
+            file: null, // 已存在的文件不需要 File 对象
+            preview: attachment.type.startsWith('image/') ? attachment.url : undefined,
+            url: attachment.url, // 保存原始URL
+          }))
+          
+          console.log("转换后的文件列表:", existingFiles)
+          setUploadedFiles(existingFiles)
+        } else {
+          // 如果没有附件，清空文件列表
+          setUploadedFiles([])
         }
       } else {
         console.log("记录不存在或类型不匹配:", record) // 调试日志
         console.log("mappedPoopRecords ID列表:", mappedPoopRecords.map(r => r.id))
         console.log("查找的记录ID:", recordId)
+        
+        // 清空文件列表
+        setUploadedFiles([])
         
         // 不要立即跳转，而是显示错误信息
         toast({
@@ -512,7 +543,7 @@ export default function PoopRecordPage() {
               url: (file as any).url,
             })
             console.log('[Poop] 已存在的附件，直接保留:', file)
-          } else {
+          } else if (file.file) {
             try {
               const url = await poopRecordsApi.uploadImage(file.file)
               console.log('[Poop] 上传成功，url:', url)
@@ -543,8 +574,9 @@ export default function PoopRecordPage() {
           console.log('[Poop] 调用 updateRecord', newRecord)
           await poopRecordsApi.updateRecord(newRecord)
         } else {
-          console.log('[Poop] 调用 addRecord', newRecord, uploadedFiles[0]?.file)
-          await poopRecordsApi.addRecord(newRecord, uploadedFiles[0]?.file)
+          console.log('[Poop] 调用 addRecord', newRecord)
+          // 对于新建记录，已经在上面处理了所有文件上传，直接调用 addRecord
+          await poopRecordsApi.addRecord(newRecord)
         }
       }
       toast({
@@ -763,6 +795,21 @@ export default function PoopRecordPage() {
           </CardContent>
         </Card>
 
+        {/* 备注 */}
+        <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
+          <CardHeader>
+            <CardTitle>备注</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              placeholder="记录其他感受或注意事项..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="min-h-[100px] resize-none"
+            />
+          </CardContent>
+        </Card>
+
         {/* 附件上传 */}
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
           <CardHeader>
@@ -782,6 +829,50 @@ export default function PoopRecordPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              {/* 已上传图片预览网格 */}
+              {uploadedFiles.filter(file => file.type.startsWith('image/')).length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm text-gray-700">已上传图片预览：</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {uploadedFiles
+                      .filter(file => file.type.startsWith('image/'))
+                      .map(file => (
+                        <div key={file.id} className="relative group">
+                          <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 cursor-pointer">
+                            <img
+                              src={file.preview || file.url}
+                              alt={file.name}
+                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                              onClick={() => setImageModalUrl(file.preview || file.url || '')}
+                            />
+                          </div>
+                          {/* 删除按钮 */}
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="absolute -top-2 -right-2 w-6 h-6 rounded-full p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => handleRemoveFile(file.id)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                          {/* 压缩标识 */}
+                          {enableImageCompression && file.file && (
+                            <div className="absolute bottom-1 left-1">
+                              <Badge variant="secondary" className="text-xs px-1 py-0">
+                                压缩
+                              </Badge>
+                            </div>
+                          )}
+                          {/* 文件名 */}
+                          <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 truncate rounded-b-lg">
+                            {file.name}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+              
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                 <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                 <Label htmlFor="file-upload" className="cursor-pointer">
@@ -856,21 +947,6 @@ export default function PoopRecordPage() {
           </CardContent>
         </Card>
 
-        {/* 备注 */}
-        <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
-          <CardHeader>
-            <CardTitle>备注</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Textarea
-              placeholder="记录其他感受或注意事项..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="min-h-[100px] resize-none"
-            />
-          </CardContent>
-        </Card>
-
         {/* 提交按钮 */}
         <div className="flex space-x-4">
           <Button
@@ -889,6 +965,31 @@ export default function PoopRecordPage() {
           </Button>
         </div>
       </div>
+      
+      {/* 图片放大模态框 */}
+      {imageModalUrl && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+          onClick={() => setImageModalUrl(null)}
+        >
+          <div className="relative max-w-4xl max-h-4xl w-full h-full flex items-center justify-center p-4">
+            <img
+              src={imageModalUrl}
+              alt="放大图片"
+              className="max-w-full max-h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-4 right-4 text-white hover:text-gray-300 bg-black bg-opacity-50 hover:bg-opacity-75"
+              onClick={() => setImageModalUrl(null)}
+            >
+              <X className="h-6 w-6" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

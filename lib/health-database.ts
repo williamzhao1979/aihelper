@@ -18,6 +18,7 @@ export interface HealthRecord {
     name: string
     type: string
     size: number
+    url?: string  // 添加 url 字段，可选，因为有些记录可能没有URL
   }>
   // Period specific fields
   flow?: string
