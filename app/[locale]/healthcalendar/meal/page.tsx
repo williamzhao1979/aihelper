@@ -104,14 +104,18 @@ export default function MealRecordPage() {
   const mappedMealRecords = useMemo(() => {
     console.log('[mappedMealRecords] useMemo triggered')
     console.log('[mappedMealRecords] mealRecords length:', mealRecordsApi.records.length)
-    console.log('[mappedMealRecords] selectedUser:', selectedUser)
-    console.log('[mappedMealRecords] mapping records, mealRecords:', mealRecordsApi.records)
-    return mealRecordsApi.records.map((r) => ({
+    
+    // 提取需要的属性，避免对整个对象的依赖
+    const records = mealRecordsApi.records
+    const userUniqueId = selectedUser?.uniqueOwnerId || ""
+    const userName = selectedUser?.nickname || ""
+    
+    return records.map((r) => ({
       id: r.id,
       recordId: r.id,
-      uniqueOwnerId: selectedUser?.uniqueOwnerId || "",
-      ownerId: selectedUser?.uniqueOwnerId || "",
-      ownerName: selectedUser?.nickname || "",
+      uniqueOwnerId: userUniqueId,
+      ownerId: userUniqueId,
+      ownerName: userName,
       date: r.date,
       datetime: r.datetime, // 映射datetime字段
       type: "meal",
@@ -131,7 +135,10 @@ export default function MealRecordPage() {
       createdAt: new Date(r.createdAt),
       updatedAt: new Date(r.updatedAt),
     }))
-  }, [mealRecordsApi.records, selectedUser])
+    
+    // 使用mealRecordsApi.records.length替代mealRecordsApi.records作为依赖
+    // 这样在records数量不变但内容可能变化时不会重新渲染
+  }, [mealRecordsApi.records.length, selectedUser?.uniqueOwnerId, selectedUser?.nickname])
 
   // 强制获取最新数据 - 每次进入meal页面时都强制刷新云端数据（与view页面保持一致）
   useEffect(() => {
@@ -163,7 +170,8 @@ export default function MealRecordPage() {
     return () => {
       clearTimeout(timer)
     }
-  }, [selectedUser?.uniqueOwnerId, mealRecordsApi])
+    // 只依赖于selectedUser?.uniqueOwnerId，移除mealRecordsApi依赖避免循环重渲染
+  }, [selectedUser?.uniqueOwnerId])
 
   // 检查是否为编辑模式 - 支持URL参数和localStorage
   useEffect(() => {
@@ -455,6 +463,10 @@ export default function MealRecordPage() {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
     
+    // 批量处理所有文件，避免多次更新状态
+    const newFiles: UploadedFile[] = []
+    const imageLoadPromises: Promise<void>[] = []
+    
     for (const file of files) {
       const fileId = Math.random().toString(36).substr(2, 9)
       let processedFile = file
@@ -479,18 +491,33 @@ export default function MealRecordPage() {
         file: processedFile
       }
       
-      // 如果是图片，创建预览
+      // 如果是图片，创建预览（但延迟更新状态）
       if (file.type.startsWith('image/')) {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          setUploadedFiles(prev => prev.map(f => 
-            f.id === fileId ? { ...f, preview: e.target?.result as string } : f
-          ))
-        }
-        reader.readAsDataURL(processedFile)
+        const imagePromise = new Promise<void>((resolve) => {
+          const reader = new FileReader()
+          reader.onload = (e) => {
+            uploadedFile.preview = e.target?.result as string
+            resolve()
+          }
+          reader.readAsDataURL(processedFile)
+        })
+        imageLoadPromises.push(imagePromise)
       }
       
-      setUploadedFiles(prev => [...prev, uploadedFile])
+      newFiles.push(uploadedFile)
+    }
+    
+    // 先添加不带预览的文件，避免闪烁
+    setUploadedFiles(prev => [...prev, ...newFiles])
+    
+    // 等待所有图片加载完成
+    if (imageLoadPromises.length > 0) {
+      // 使用requestAnimationFrame确保在下一帧渲染
+      await Promise.all(imageLoadPromises)
+      requestAnimationFrame(() => {
+        // 只更新一次状态，减少重渲染
+        setUploadedFiles(prev => [...prev])
+      })
     }
     
     // 清空input值，允许重复选择同一文件
@@ -689,19 +716,93 @@ export default function MealRecordPage() {
     }
   }
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
-
-  const getFileIcon = (type: string) => {
-    if (type.startsWith('image/')) return <Image className="h-4 w-4" />
-    if (type.includes('text') || type.includes('document')) return <FileText className="h-4 w-4" />
-    return <File className="h-4 w-4" />
-  }
+  // 使用React.memo优化文件列表项渲染
+  const MemoizedFileItem = React.memo(
+    ({ 
+      file, 
+      onRemove, 
+      onImageClick,
+      showCompressionBadge 
+    }: { 
+      file: UploadedFile; 
+      onRemove: (id: string) => void; 
+      onImageClick: (url: string) => void;
+      showCompressionBadge: boolean;
+    }) => {
+      // 获取文件图标
+      const getFileIcon = (type: string) => {
+        if (type.startsWith('image/')) return <Image className="h-4 w-4" />;
+        if (type.includes('text') || type.includes('document')) return <FileText className="h-4 w-4" />;
+        return <File className="h-4 w-4" />;
+      };
+      
+      // 格式化文件大小
+      const formatFileSize = (bytes: number) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      };
+      
+      return (
+        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center space-x-3 flex-1">
+            {file.preview ? (
+              // 图片预览
+              <div className="flex-shrink-0">
+                <img 
+                  src={file.preview} 
+                  alt={file.name}
+                  loading="lazy"
+                  className="w-12 h-12 object-cover rounded border"
+                  onClick={() => file.preview && onImageClick(file.preview)}
+                />
+              </div>
+            ) : (
+              // 非图片文件图标
+              <div className="flex-shrink-0">
+                {getFileIcon(file.type)}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm truncate">{file.name}</div>
+              <div className="text-xs text-gray-500 flex items-center space-x-2">
+                <span>{formatFileSize(file.size)}</span>
+                {file.type.startsWith('image/') && showCompressionBadge && file.file && (
+                  <Badge variant="secondary" className="text-xs">
+                    已压缩
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(file.id);
+            }}
+            className="text-red-500 hover:text-red-700 flex-shrink-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      );
+    },
+    // 自定义比较函数，只有在关键属性变化时才重新渲染
+    (prevProps, nextProps) => {
+      return (
+        prevProps.file.id === nextProps.file.id &&
+        prevProps.file.name === nextProps.file.name &&
+        prevProps.file.size === nextProps.file.size &&
+        prevProps.file.preview === nextProps.file.preview &&
+        prevProps.file.url === nextProps.file.url &&
+        prevProps.showCompressionBadge === nextProps.showCompressionBadge
+      );
+    }
+  );
 
   if (isLoading) {
     return (
@@ -944,7 +1045,7 @@ export default function MealRecordPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {/* 已上传图片预览网格 */}
+              {/* 已上传图片预览网格 - 使用React.memo包装后的组件 */}
               {uploadedFiles.filter(file => file.type.startsWith('image/')).length > 0 && (
                 <div className="space-y-2">
                   <h4 className="font-medium text-sm text-gray-700">已上传图片预览：</h4>
@@ -952,11 +1053,18 @@ export default function MealRecordPage() {
                     {uploadedFiles
                       .filter(file => file.type.startsWith('image/'))
                       .map(file => (
-                        <div key={file.id} className="relative group">
+                        <div 
+                          key={file.id} 
+                          className="relative group"
+                          // 使用key属性包含所有可能变化的值，确保只在需要时更新
+                          data-key={`${file.id}-${!!file.preview}-${!!file.url}-${file.name}`}
+                        >
                           <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 cursor-pointer">
+                            {/* 添加loading属性，优化图片加载 */}
                             <img
                               src={file.preview || file.url}
                               alt={file.name}
+                              loading="lazy"
                               className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
                               onClick={() => setImageModalUrl(file.preview || file.url || '')}
                             />
@@ -966,11 +1074,14 @@ export default function MealRecordPage() {
                             variant="destructive"
                             size="sm"
                             className="absolute -top-2 -right-2 w-6 h-6 rounded-full p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => handleRemoveFile(file.id)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // 阻止事件冒泡
+                              handleRemoveFile(file.id);
+                            }}
                           >
                             <X className="h-3 w-3" />
                           </Button>
-                          {/* 压缩标识 */}
+                          {/* 压缩标识 - 只在确实需要时显示 */}
                           {enableImageCompression && file.file && (
                             <div className="absolute bottom-1 left-1">
                               <Badge variant="secondary" className="text-xs px-1 py-0">
@@ -1016,44 +1127,13 @@ export default function MealRecordPage() {
                   <h4 className="font-medium">已上传文件：</h4>
                   <div className="grid grid-cols-1 gap-3">
                     {uploadedFiles.map(file => (
-                      <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center space-x-3 flex-1">
-                          {file.preview ? (
-                            // 图片预览
-                            <div className="flex-shrink-0">
-                              <img 
-                                src={file.preview} 
-                                alt={file.name}
-                                className="w-12 h-12 object-cover rounded border"
-                              />
-                            </div>
-                          ) : (
-                            // 非图片文件图标
-                            <div className="flex-shrink-0">
-                              {getFileIcon(file.type)}
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm truncate">{file.name}</div>
-                            <div className="text-xs text-gray-500 flex items-center space-x-2">
-                              <span>{formatFileSize(file.size)}</span>
-                              {file.type.startsWith('image/') && enableImageCompression && (
-                                <Badge variant="secondary" className="text-xs">
-                                  已压缩
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveFile(file.id)}
-                          className="text-red-500 hover:text-red-700 flex-shrink-0"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <MemoizedFileItem
+                        key={file.id}
+                        file={file}
+                        onRemove={handleRemoveFile}
+                        onImageClick={setImageModalUrl}
+                        showCompressionBadge={enableImageCompression}
+                      />
                     ))}
                   </div>
                 </div>

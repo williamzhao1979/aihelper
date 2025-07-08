@@ -189,17 +189,7 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
       setLoading(false);
       return;
     }
-<<<<<<< Updated upstream
     const filePath = `users/${uniqueOwnerId}/records.json`;
-=======
-    
-    // 统一用户ID格式
-    const cleanUserId = uniqueOwnerId.replace(/^user_/, ''); // 移除现有的 user_ 前缀
-    const userPrefix = `user_${cleanUserId}`; // 添加统一的 user_ 前缀
-    const filePath = `users/${userPrefix}/records.json`;
-    
-    console.log('[syncToCloud] 统一后的文件路径:', filePath);
->>>>>>> Stashed changes
     console.log('Uploading records.json to:', filePath);
     const blob = new Blob([raw], { type: 'application/json' });
     const { error } = await supabase.storage.from('healthcalendar').upload(filePath, blob, { upsert: true });
@@ -216,17 +206,7 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
   const syncFromCloud = useCallback(async () => {
     setLoading(true);
     setError(null);
-<<<<<<< Updated upstream
     const filePath = `users/${uniqueOwnerId}/records.json`;
-=======
-    
-    // 统一用户ID格式
-    const cleanUserId = uniqueOwnerId.replace(/^user_/, ''); // 移除现有的 user_ 前缀
-    const userPrefix = `user_${cleanUserId}`; // 添加统一的 user_ 前缀
-    const filePath = `users/${userPrefix}/records.json`;
-    
-    console.log('[syncFromCloud] 统一后的文件路径:', filePath);
->>>>>>> Stashed changes
     
     // 使用更强的时间戳和随机数确保每次都获取最新数据
     const timestamp = Date.now();
