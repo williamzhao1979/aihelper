@@ -157,6 +157,7 @@ export default function HealthCalendarPage() {
         name: a.name,
         type: a.type,
         size: a.size,
+        url: a.url, // 添加 url 字段
       })) || [],
       poopType: r.poopType,
       poopColor: r.poopColor,
@@ -185,6 +186,7 @@ export default function HealthCalendarPage() {
         name: a.name,
         type: a.type,
         size: a.size,
+        url: a.url, // 添加 url 字段
       })) || [],
       flow: r.flow,
       pain: r.pain,

@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { ArrowLeft, Edit, Trash2, Plus, Calendar, Heart, Activity, Users, Clock, Tag } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, Plus, Calendar, Heart, Activity, Users, Clock, Tag, X } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
 import { useParams } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -39,6 +39,7 @@ export default function ViewPage() {
   const [deletingRecordId, setDeletingRecordId] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [recordToDelete, setRecordToDelete] = useState<HealthRecord | null>(null)
+  const [imageModalUrl, setImageModalUrl] = useState<string | null>(null) // 图片放大模态框
   
   const { users: availableUsers, isLoading: usersLoading, getPrimaryUser } = useUserManagement()
   
@@ -79,6 +80,7 @@ export default function ViewPage() {
         name: a.name,
         type: a.type,
         size: a.size,
+        url: a.url, // 添加 url 字段
       })) || [],
       poopType: r.poopType,
       poopColor: r.poopColor,
@@ -107,6 +109,7 @@ export default function ViewPage() {
         name: a.name,
         type: a.type,
         size: a.size,
+        url: a.url, // 添加 url 字段
       })) || [],
       flow: r.flow,
       pain: r.pain,
@@ -527,14 +530,44 @@ export default function ViewPage() {
                 {record.attachments && record.attachments.length > 0 && (
                   <div className="mt-4">
                     <h4 className="text-sm font-medium text-gray-600 mb-2">附件:</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      {record.attachments.map((attachment) => (
-                        <div key={attachment.id} className="p-2 border rounded-lg">
-                          <p className="text-sm font-medium">{attachment.name}</p>
-                          <p className="text-xs text-gray-500">{attachment.type}</p>
-                        </div>
-                      ))}
-                    </div>
+                    
+                    {/* 图片预览网格 */}
+                    {record.attachments.filter(a => a.type.startsWith('image/') && a.url).length > 0 && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-3">
+                        {record.attachments
+                          .filter(a => a.type.startsWith('image/') && a.url)
+                          .map(attachment => (
+                            <div key={attachment.id} className="relative group">
+                              <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200 cursor-pointer">
+                                <img
+                                  src={attachment.url}
+                                  alt={attachment.name}
+                                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                                  onClick={() => attachment.url && setImageModalUrl(attachment.url)}
+                                />
+                              </div>
+                              {/* 文件名 */}
+                              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 truncate rounded-b-lg">
+                                {attachment.name}
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                    
+                    {/* 非图片附件列表 */}
+                    {record.attachments.filter(a => !a.type.startsWith('image/')).length > 0 && (
+                      <div className="grid grid-cols-2 gap-2">
+                        {record.attachments
+                          .filter(a => !a.type.startsWith('image/'))
+                          .map(attachment => (
+                            <div key={attachment.id} className="p-2 border rounded-lg">
+                              <p className="text-sm font-medium">{attachment.name}</p>
+                              <p className="text-xs text-gray-500">{attachment.type}</p>
+                            </div>
+                          ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -585,6 +618,31 @@ export default function ViewPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* 图片放大模态框 */}
+      {imageModalUrl && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+          onClick={() => setImageModalUrl(null)}
+        >
+          <div className="relative max-w-4xl max-h-4xl w-full h-full flex items-center justify-center p-4">
+            <img
+              src={imageModalUrl}
+              alt="放大图片"
+              className="max-w-full max-h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-4 right-4 text-white hover:text-gray-300 bg-black bg-opacity-50 hover:bg-opacity-75"
+              onClick={() => setImageModalUrl(null)}
+            >
+              <X className="h-6 w-6" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
