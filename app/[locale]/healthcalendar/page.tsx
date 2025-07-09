@@ -246,7 +246,7 @@ export default function HealthCalendarPage() {
       ownerName: currentUser?.nickname || "",
       date: r.date,
       datetime: r.datetime, // 映射datetime字段
-      type: "health",
+      type: "myrecord",
       content: r.content,
       tags: r.tags,
       attachments: r.attachments?.map(a => ({
@@ -461,6 +461,14 @@ const handleAddRecord = () => {
       selectedUsers: selectedUserIds
     })
     
+    // 调试：检查今天的记录
+    const todayRecords = allRecords.filter(record => {
+      const recordDate = new Date(record.date).toISOString().split('T')[0]
+      const today = new Date().toISOString().split('T')[0]
+      return recordDate === today && selectedUserIds.includes(record.ownerId || record.uniqueOwnerId || '')
+    })
+    console.log('[recentRecords] 今天的记录:', todayRecords)
+    
     return sortedRecords
   }, [mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords, selectedUsers])
 
@@ -481,7 +489,7 @@ const handleAddRecord = () => {
           dotColor: "bg-yellow-500",
           title: "排便记录"
         }
-      case "health":
+      case "myrecord":
         return {
           icon: <Heart className="h-4 w-4" />,
           color: "bg-green-50",
@@ -525,6 +533,9 @@ const handleAddRecord = () => {
       const summaryParts = [mealTypeText, foodTypesText, portionText].filter(Boolean)
       return summaryParts.length > 0 ? summaryParts.join(' · ') : '用餐记录'
     }
+    if (record.type === "myrecord") {
+      return record.content?.slice(0, 20) + (record.content && record.content.length > 20 ? '...' : '') || '其他记录'
+    }
     return record.content?.slice(0, 20) + (record.content && record.content.length > 20 ? '...' : '') || '健康记录'
   }
 
@@ -564,7 +575,7 @@ const handleAddRecord = () => {
       router.push(`/healthcalendar/meal?date=${record.date}&edit=${record.id}` as any)
       // 使用 localStorage 传递编辑信息
       localStorage.setItem('editRecordId', record.id)
-    } else if (record.type === "health") {
+    } else if (record.type === "myrecord") {
       // 其他记录跳转到其他记录页面
       router.push(`/healthcalendar/myrecord?date=${record.date}&edit=${record.id}` as any)
       // 使用 localStorage 传递编辑信息

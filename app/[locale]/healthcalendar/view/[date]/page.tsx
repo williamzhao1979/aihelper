@@ -169,7 +169,7 @@ export default function ViewPage() {
       ownerName: currentUser?.nickname || "",
       date: r.date,
       datetime: r.datetime, // 映射datetime字段
-      type: "health",
+      type: "myrecord",
       content: r.content,
       tags: r.tags,
       attachments: r.attachments?.map(a => ({
