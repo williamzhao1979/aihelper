@@ -33,6 +33,7 @@ export default function HealthCalendarPage() {
   const [stats, setStats] = useState({
     monthlyRecords: 0,
     healthDays: 0,
+    monthlyPoopRecords: 0,
     periodCycle: "28天"
   })
   const [isSyncing, setIsSyncing] = useState(false)
@@ -290,6 +291,7 @@ export default function HealthCalendarPage() {
       setStats({
         monthlyRecords: 0,
         healthDays: 0,
+        monthlyPoopRecords: 0,
         periodCycle: "28天"
       })
       return
@@ -305,11 +307,19 @@ export default function HealthCalendarPage() {
       const recordDate = new Date(record.date)
       return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear
     }).length
+    
+    // 计算本月排便记录数
+    const monthlyPoopRecords = filteredRecords.filter(record => {
+      const recordDate = new Date(record.date)
+      return record.type === 'poop' && recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear
+    }).length
+    
     const uniqueDates = new Set(filteredRecords.map(record => record.date))
     const healthDays = uniqueDates.size
     setStats({
       monthlyRecords,
       healthDays,
+      monthlyPoopRecords,
       periodCycle: "28天"
     })
   }, [isInitialized, selectedUsers, mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords])
@@ -561,7 +571,7 @@ const handleAddRecord = () => {
   // 处理查看记录
   const handleViewRecord = (record: HealthRecord) => {
     if (record.type === "period") {
-      router.push("/healthcalendar/period?date=${record.date}&edit=${record.id}` as any" as any)
+      router.push(`/healthcalendar/period?date=${record.date}&edit=${record.id}` as any)
       // 使用 localStorage 传递编辑信息
       localStorage.setItem('editRecordId', record.id)
     } else if (record.type === "poop") {
@@ -636,13 +646,25 @@ const handleAddRecord = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-white/80 backdrop-blur-sm">
+        {/* <Card className="bg-white/80 backdrop-blur-sm">
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
               <Heart className="h-5 w-5 text-red-600" />
               <div>
                 <p className="text-xs text-gray-600">健康天数&nbsp;&nbsp;
                 <span className="text-lg font-semibold text-gray-900">{stats.healthDays}</span>
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card> */}
+        <Card className="bg-white/80 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <Activity className="h-5 w-5 text-yellow-600" />
+              <div>
+                <p className="text-xs text-gray-600">大便次数&nbsp;&nbsp;
+                <span className="text-lg font-semibold text-gray-900">{stats.monthlyPoopRecords}</span>
                 </p>
               </div>
             </div>
