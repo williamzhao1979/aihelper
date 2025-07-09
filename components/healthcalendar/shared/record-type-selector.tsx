@@ -92,7 +92,7 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       description: "记录购买或使用的物品",
       icon: <Package className="h-6 w-6 text-amber-600" />,
       color: "bg-amber-50 hover:bg-amber-100 border-amber-200",
-      route: "/healthcalendar/record"
+      route: "/healthcalendar/itemrecord"
     },
     {
       id: "thoughts",
