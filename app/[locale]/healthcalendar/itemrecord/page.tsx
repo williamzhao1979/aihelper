@@ -30,7 +30,7 @@ interface UploadedFile {
   url?: string // 添加 url 字段，用于已存在的文件
 }
 
-export default function HealthRecordPage() {
+export default function ItemRecordPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()

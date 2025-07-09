@@ -16,7 +16,9 @@ import {
   X,
   Utensils,
   Dumbbell,
-  MoreHorizontal
+  MoreHorizontal,
+  Package,
+  Lightbulb
 } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
 import PoopDetectiveIcon from "./poop-detective-icon"
@@ -69,20 +71,52 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       route: "/healthcalendar/poop"
     },
     {
-      id: "exercise",
-      title: "运动记录",
-      description: "记录运动锻炼情况",
-      icon: <Dumbbell className="h-6 w-6 text-cyan-600" />,
-      color: "bg-cyan-50 hover:bg-cyan-100 border-cyan-200",
-      route: "/healthcalendar/record"
+      id: "period",
+      title: "生理记录",
+      description: "记录生理周期和症状",
+      icon: <Activity className="h-6 w-6 text-red-600" />,
+      color: "bg-red-50 hover:bg-red-100 border-red-200",
+      route: "/healthcalendar/period"
     },
     {
       id: "other",
-      title: "其他记录",
+      title: "我的记录",
       description: "记录其他信息",
       icon: <MoreHorizontal className="h-6 w-6 text-gray-600" />,
       color: "bg-gray-50 hover:bg-gray-100 border-gray-200",
       route: "/healthcalendar/myrecord"
+    },
+    {
+      id: "items",
+      title: "物品记录",
+      description: "记录购买或使用的物品",
+      icon: <Package className="h-6 w-6 text-amber-600" />,
+      color: "bg-amber-50 hover:bg-amber-100 border-amber-200",
+      route: "/healthcalendar/itemrecord"
+    },
+    {
+      id: "thoughts",
+      title: "想法记录",
+      description: "记录想法和灵感",
+      icon: <Lightbulb className="h-6 w-6 text-yellow-600" />,
+      color: "bg-yellow-50 hover:bg-yellow-100 border-yellow-200",
+      route: "/healthcalendar/record"
+    },
+    {
+      id: "medication",
+      title: "用药记录",
+      description: "记录药物使用情况",
+      icon: <Pill className="h-6 w-6 text-purple-600" />,
+      color: "bg-purple-50 hover:bg-purple-100 border-purple-200",
+      route: "/healthcalendar/record"
+    },
+    {
+      id: "checkup",
+      title: "体检记录",
+      description: "记录体检报告和结果",
+      icon: <Stethoscope className="h-6 w-6 text-green-600" />,
+      color: "bg-green-50 hover:bg-green-100 border-green-200",
+      route: "/healthcalendar/record"
     },
     {
       id: "general",
@@ -109,27 +143,11 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       route: "/healthcalendar/record"
     },
     {
-      id: "period",
-      title: "生理记录",
-      description: "记录生理周期和症状",
-      icon: <Activity className="h-6 w-6 text-red-600" />,
-      color: "bg-red-50 hover:bg-red-100 border-red-200",
-      route: "/healthcalendar/period"
-    },
-    {
-      id: "medication",
-      title: "用药记录",
-      description: "记录药物使用情况",
-      icon: <Pill className="h-6 w-6 text-purple-600" />,
-      color: "bg-purple-50 hover:bg-purple-100 border-purple-200",
-      route: "/healthcalendar/record"
-    },
-    {
-      id: "checkup",
-      title: "体检记录",
-      description: "记录体检报告和结果",
-      icon: <Stethoscope className="h-6 w-6 text-green-600" />,
-      color: "bg-green-50 hover:bg-green-100 border-green-200",
+      id: "exercise",
+      title: "运动记录",
+      description: "记录运动锻炼情况",
+      icon: <Dumbbell className="h-6 w-6 text-cyan-600" />,
+      color: "bg-cyan-50 hover:bg-cyan-100 border-cyan-200",
       route: "/healthcalendar/record"
     }
   ]
