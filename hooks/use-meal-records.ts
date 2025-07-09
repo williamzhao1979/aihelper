@@ -37,14 +37,13 @@ interface RecordsFile {
 
 interface UseMealRecordsResult {
   records: MealRecord[];
-  addRecord: (record: MealRecord) => Promise<void>;
+  addRecord: (record: MealRecord, imageFile?: File) => Promise<void>;
   updateRecord: (record: MealRecord) => Promise<void>;
   deleteRecord: (recordId: string) => Promise<void>;
   uploadImage: (file: File) => Promise<string>;
   syncToCloud: () => Promise<void>;
   syncFromCloud: () => Promise<void>;
   forceRefresh: () => Promise<void>; // 强制刷新数据
-  directSyncToCloud: (recordsToSync: MealRecord[]) => Promise<void>; // 直接同步指定记录
   loading: boolean;
   error: string | null;
 }
@@ -99,322 +98,133 @@ export function useMealRecords(currentUserId: string, uniqueOwnerId: string): Us
 
   // 上传图片到 Supabase Storage
   const uploadImage = useCallback(async (file: File) => {
-    if (!file) {
-      throw new Error('文件不能为空')
-    }
-    
-    if (!uniqueOwnerId) {
-      throw new Error('用户ID不能为空')
-    }
-    
     setLoading(true);
     setError(null);
-    
-    console.log('[uploadImage] 开始上传文件:', {
-      fileName: file.name,
-      fileSize: file.size,
-      fileType: file.type,
-      uniqueOwnerId
-    });
-    
-    try {
-      // 清理文件名，移除特殊字符，避免上传问题
-      const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-      
-      // 统一用户ID格式，确保只有一个 user_ 前缀
-      const cleanUserId = uniqueOwnerId.replace(/^user_/, ''); // 移除现有的 user_ 前缀
-      const userPrefix = `user_${cleanUserId}`; // 添加统一的 user_ 前缀
-      const filePath = `users/${userPrefix}/attachments/meal/${Date.now()}_${cleanFileName}`;
-      
-      console.log('[uploadImage] 统一后的用户ID:', userPrefix);
-      console.log('[uploadImage] 上传路径:', filePath);
-      
-      const { error } = await supabase.storage.from('healthcalendar').upload(filePath, file, { upsert: true });
-      if (error) {
-        console.error('[uploadImage] 上传失败:', error);
-        setLoading(false);
-        setError(error.message);
-        throw error;
-      }
-      
-      console.log('[uploadImage] 上传成功，获取访问URL');
-      
-      // 获取受控访问URL
-      const { data, error: urlError } = await supabase.storage.from('healthcalendar').createSignedUrl(filePath, 60 * 60 * 24 * 7); // 7天有效
-      
+    const filePath = `users/${uniqueOwnerId}/attachments/${Date.now()}_${file.name}`;
+    const { error } = await supabase.storage.from('healthcalendar').upload(filePath, file, { upsert: true });
+    if (error) {
       setLoading(false);
-      
-      if (urlError || !data?.signedUrl) {
-        console.error('[uploadImage] 获取URL失败:', urlError);
-        setError(urlError?.message || 'Failed to get image URL');
-        throw urlError || new Error('Failed to get image URL');
-      }
-      
-      console.log('[uploadImage] 上传完成，URL:', data.signedUrl);
-      return data.signedUrl;
-    } catch (error) {
-      console.error('[uploadImage] 上传过程中出错:', error);
-      setLoading(false);
+      setError(error.message);
       throw error;
     }
-  }, [uniqueOwnerId]);
-
-  // Save to localStorage
-  const saveToLocal = useCallback((newRecords: MealRecord[]) => {
-    if (typeof window !== "undefined" && uniqueOwnerId) {
-      const recordsFile: RecordsFile = {
-        uniqueOwnerId,
-        records: newRecords,
-        lastUpdated: new Date().toISOString(),
-        version: RECORDS_VERSION,
-        checksum: calcChecksum(JSON.stringify(newRecords))
-      };
-      localStorage.setItem(LOCAL_KEY_PREFIX + uniqueOwnerId, JSON.stringify(recordsFile));
-      console.log('[saveToLocal] 保存到localStorage，记录数量:', newRecords.length);
+    // 获取受控访问URL
+    const { data, error: urlError } = await supabase.storage.from('healthcalendar').createSignedUrl(filePath, 60 * 60 * 24 * 7); // 7天有效
+    setLoading(false);
+    if (urlError || !data?.signedUrl) {
+      setError(urlError?.message || 'Failed to get image URL');
+      throw urlError || new Error('Failed to get image URL');
     }
+    return data.signedUrl;
   }, [uniqueOwnerId]);
 
-  // 同步到云端
+  // 保存到 localStorage - 强制更新
+  const saveLocal = useCallback((newRecords: MealRecord[]) => {
+    const now = new Date().toISOString();
+    const recordsFile: RecordsFile = {
+      uniqueOwnerId,
+      records: newRecords,
+      lastUpdated: now,
+      version: RECORDS_VERSION,
+      checksum: calcChecksum(JSON.stringify(newRecords)),
+    };
+    
+    console.log('[saveLocal] 强制更新本地存储，记录数量:', newRecords.length);
+    console.log('[saveLocal] 更新时间:', now);
+    
+    // 强制更新localStorage
+    localStorage.setItem(LOCAL_KEY_PREFIX + uniqueOwnerId, JSON.stringify(recordsFile));
+    
+    // 强制更新状态
+    setRecords([...newRecords]);
+    
+    console.log('[saveLocal] 本地存储和状态已强制更新');
+  }, [uniqueOwnerId]);
+
+  // 上传 records.json 到 Supabase Storage
   const syncToCloud = useCallback(async () => {
-    if (!uniqueOwnerId) return;
-    
     setLoading(true);
     setError(null);
-    
-    try {
-      // 获取最新的记录状态，避免使用过期的闭包值
-      const currentRecords = records;
-      console.log('[syncToCloud] 开始同步到云端，uniqueOwnerId:', uniqueOwnerId);
-      console.log('[syncToCloud] 同步记录数:', currentRecords.length);
-      
-      // 统一用户ID格式
-      const cleanUserId = uniqueOwnerId.replace(/^user_/, ''); // 移除现有的 user_ 前缀
-      const userPrefix = `user_${cleanUserId}`; // 添加统一的 user_ 前缀
-      
-      const recordsFile: RecordsFile = {
-        uniqueOwnerId,
-        records: currentRecords,
-        lastUpdated: new Date().toISOString(),
-        version: RECORDS_VERSION,
-        checksum: calcChecksum(JSON.stringify(currentRecords))
-      };
-
-      const fileName = `users/${userPrefix}/meal-records.json`;
-      console.log('[syncToCloud] 统一后的文件路径:', fileName);
-      const fileBlob = new Blob([JSON.stringify(recordsFile, null, 2)], { type: 'application/json' });
-
-      // 验证文件内容非空
-      if (fileBlob.size === 0) {
-        console.error('[syncToCloud] 错误: 试图上传空文件');
-        throw new Error('Cannot upload empty file content');
-      }
-      
-      // 检查文件内容是否包含记录
-      const fileContent = await fileBlob.text();
-      const parsedContent = JSON.parse(fileContent);
-      console.log('[syncToCloud] 待上传文件内容检查:', {
-        hasUniqueOwnerId: !!parsedContent.uniqueOwnerId,
-        recordsCount: parsedContent.records?.length || 0,
-        fileSize: fileBlob.size,
-        checksum: parsedContent.checksum
-      });
-      
-      if (!parsedContent.records || parsedContent.records.length === 0) {
-        console.warn('[syncToCloud] 警告: 上传的记录数组为空');
-      }
-      
-      // 重新创建文件Blob以确保内容有效
-      const verifiedBlob = new Blob([JSON.stringify(parsedContent, null, 2)], { type: 'application/json' });
-      
-      // 执行上传
-      const { error: uploadError } = await supabase.storage
-        .from('healthcalendar')
-        .upload(fileName, verifiedBlob, { upsert: true });
-
-      if (uploadError) {
-        console.error('[syncToCloud] 上传失败，错误:', uploadError);
-        throw new Error(`Cloud sync failed: ${uploadError.message}`);
-      }
-
-      console.log('[syncToCloud] 云端同步成功');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      console.error('[syncToCloud] 云端同步失败:', errorMessage);
-      setError(errorMessage);
-      throw err;
-    } finally {
+    const raw = localStorage.getItem(LOCAL_KEY_PREFIX + uniqueOwnerId);
+    if (!raw) {
       setLoading(false);
+      return;
     }
-  }, [records, uniqueOwnerId]);
-
-  // 从云端同步
-  const syncFromCloud = useCallback(async () => {
-    if (!uniqueOwnerId) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      console.log('[syncFromCloud] 开始从云端同步，uniqueOwnerId:', uniqueOwnerId);
-      
-      // 统一用户ID格式
-      const cleanUserId = uniqueOwnerId.replace(/^user_/, ''); // 移除现有的 user_ 前缀
-      const userPrefix = `user_${cleanUserId}`; // 添加统一的 user_ 前缀
-      const fileName = `users/${userPrefix}/meal-records.json`;
-      
-      console.log('[syncFromCloud] 统一后的文件路径:', fileName);
-      const { data, error: downloadError } = await supabase.storage
-        .from('healthcalendar')
-        .download(fileName);
-
-      if (downloadError) {
-        if (downloadError.message.includes('not found')) {
-          console.log('[syncFromCloud] 云端文件不存在，使用本地数据');
-          return;
-        }
-        throw new Error(`Download failed: ${downloadError.message}`);
-      }
-
-      const text = await data.text();
-      const cloudRecordsFile: RecordsFile = JSON.parse(text);
-      
-      console.log('[syncFromCloud] 从云端获取到数据，记录数量:', cloudRecordsFile.records?.length || 0);
-      console.log('[syncFromCloud] 云端最后更新时间:', cloudRecordsFile.lastUpdated);
-
-      // 比较版本和校验和
-      const localData = localStorage.getItem(LOCAL_KEY_PREFIX + uniqueOwnerId);
-      let shouldUpdate = true;
-      
-      if (localData) {
-        const localRecordsFile: RecordsFile = JSON.parse(localData);
-        const localTime = new Date(localRecordsFile.lastUpdated);
-        const cloudTime = new Date(cloudRecordsFile.lastUpdated);
-        
-        console.log('[syncFromCloud] 本地时间:', localTime, '云端时间:', cloudTime);
-        
-        if (localTime >= cloudTime && localRecordsFile.checksum === cloudRecordsFile.checksum) {
-          console.log('[syncFromCloud] 本地数据更新或相同，不需要更新');
-          shouldUpdate = false;
-        }
-      }
-
-      if (shouldUpdate) {
-        console.log('[syncFromCloud] 更新本地数据');
-        setRecords([...cloudRecordsFile.records || []]);
-        saveToLocal(cloudRecordsFile.records || []);
-      }
-
-      console.log('[syncFromCloud] 云端同步完成');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      console.error('[syncFromCloud] 云端同步失败:', errorMessage);
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setLoading(false);
+    const filePath = `users/${uniqueOwnerId}/meal-records.json`;
+    console.log('Uploading meal-records.json to:', filePath);
+    const blob = new Blob([raw], { type: 'application/json' });
+    const { error } = await supabase.storage.from('healthcalendar').upload(filePath, blob, { upsert: true });
+    if (error) {
+      console.error('Upload error:', error.message);
+      setError(error.message);
+    } else {
+      console.log('Upload success:', filePath);
     }
-  }, [uniqueOwnerId, saveToLocal]);
-
-  // 强制刷新 - 清除缓存并重新获取云端数据
-  const forceRefresh = useCallback(async () => {
-    if (!uniqueOwnerId) return;
-    
-    console.log('[forceRefresh] 开始强制刷新');
-    
-    // 清除本地缓存
-    localStorage.removeItem(LOCAL_KEY_PREFIX + uniqueOwnerId);
-    setRecords([]);
-    
-    try {
-      // 从云端重新获取
-      await syncFromCloud();
-    } catch (error) {
-      console.log('[forceRefresh] 云端获取失败，保持空状态');
-      setRecords([]);
-    }
-    
-    console.log('[forceRefresh] 强制刷新完成');
-  }, [uniqueOwnerId, syncFromCloud]);
-
-
-
-  // 直接同步指定记录到云端（不依赖组件状态）
-  const directSyncToCloud = useCallback(async (recordsToSync: MealRecord[]) => {
-    if (!uniqueOwnerId) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      console.log('[directSyncToCloud] 开始同步到云端，uniqueOwnerId:', uniqueOwnerId);
-      console.log('[directSyncToCloud] 同步记录数量:', recordsToSync.length);
-      
-      // 统一用户ID格式
-      const cleanUserId = uniqueOwnerId.replace(/^user_/, ''); // 移除现有的 user_ 前缀
-      const userPrefix = `user_${cleanUserId}`; // 添加统一的 user_ 前缀
-      
-      const recordsFile: RecordsFile = {
-        uniqueOwnerId,
-        records: recordsToSync,
-        lastUpdated: new Date().toISOString(),
-        version: RECORDS_VERSION,
-        checksum: calcChecksum(JSON.stringify(recordsToSync))
-      };
-
-      const fileName = `users/${userPrefix}/meal-records.json`;
-      console.log('[directSyncToCloud] 统一后的文件路径:', fileName);
-      
-      // 创建文件内容
-      const fileContent = JSON.stringify(recordsFile, null, 2);
-      console.log('[directSyncToCloud] 文件内容字节数:', fileContent.length);
-      const fileBlob = new Blob([fileContent], { type: 'application/json' });
-      
-      // 验证文件内容
-      console.log('[directSyncToCloud] 文件对象大小:', fileBlob.size);
-      if (fileBlob.size === 0) {
-        console.error('[directSyncToCloud] 错误: 试图上传空文件');
-        throw new Error('Cannot upload empty file content');
-      }
-      
-      // 执行上传
-      const { error: uploadError } = await supabase.storage
-        .from('healthcalendar')
-        .upload(fileName, fileBlob, { upsert: true });
-
-      if (uploadError) {
-        console.error('[directSyncToCloud] 上传失败，错误:', uploadError);
-        throw new Error(`Cloud sync failed: ${uploadError.message}`);
-      }
-
-      console.log('[directSyncToCloud] 云端同步成功');
-      
-      // 成功后重新获取云端数据以确认同步成功
-      try {
-        // 下载刚上传的文件以验证
-        const { data: verifyData, error: verifyError } = await supabase.storage
-          .from('healthcalendar')
-          .download(fileName);
-          
-        if (verifyError) {
-          console.error('[directSyncToCloud] 验证下载失败:', verifyError);
-        } else {
-          const verifiedContent = await verifyData.text();
-          const verifiedFile = JSON.parse(verifiedContent);
-          console.log('[directSyncToCloud] 验证下载成功，记录数:', verifiedFile.records.length);
-        }
-      } catch (verifyErr) {
-        console.error('[directSyncToCloud] 验证过程错误:', verifyErr);
-      }
-      
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      console.error('[directSyncToCloud] 云端同步失败:', errorMessage);
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
+    setLoading(false);
   }, [uniqueOwnerId]);
+
+  // 从 Supabase Storage 拉取 records.json - 强制获取最新数据
+  const syncFromCloud = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const filePath = `users/${uniqueOwnerId}/meal-records.json`;
+    
+    // 使用更强的时间戳和随机数确保每次都获取最新数据
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
+    const cacheBuster = `?t=${timestamp}&r=${random}&sync=true`;
+    
+    console.log('[syncFromCloud] 开始强制获取最新数据，cacheBuster:', cacheBuster);
+    
+    const { data, error } = await supabase.storage
+      .from('healthcalendar')
+      .download(`${filePath}${cacheBuster}`);
+      
+    if (error) {
+      console.error('[syncFromCloud] 获取数据失败:', error);
+      setLoading(false);
+      setError(error.message);
+      return;
+    }
+    
+    const text = await data.text();
+    console.log('[syncFromCloud] 获取到的最新数据:', text); // 调试输出原始内容
+    try {
+      const parsed: RecordsFile = JSON.parse(text);
+      console.log('[syncFromCloud] 解析后的数据:', parsed); // 调试输出解析内容
+      // 强制更新本地数据
+      saveLocal(parsed.records);
+      console.log('[syncFromCloud] 本地数据已强制更新');
+    } catch (e) {
+      console.error('[syncFromCloud] 解析数据失败:', e);
+      setError('Failed to parse meal-records.json');
+    }
+    setLoading(false);
+  }, [uniqueOwnerId, saveLocal]);
+
+  // 新增记录
+  const addRecord = useCallback(async (record: MealRecord, imageFile?: File) => {
+    setLoading(true);
+    setError(null);
+    let attachments = record.attachments || [];
+    if (imageFile) {
+      const url = await uploadImage(imageFile);
+      attachments = [
+        ...attachments,
+        {
+          id: Date.now().toString(),
+          name: imageFile.name,
+          type: imageFile.type,
+          size: imageFile.size,
+          url,
+        },
+      ];
+    }
+    const newRecord = { ...record, attachments, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    const newRecords = [...records, newRecord];
+    saveLocal(newRecords);
+    await syncToCloud();
+    setLoading(false);
+  }, [records, uploadImage, saveLocal, syncToCloud]);
 
   // 更新记录
   const updateRecord = useCallback(async (record: MealRecord) => {
@@ -428,34 +238,75 @@ export function useMealRecords(currentUserId: string, uniqueOwnerId: string): Us
     }
     const newRecords = [...records];
     newRecords[idx] = { ...record, updatedAt: new Date().toISOString() };
-    saveToLocal(newRecords);
+    saveLocal(newRecords);
     await syncToCloud();
     setLoading(false);
-  }, [records, saveToLocal, syncToCloud]);
+  }, [records, saveLocal, syncToCloud]);
 
   // 删除记录
   const deleteRecord = useCallback(async (recordId: string) => {
     setLoading(true);
     setError(null);
     const newRecords = records.filter(r => r.id !== recordId);
-    saveToLocal(newRecords);
+    saveLocal(newRecords);
     await syncToCloud();
     setLoading(false);
-  }, [records, saveToLocal, syncToCloud]);
-  
-  // 添加记录
-  const addRecord = useCallback(async (record: MealRecord) => {
+  }, [records, saveLocal, syncToCloud]);
+
+  // 强制刷新数据 - 清除缓存并重新获取
+  const forceRefresh = useCallback(async () => {
+    console.log('[forceRefresh] 开始强制刷新数据');
     setLoading(true);
     setError(null);
     
-    const newRecord = { ...record, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-    const newRecords = [...records, newRecord];
-    saveToLocal(newRecords);
-    await syncToCloud();
-    setLoading(false);
-  }, [records, saveToLocal, syncToCloud]);
+    try {
+      // 清除localStorage缓存
+      localStorage.removeItem(LOCAL_KEY_PREFIX + uniqueOwnerId);
+      console.log('[forceRefresh] 已清除localStorage缓存');
+      
+      // 清除内存中的记录状态
+      setRecords([]);
+      console.log('[forceRefresh] 已清除内存中的记录状态');
+      
+      // 强制从云端获取最新数据，使用更强的缓存破坏
+      const filePath = `users/${uniqueOwnerId}/meal-records.json`;
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(7);
+      const cacheBuster = `?t=${timestamp}&r=${random}&force=true`;
+      
+      console.log('[forceRefresh] 使用强制缓存破坏参数:', cacheBuster);
+      
+      const { data, error } = await supabase.storage
+        .from('healthcalendar')
+        .download(`${filePath}${cacheBuster}`);
+        
+      if (error) {
+        console.error('[forceRefresh] 获取数据失败:', error);
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+      
+      const text = await data.text();
+      console.log('[forceRefresh] 获取到的最新数据:', text);
+      try {
+        const parsed: RecordsFile = JSON.parse(text);
+        console.log('[forceRefresh] 解析后的数据:', parsed);
+        // 强制更新本地数据
+        saveLocal(parsed.records);
+        console.log('[forceRefresh] 强制刷新完成，记录数量:', parsed.records.length);
+      } catch (e) {
+        console.error('[forceRefresh] 解析数据失败:', e);
+        setError('Failed to parse meal-records.json');
+      }
+    } catch (error) {
+      console.error('[forceRefresh] 强制刷新失败:', error);
+      setError('强制刷新失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [uniqueOwnerId, saveLocal]);
 
-  // 返回API对象，确保包含所有需要的函数
   return {
     records,
     addRecord,
@@ -465,8 +316,7 @@ export function useMealRecords(currentUserId: string, uniqueOwnerId: string): Us
     syncToCloud,
     syncFromCloud,
     forceRefresh,
-    directSyncToCloud,
     loading,
-    error
+    error,
   };
 }
