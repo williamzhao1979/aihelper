@@ -19,6 +19,16 @@ export default function CalendarDay({
   records,
   onClick
 }: CalendarDayProps) {
+  // 调试：如果是今天，输出记录信息
+  if (isToday) {
+    console.log('[CalendarDay] 今天的记录:', {
+      date: date.toISOString().split('T')[0],
+      records: records,
+      recordCount: records.length,
+      recordTypes: records.map(r => r.type)
+    })
+  }
+
   // 获取健康状态指示器
   const getHealthIndicators = () => {
     const indicators: string[] = []
@@ -28,8 +38,8 @@ export default function CalendarDay({
         case "period":
           indicators.push("bg-red-500")
           break
-        case "health":
-          indicators.push("bg-blue-500")
+        case "myrecord":
+          indicators.push("bg-green-500")
           break
         case "poop":
           indicators.push("bg-yellow-500")
@@ -87,4 +97,4 @@ export default function CalendarDay({
       )}
     </button>
   )
-} 
+}
