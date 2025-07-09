@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ArrowLeft, Upload, X, FileText, Image, File, Users } from "lucide-react"
+import { ArrowLeft, Upload, X, FileText, Image, File, Users, Package } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
 import { useSearchParams } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -76,12 +76,12 @@ export default function ItemRecordPage() {
 
   const selectedUser = currentUser
 
-  console.log("[MyRecordPage] selectedUser?.uniqueOwnerId:", selectedUser?.uniqueOwnerId)
-  console.log("[MyRecordPage] selectedUser:", selectedUser)
-  console.log("[MyRecordPage] currentUser?.uniqueOwnerId:", currentUser?.uniqueOwnerId)
+  console.log("[ItemRecordPage] selectedUser?.uniqueOwnerId:", selectedUser?.uniqueOwnerId)
+  console.log("[ItemRecordPage] selectedUser:", selectedUser)
+  console.log("[ItemRecordPage] currentUser?.uniqueOwnerId:", currentUser?.uniqueOwnerId)
 
   const handleUserSelectionChange = (user: UserProfile) => {
-    console.log('[MyRecordPage] User selection changed to:', user)
+    console.log('[ItemRecordPage] User selection changed to:', user)
     // 用户选择变化会通过全局状态自动同步
   }
 
@@ -105,7 +105,7 @@ export default function ItemRecordPage() {
       ownerName: selectedUser?.nickname || "",
       date: r.date,
       datetime: r.datetime, // 映射datetime字段
-      type: "health",
+      type: "item",
       content: r.content,
       tags: r.tags,
       attachments: r.attachments?.map(a => ({
@@ -123,21 +123,21 @@ export default function ItemRecordPage() {
   // 强制获取最新数据 - 每次进入myrecord页面时都强制刷新云端数据（与view页面保持一致）
   useEffect(() => {
     if (!selectedUser?.uniqueOwnerId) return
-    console.log('[useEffect] MyRecord页面强制云端刷新触发. selectedUser:', selectedUser)
+    console.log('[useEffect] ItemRecord页面强制云端刷新触发. selectedUser:', selectedUser)
     
     const doForceRefresh = async () => {
       try {
-        console.log('[useEffect] MyRecord页面开始强制云端刷新，用户:', selectedUser?.uniqueOwnerId)
+        console.log('[useEffect] ItemRecord页面开始强制云端刷新，用户:', selectedUser?.uniqueOwnerId)
         // 使用forceRefresh确保清除所有缓存并获取最新数据
         await myRecordsApi.forceRefresh()
-        console.log('[useEffect] MyRecord页面强制云端刷新完成')
+        console.log('[useEffect] ItemRecord页面强制云端刷新完成')
       } catch (err) {
-        console.error('[useEffect] MyRecord页面强制云端刷新失败，尝试syncFromCloud:', err)
+        console.error('[useEffect] ItemRecord页面强制云端刷新失败，尝试syncFromCloud:', err)
         try {
           await myRecordsApi.syncFromCloud()
-          console.log('[useEffect] MyRecord页面syncFromCloud完成')
+          console.log('[useEffect] ItemRecord页面syncFromCloud完成')
         } catch (syncErr) {
-          console.error('[useEffect] MyRecord页面syncFromCloud也失败:', syncErr)
+          console.error('[useEffect] ItemRecord页面syncFromCloud也失败:', syncErr)
         }
       }
     }
@@ -171,7 +171,7 @@ export default function ItemRecordPage() {
         // 从mappedMyRecords中查找记录（与view页面使用相同的数据源）
         const record = mappedMyRecords.find(r => r.id === editId || r.recordId === editId)
         
-        if (record && record.type === "health") {
+        if (record && record.type === "item") {
           console.log("从mappedMyRecords找到记录:", record)
           await loadRecordForEdit(editId)
         } else {
@@ -179,7 +179,7 @@ export default function ItemRecordPage() {
           // 如果当前没有找到记录，可能是数据还在加载中，等待一下再试
           setTimeout(() => {
             const retryRecord = mappedMyRecords.find(r => r.id === editId || r.recordId === editId)
-            if (retryRecord && retryRecord.type === "health") {
+            if (retryRecord && retryRecord.type === "item") {
               console.log("重试找到记录:", retryRecord)
               loadRecordForEdit(editId)
             } else {
@@ -230,7 +230,7 @@ export default function ItemRecordPage() {
         return
       }
       
-      if (record && record.type === "health") {
+      if (record && record.type === "item") {
         console.log("记录类型正确，开始设置表单值") // 调试日志
         
         // 使用实际记录的值，只有在值为undefined或null时才使用默认值
@@ -417,26 +417,26 @@ export default function ItemRecordPage() {
     
     setIsSubmitting(true)
     try {
-      console.log('[MyRecord] handleSubmit start, isEditMode:', isEditMode, 'uploadedFiles:', uploadedFiles)
-      // 构造 MyRecord
+      console.log('[ItemRecord] handleSubmit start, isEditMode:', isEditMode, 'uploadedFiles:', uploadedFiles)
+      // 构造 MyRecord (注意：这里需要使用 'myrecord' 类型，因为API接口要求这个类型)
       const newRecord = {
         id: isEditMode ? editRecordId : Math.random().toString(36).substr(2, 9),
         date: getLocalDateString(new Date(recordDateTime)),
         datetime: new Date(recordDateTime).toISOString(), // 设置datetime字段，格式与updatedAt相同
-        type: 'myrecord' as const,
+        type: 'myrecord' as const, // 使用标准的myrecord类型，在显示时区分
         content: content.trim(),
         tags: tags,
         attachments: [] as FileAttachment[],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
-      console.log('[MyRecord] newRecord:', newRecord)
-      console.log('[MyRecord] myRecordsApi:', myRecordsApi)
+      console.log('[ItemRecord] newRecord:', newRecord)
+      console.log('[ItemRecord] myRecordsApi:', myRecordsApi)
       
       let attachments: FileAttachment[] = []
       if (uploadedFiles.length > 0 && myRecordsApi) {
         for (const file of uploadedFiles) {
-          console.log('[MyRecord] 准备上传文件:', file)
+          console.log('[ItemRecord] 准备上传文件:', file)
           if ((file as any).url) {
             // 如果文件已经有URL，说明是已存在的附件
             attachments.push({
@@ -446,11 +446,11 @@ export default function ItemRecordPage() {
               size: file.size,
               url: (file as any).url,
             })
-            console.log('[MyRecord] 已存在的附件，直接保留:', file)
+            console.log('[ItemRecord] 已存在的附件，直接保留:', file)
           } else if (file.file) {
             try {
               const url = await myRecordsApi.uploadImage(file.file)
-              console.log('[MyRecord] 上传成功，url:', url)
+              console.log('[ItemRecord] 上传成功，url:', url)
               attachments.push({
                 id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
                 name: file.name,
@@ -459,7 +459,7 @@ export default function ItemRecordPage() {
                 url,
               })
             } catch (e) {
-              console.error('[MyRecord] Supabase 上传失败:', e)
+              console.error('[ItemRecord] Supabase 上传失败:', e)
               toast({
                 title: '文件上传失败',
                 description: (e as Error).message,
@@ -473,14 +473,14 @@ export default function ItemRecordPage() {
       }
       
       newRecord.attachments = attachments
-      console.log('[MyRecord] 最终 attachments:', attachments)
+      console.log('[ItemRecord] 最终 attachments:', attachments)
       
       if (myRecordsApi) {
         if (isEditMode) {
-          console.log('[MyRecord] 调用 updateRecord', newRecord)
+          console.log('[ItemRecord] 调用 updateRecord', newRecord)
           await myRecordsApi.updateRecord(newRecord)
         } else {
-          console.log('[MyRecord] 调用 addRecord', newRecord)
+          console.log('[ItemRecord] 调用 addRecord', newRecord)
           // 对于新建记录，已经在上面处理了所有文件上传，直接调用 addRecord
           await myRecordsApi.addRecord(newRecord)
         }
@@ -488,7 +488,7 @@ export default function ItemRecordPage() {
       
       toast({
         title: "保存成功",
-        description: `已为 ${selectedUser.nickname} 保存记录（含云端同步）`,
+        description: `已为 ${selectedUser.nickname} 保存物品记录（含云端同步）`,
       })
       
       setTimeout(() => {
@@ -498,7 +498,7 @@ export default function ItemRecordPage() {
       console.error("保存失败:", error)
       toast({
         title: "保存失败",
-        description: myRecordsApi?.error || '保存记录时发生错误，请重试',
+        description: myRecordsApi?.error || '保存物品记录时发生错误，请重试',
         variant: "destructive",
       })
     } finally {
@@ -580,7 +580,7 @@ export default function ItemRecordPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">加载记录中...</p>
+          <p className="text-gray-600">加载物品记录中...</p>
         </div>
       </div>
     )
@@ -600,15 +600,15 @@ export default function ItemRecordPage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex items-center space-x-2">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <FileText className="h-6 w-6 text-blue-600" />
+            <div className="p-2 bg-amber-100 rounded-lg">
+              <Package className="h-6 w-6 text-amber-600" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {isEditMode ? "编辑我的记录" : "我的记录"}
+                {isEditMode ? "编辑物品记录" : "物品记录"}
               </h1>
               <p className="text-sm text-gray-600">
-                {isEditMode ? "修改记录信息" : "记录其他信息"}
+                {isEditMode ? "修改物品记录信息" : "记录购买或使用的物品"}
               </p>
             </div>
           </div>
@@ -654,11 +654,11 @@ export default function ItemRecordPage() {
         {/* 记录内容 */}
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
           <CardHeader>
-            <CardTitle>记录内容</CardTitle>
+            <CardTitle>物品内容</CardTitle>
           </CardHeader>
           <CardContent>
             <Textarea
-              placeholder="详细描述您的健康状况或其他信息..."
+              placeholder="详细描述您购买或使用的物品信息..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
               className="min-h-[120px] resize-none"
@@ -675,7 +675,7 @@ export default function ItemRecordPage() {
             <div className="space-y-3">
               <div className="flex space-x-2">
                 <Input
-                  placeholder="添加标签（如：头痛、发烧等）"
+                  placeholder="添加标签（如：购买、使用、维护等）"
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
@@ -852,9 +852,9 @@ export default function ItemRecordPage() {
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || !selectedUser || !content.trim()}
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
+            className="flex-1 bg-amber-600 hover:bg-amber-700"
           >
-            {isSubmitting ? "保存中..." : (isEditMode ? "更新记录" : "保存记录")}
+            {isSubmitting ? "保存中..." : (isEditMode ? "更新物品记录" : "保存物品记录")}
           </Button>
         </div>
       </div>
