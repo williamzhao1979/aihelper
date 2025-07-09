@@ -620,81 +620,13 @@ export default function MealRecordPage() {
       newRecord.attachments = attachments
       console.log('[Meal] 最终 attachments:', attachments)
       if (mealRecordsApi) {
-        try {
-          if (isEditMode) {
-            console.log('[Meal] 调用 updateRecord', newRecord);
-            await mealRecordsApi.updateRecord(newRecord);
-            console.log('[Meal] updateRecord 调用成功');
-            
-            // 编辑模式额外调用直接同步方法确保云端更新
-            console.log('[Meal] 编辑模式额外调用 directSyncToCloud');
-            try {
-              // 获取当前所有记录
-              const currentRecords = [...mealRecordsApi.records]; 
-              // 替换或添加当前编辑的记录
-              const recordIndex = currentRecords.findIndex(r => r.id === newRecord.id);
-              if (recordIndex >= 0) {
-                currentRecords[recordIndex] = newRecord;
-              } else {
-                currentRecords.push(newRecord);
-              }
-              // 直接同步所有记录到云端
-              await mealRecordsApi.directSyncToCloud(currentRecords);
-              console.log('[Meal] 编辑模式 directSyncToCloud 调用成功，同步记录数:', currentRecords.length);
-            } catch (syncError) {
-              console.error('[Meal] 编辑模式 directSyncToCloud 调用失败:', syncError);
-            }
-          } else {
-            console.log('[Meal] 调用 addRecord', newRecord);
-            
-            // 对于新建记录，我们使用三种方法确保云端同步成功
-            
-            // 方法1: 使用 addRecord (会更新状态并调用云端同步)
-            await mealRecordsApi.addRecord(newRecord);
-            console.log('[Meal] addRecord 调用成功，现有记录数:', mealRecordsApi.records.length);
-            
-            // 验证记录已被添加到内存
-            const addedRecord = mealRecordsApi.records.find(r => r.id === newRecord.id);
-            if (addedRecord) {
-              console.log('[Meal] 验证成功: 记录已添加到内存中');
-            } else {
-              console.warn('[Meal] 记录未被成功添加到内存中');
-            }
-            
-            // 方法2: 再次调用 directSyncToCloud 确保记录被同步
-            console.log('[Meal] 额外调用 directSyncToCloud 确保云端同步');
-            try {
-              // 获取当前所有记录，添加新记录
-              const recordsToSync = [...mealRecordsApi.records];
-              
-              // 确保新记录在同步数组中
-              if (!recordsToSync.some(r => r.id === newRecord.id)) {
-                console.log('[Meal] 添加缺失的记录到同步数组');
-                recordsToSync.push(newRecord);
-              }
-              
-              // 确保数组不为空
-              const finalRecords = recordsToSync.length > 0 ? recordsToSync : [newRecord];
-              
-              // 直接同步到云端
-              await mealRecordsApi.directSyncToCloud(finalRecords);
-              console.log('[Meal] directSyncToCloud 调用成功，同步记录数:', finalRecords.length);
-            } catch (syncError) {
-              console.error('[Meal] directSyncToCloud 调用失败:', syncError);
-              
-              // 方法3: 最后尝试调用常规 syncToCloud
-              try {
-                console.log('[Meal] 最后尝试调用 syncToCloud');
-                await mealRecordsApi.syncToCloud();
-                console.log('[Meal] 常规 syncToCloud 调用成功');
-              } catch (finalError) {
-                console.error('[Meal] 所有同步方法均失败:', finalError);
-              }
-            }
-          }
-        } catch (apiError) {
-          console.error('[Meal] 调用 mealRecordsApi 方法失败:', apiError);
-          throw apiError;
+        if (isEditMode) {
+          console.log('[Meal] 调用 updateRecord', newRecord)
+          await mealRecordsApi.updateRecord(newRecord)
+        } else {
+          console.log('[Meal] 调用 addRecord', newRecord)
+          // 对于新建记录，已经在上面处理了所有文件上传，直接调用 addRecord
+          await mealRecordsApi.addRecord(newRecord)
         }
       }
       toast({

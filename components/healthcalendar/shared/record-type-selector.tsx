@@ -69,14 +69,6 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       route: "/healthcalendar/poop"
     },
     {
-      id: "general",
-      title: "健康记录",
-      description: "记录身体状况、症状等",
-      icon: <FileText className="h-6 w-6 text-blue-600" />,
-      color: "bg-blue-50 hover:bg-blue-100 border-blue-200",
-      route: "/healthcalendar/record"
-    },
-    {
       id: "exercise",
       title: "运动记录",
       description: "记录运动锻炼情况",
@@ -85,11 +77,35 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       route: "/healthcalendar/record"
     },
     {
+      id: "other",
+      title: "其他记录",
+      description: "记录其他信息",
+      icon: <MoreHorizontal className="h-6 w-6 text-gray-600" />,
+      color: "bg-gray-50 hover:bg-gray-100 border-gray-200",
+      route: "/healthcalendar/myrecord"
+    },
+    {
+      id: "general",
+      title: "健康记录",
+      description: "记录身体状况、症状等",
+      icon: <FileText className="h-6 w-6 text-blue-600" />,
+      color: "bg-blue-50 hover:bg-blue-100 border-blue-200",
+      route: "/healthcalendar/record"
+    },
+    {
       id: "mood",
       title: "心情记录",
       description: "记录情绪和心理健康",
       icon: <Heart className="h-6 w-6 text-pink-600" />,
       color: "bg-pink-50 hover:bg-pink-100 border-pink-200",
+      route: "/healthcalendar/record"
+    },
+    {
+      id: "photo",
+      title: "照片记录",
+      description: "上传照片",
+      icon: <Camera className="h-6 w-6 text-indigo-600" />,
+      color: "bg-indigo-50 hover:bg-indigo-100 border-indigo-200",
       route: "/healthcalendar/record"
     },
     {
@@ -114,22 +130,6 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       description: "记录体检报告和结果",
       icon: <Stethoscope className="h-6 w-6 text-green-600" />,
       color: "bg-green-50 hover:bg-green-100 border-green-200",
-      route: "/healthcalendar/record"
-    },
-    {
-      id: "photo",
-      title: "照片记录",
-      description: "上传照片",
-      icon: <Camera className="h-6 w-6 text-indigo-600" />,
-      color: "bg-indigo-50 hover:bg-indigo-100 border-indigo-200",
-      route: "/healthcalendar/record"
-    },
-    {
-      id: "other",
-      title: "其他记录",
-      description: "记录其他信息",
-      icon: <MoreHorizontal className="h-6 w-6 text-gray-600" />,
-      color: "bg-gray-50 hover:bg-gray-100 border-gray-200",
       route: "/healthcalendar/record"
     }
   ]
