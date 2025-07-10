@@ -132,6 +132,20 @@ export default function HealthCalendar({
     onUserSelectionChange(users)
   }, [updateSelectedUsers, onUserSelectionChange])
 
+  // Log records when they change
+  useEffect(() => {
+    console.log('[HealthCalendar] Records updated:', {
+      total: records.length,
+      types: {
+        poop: records.filter(r => r.type === 'poop').length,
+        period: records.filter(r => r.type === 'period').length,
+        meal: records.filter(r => r.type === 'meal').length,
+        myrecord: records.filter(r => r.type === 'myrecord').length,
+        item: records.filter(r => r.type === 'item').length
+      }
+    });
+  }, [records]);
+
   return (
     <div className="p-6">
       {/* Calendar Header */}

@@ -14,8 +14,8 @@ import { useSearchParams } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { getLocalDateTimeString, getLocalDateString } from "@/lib/utils"
 import { useUserManagement } from "@/hooks/use-user-management"
-import { useMyRecords } from '@/hooks/use-my-records'
-import type { FileAttachment } from '@/hooks/use-my-records'
+import { useItemRecords } from '@/hooks/use-item-records'
+import type { FileAttachment } from '@/hooks/use-item-records'
 import { useGlobalUserSelection } from "@/hooks/use-global-user-selection"
 import { SingleUserSelector } from "@/components/healthcalendar/shared/single-user-selector"
 import type { UserProfile } from "@/components/healthcalendar/shared/user-selector"
@@ -85,19 +85,19 @@ export default function ItemRecordPage() {
     // 用户选择变化会通过全局状态自动同步
   }
 
-  // myRecordsApi 必须在 selectedUser 声明后
-  const myRecordsApi = useMyRecords(
+  // itemRecordsApi 必须在 selectedUser 声明后
+  const itemRecordsApi = useItemRecords(
     selectedUser?.ownerId || '',
     selectedUser?.uniqueOwnerId || ''
   )
 
   // 使用与view页面完全一致的映射逻辑
-  const mappedMyRecords = useMemo(() => {
-    console.log('[mappedMyRecords] useMemo triggered')
-    console.log('[mappedMyRecords] myRecords length:', myRecordsApi.records.length)
-    console.log('[mappedMyRecords] selectedUser:', selectedUser)
-    console.log('[mappedMyRecords] mapping records, myRecords:', myRecordsApi.records)
-    return myRecordsApi.records.map((r) => ({
+  const mappedItemRecords = useMemo(() => {
+    console.log('[mappedItemRecords] useMemo triggered')
+    console.log('[mappedItemRecords] itemRecords length:', itemRecordsApi.records.length)
+    console.log('[mappedItemRecords] selectedUser:', selectedUser)
+    console.log('[mappedItemRecords] mapping records, itemRecords:', itemRecordsApi.records)
+    return itemRecordsApi.records.map((r) => ({
       id: r.id,
       recordId: r.id,
       uniqueOwnerId: selectedUser?.uniqueOwnerId || "",
@@ -118,7 +118,7 @@ export default function ItemRecordPage() {
       createdAt: new Date(r.createdAt),
       updatedAt: new Date(r.updatedAt),
     }))
-  }, [myRecordsApi.records, selectedUser])
+  }, [itemRecordsApi.records, selectedUser])
 
   // 强制获取最新数据 - 每次进入myrecord页面时都强制刷新云端数据（与view页面保持一致）
   useEffect(() => {
@@ -129,12 +129,12 @@ export default function ItemRecordPage() {
       try {
         console.log('[useEffect] ItemRecord页面开始强制云端刷新，用户:', selectedUser?.uniqueOwnerId)
         // 使用forceRefresh确保清除所有缓存并获取最新数据
-        await myRecordsApi.forceRefresh()
+        await itemRecordsApi.forceRefresh()
         console.log('[useEffect] ItemRecord页面强制云端刷新完成')
       } catch (err) {
         console.error('[useEffect] ItemRecord页面强制云端刷新失败，尝试syncFromCloud:', err)
         try {
-          await myRecordsApi.syncFromCloud()
+          await itemRecordsApi.syncFromCloud()
           console.log('[useEffect] ItemRecord页面syncFromCloud完成')
         } catch (syncErr) {
           console.error('[useEffect] ItemRecord页面syncFromCloud也失败:', syncErr)
@@ -166,19 +166,19 @@ export default function ItemRecordPage() {
       // 使用与view页面相同的数据加载逻辑
       const loadRecordFromMappedData = async () => {
         console.log("开始从mappedMyRecords中查找记录:", editId)
-        console.log("当前mappedMyRecords数量:", mappedMyRecords.length)
+        console.log("当前mappedItemRecords数量:", mappedItemRecords.length)
         
-        // 从mappedMyRecords中查找记录（与view页面使用相同的数据源）
-        const record = mappedMyRecords.find(r => r.id === editId || r.recordId === editId)
+        // 从mappedItemRecords中查找记录（与view页面使用相同的数据源）
+        const record = mappedItemRecords.find(r => r.id === editId || r.recordId === editId)
         
         if (record && record.type === "item") {
           console.log("从mappedMyRecords找到记录:", record)
           await loadRecordForEdit(editId)
         } else {
-          console.log("在mappedMyRecords中未找到记录，等待数据加载...")
+          console.log("在mappedItemRecords中未找到记录，等待数据加载...")
           // 如果当前没有找到记录，可能是数据还在加载中，等待一下再试
           setTimeout(() => {
-            const retryRecord = mappedMyRecords.find(r => r.id === editId || r.recordId === editId)
+            const retryRecord = mappedItemRecords.find(r => r.id === editId || r.recordId === editId)
             if (retryRecord && retryRecord.type === "item") {
               console.log("重试找到记录:", retryRecord)
               loadRecordForEdit(editId)
@@ -201,27 +201,27 @@ export default function ItemRecordPage() {
     } else {
       console.log("新建模式") // 调试日志
     }
-  }, [searchParams, mappedMyRecords]) // 使用mappedMyRecords作为依赖项
+  }, [searchParams, mappedItemRecords]) // 使用mappedItemRecords作为依赖项
 
   // 加载记录用于编辑 - 使用与view页面相同的数据源
   const loadRecordForEdit = async (recordId: string) => {
     console.log("开始加载记录:", recordId) // 调试日志
     console.log("当前用户:", selectedUser)
-    console.log("mappedMyRecords数量:", mappedMyRecords.length)
+    console.log("mappedItemRecords数量:", mappedItemRecords.length)
     setIsLoadingRecord(true) // 使用专门的记录加载状态
     
     try {
-      // 从mappedMyRecords中查找记录（与view页面使用相同的数据源）
-      console.log("从mappedMyRecords中查找:", recordId)
-      console.log("当前mappedMyRecords:", mappedMyRecords)
+      // 从mappedItemRecords中查找记录（与view页面使用相同的数据源）
+      console.log("从mappedItemRecords中查找:", recordId)
+      console.log("当前mappedItemRecords:", mappedItemRecords)
       
-      let record = mappedMyRecords.find(r => r.id === recordId || r.recordId === recordId)
+      let record = mappedItemRecords.find(r => r.id === recordId || r.recordId === recordId)
       
       if (record) {
-        console.log("从mappedMyRecords找到记录:", record)
+        console.log("从mappedItemRecords找到记录:", record)
       } else {
-        console.log("在mappedMyRecords中未找到记录")
-        // 如果mappedMyRecords中没有找到记录，显示错误
+        console.log("在mappedItemRecords中未找到记录")
+        // 如果mappedItemRecords中没有找到记录，显示错误
         toast({
           title: "记录不存在",
           description: `要编辑的记录 (${recordId}) 不存在。`,
@@ -305,7 +305,7 @@ export default function ItemRecordPage() {
         }
       } else {
         console.log("记录不存在或类型不匹配:", record) // 调试日志
-        console.log("mappedMyRecords ID列表:", mappedMyRecords.map(r => r.id))
+        console.log("mappedItemRecords ID列表:", mappedItemRecords.map(r => r.id))
         console.log("查找的记录ID:", recordId)
         
         // 清空文件列表
@@ -423,7 +423,7 @@ export default function ItemRecordPage() {
         id: isEditMode ? editRecordId : Math.random().toString(36).substr(2, 9),
         date: getLocalDateString(new Date(recordDateTime)),
         datetime: new Date(recordDateTime).toISOString(), // 设置datetime字段，格式与updatedAt相同
-        type: 'myrecord' as const, // 使用标准的myrecord类型，在显示时区分
+        type: 'item' as const, // 使用item类型
         content: content.trim(),
         tags: tags,
         attachments: [] as FileAttachment[],
@@ -431,10 +431,10 @@ export default function ItemRecordPage() {
         updatedAt: new Date().toISOString(),
       }
       console.log('[ItemRecord] newRecord:', newRecord)
-      console.log('[ItemRecord] myRecordsApi:', myRecordsApi)
+      console.log('[ItemRecord] itemRecordsApi:', itemRecordsApi)
       
       let attachments: FileAttachment[] = []
-      if (uploadedFiles.length > 0 && myRecordsApi) {
+      if (uploadedFiles.length > 0 && itemRecordsApi) {
         for (const file of uploadedFiles) {
           console.log('[ItemRecord] 准备上传文件:', file)
           if ((file as any).url) {
@@ -449,7 +449,7 @@ export default function ItemRecordPage() {
             console.log('[ItemRecord] 已存在的附件，直接保留:', file)
           } else if (file.file) {
             try {
-              const url = await myRecordsApi.uploadImage(file.file)
+              const url = await itemRecordsApi.uploadImage(file.file)
               console.log('[ItemRecord] 上传成功，url:', url)
               attachments.push({
                 id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
@@ -475,14 +475,14 @@ export default function ItemRecordPage() {
       newRecord.attachments = attachments
       console.log('[ItemRecord] 最终 attachments:', attachments)
       
-      if (myRecordsApi) {
+      if (itemRecordsApi) {
         if (isEditMode) {
           console.log('[ItemRecord] 调用 updateRecord', newRecord)
-          await myRecordsApi.updateRecord(newRecord)
+          await itemRecordsApi.updateRecord(newRecord)
         } else {
           console.log('[ItemRecord] 调用 addRecord', newRecord)
           // 对于新建记录，已经在上面处理了所有文件上传，直接调用 addRecord
-          await myRecordsApi.addRecord(newRecord)
+          await itemRecordsApi.addRecord(newRecord)
         }
       }
       
@@ -498,7 +498,7 @@ export default function ItemRecordPage() {
       console.error("保存失败:", error)
       toast({
         title: "保存失败",
-        description: myRecordsApi?.error || '保存物品记录时发生错误，请重试',
+        description: itemRecordsApi?.error || '保存物品记录时发生错误，请重试',
         variant: "destructive",
       })
     } finally {
@@ -605,10 +605,10 @@ export default function ItemRecordPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                {isEditMode ? "编辑物品记录" : "物品记录"}
+                {isEditMode ? "编辑物品记录" : "物品资料记录"}
               </h1>
               <p className="text-sm text-gray-600">
-                {isEditMode ? "修改物品记录信息" : "记录购买或使用的物品"}
+                {isEditMode ? "修改物品记录信息" : "物品资料放哪儿了"}
               </p>
             </div>
           </div>
