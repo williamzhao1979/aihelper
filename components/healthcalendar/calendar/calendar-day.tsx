@@ -25,7 +25,9 @@ export default function CalendarDay({
       date: date.toISOString().split('T')[0],
       records: records,
       recordCount: records.length,
-      recordTypes: records.map(r => r.type)
+      recordTypes: records.map(r => r.type),
+      hasItemRecords: records.some(r => r.type === "item"),
+      itemRecords: records.filter(r => r.type === "item")
     })
   }
 
@@ -46,6 +48,9 @@ export default function CalendarDay({
           break
         case "meal":
           indicators.push("bg-orange-500")
+          break
+        case "item":
+          indicators.push("bg-amber-500")
           break
       }
     })
