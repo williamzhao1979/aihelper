@@ -103,6 +103,22 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       route: "/healthcalendar/itemrecord"
     },
     {
+      id: "mood",
+      title: "心情记录",
+      description: "记录情绪和心理健康",
+      icon: <Heart className="h-6 w-6 text-pink-600" />,
+      color: "bg-pink-50 hover:bg-pink-100 border-pink-200",
+      route: "/healthcalendar/record"
+    },
+    {
+      id: "health",
+      title: "健康记录",
+      description: "记录身体状况、症状等",
+      icon: <FileText className="h-6 w-6 text-blue-600" />,
+      color: "bg-blue-50 hover:bg-blue-100 border-blue-200",
+      route: "/healthcalendar/health"
+    },
+    {
       id: "medication",
       title: "用药记录",
       description: "记录药物使用情况",
@@ -116,22 +132,6 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       description: "记录体检报告和结果",
       icon: <Stethoscope className="h-6 w-6 text-green-600" />,
       color: "bg-green-50 hover:bg-green-100 border-green-200",
-      route: "/healthcalendar/record"
-    },
-    {
-      id: "general",
-      title: "健康记录",
-      description: "记录身体状况、症状等",
-      icon: <FileText className="h-6 w-6 text-blue-600" />,
-      color: "bg-blue-50 hover:bg-blue-100 border-blue-200",
-      route: "/healthcalendar/record"
-    },
-    {
-      id: "mood",
-      title: "心情记录",
-      description: "记录情绪和心理健康",
-      icon: <Heart className="h-6 w-6 text-pink-600" />,
-      color: "bg-pink-50 hover:bg-pink-100 border-pink-200",
       route: "/healthcalendar/record"
     },
     {

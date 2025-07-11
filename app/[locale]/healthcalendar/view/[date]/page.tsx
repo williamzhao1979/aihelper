@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { ArrowLeft, Edit, Trash2, Plus, Calendar, Heart, Activity, Users, Clock, Tag, X, FileText, Package, Utensils, Droplets } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, Plus, Calendar, Heart, Activity, Users, Clock, Tag, X, FileText, Package, Utensils, Droplets, Stethoscope } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
 import { useParams } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -23,6 +23,7 @@ import { usePeriodRecords } from "@/hooks/use-period-records"
 import { useMealRecords } from "@/hooks/use-meal-records"
 import { useMyRecords } from "@/hooks/use-my-records"
 import { useItemRecords } from "@/hooks/use-item-records"
+import { useHealthRecords } from "@/hooks/use-health-records"
 import { useUserManagement } from "@/hooks/use-user-management"
 import { useGlobalUserSelection } from "@/hooks/use-global-user-selection"
 import { HealthRecord } from "@/lib/health-database"
@@ -62,6 +63,7 @@ export default function ViewPage() {
   const mealRecordsApi = useMealRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const myRecordsApi = useMyRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const itemRecordsApi = useItemRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
+  const healthRecordsApi = useHealthRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   console.log("[ViewPage] currentUser?.uniqueOwnerId:", currentUser?.uniqueOwnerId)
   console.log("[ViewPage] selectedUsers:", selectedUsers)
   // console.log("[ViewPage] globalSelectedUsers:", globalSelectedUsers)
@@ -70,6 +72,7 @@ export default function ViewPage() {
   const { records: mealRecords } = mealRecordsApi
   const { records: myRecords } = myRecordsApi
   const { records: itemRecords } = itemRecordsApi
+  const { records: healthRecords } = healthRecordsApi
 
   // Map PoopRecord[] to HealthRecord[] for calendar/stats
   const mappedPoopRecords: HealthRecord[] = useMemo(() => {
@@ -212,12 +215,38 @@ export default function ViewPage() {
       updatedAt: new Date(r.updatedAt),
     }))
   }, [itemRecords, currentUser, refreshVersion])
+  
+  // Map HealthRecord[] to HealthRecord[] for calendar/stats
+  const mappedHealthRecords: HealthRecord[] = useMemo(() => {
+    console.log('[mappedHealthRecords] mapping records, refreshVersion:', refreshVersion, 'healthRecords:', healthRecords)
+    return healthRecords.map((r) => ({
+      id: r.id,
+      recordId: r.id,
+      uniqueOwnerId: currentUser?.uniqueOwnerId || "",
+      ownerId: currentUser?.uniqueOwnerId || "",
+      ownerName: currentUser?.nickname || "",
+      date: r.date,
+      datetime: r.datetime, // 映射datetime字段
+      type: "health",
+      content: r.content,
+      tags: r.tags,
+      attachments: r.attachments?.map(a => ({
+        id: a.id,
+        name: a.name,
+        type: a.type,
+        size: a.size,
+        url: a.url, // 添加 url 字段
+      })) || [],
+      createdAt: new Date(r.createdAt),
+      updatedAt: new Date(r.updatedAt),
+    }))
+  }, [healthRecords, currentUser, refreshVersion])
 
   // Sync from cloud on mount and when currentUser changes - 强制获取最新数据
   useEffect(() => {
     if (!currentUser?.uniqueOwnerId) return
     console.log('[useEffect] 强制云端同步触发. currentUser:', currentUser)
-    console.log('[useEffect] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length)
+    console.log('[useEffect] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length)
     
     const doSync = async () => {
       try {
@@ -227,9 +256,10 @@ export default function ViewPage() {
           periodRecordsApi.syncFromCloud(),
           mealRecordsApi.syncFromCloud(),
           myRecordsApi.syncFromCloud(),
-          itemRecordsApi.syncFromCloud()
+          itemRecordsApi.syncFromCloud(),
+          healthRecordsApi.syncFromCloud()
         ])
-        console.log('[useEffect] 强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length)
+        console.log('[useEffect] 强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length)
       } catch (err) {
         console.error('[useEffect] 强制云端同步失败:', err)
       }
@@ -244,10 +274,10 @@ export default function ViewPage() {
   // 获取指定日期的记录
   const dayRecords = useMemo(() => {
     console.log('[dayRecords] Filtering records for date:', date)
-    console.log('[dayRecords] Available records:', mappedPoopRecords.length, 'periodRecords:', mappedPeriodRecords.length, 'mealRecords:', mappedMealRecords.length, 'myRecords:', mappedMyRecords.length, 'itemRecords:', mappedItemRecords.length)
+    console.log('[dayRecords] Available records:', mappedPoopRecords.length, 'periodRecords:', mappedPeriodRecords.length, 'mealRecords:', mappedMealRecords.length, 'myRecords:', mappedMyRecords.length, 'itemRecords:', mappedItemRecords.length, 'healthRecords:', mappedHealthRecords.length)
     console.log('[dayRecords] Current user:', currentUser)
     
-    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords]
+    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords, ...mappedHealthRecords]
     
     const filtered = allRecords.filter(record => {
       const recordDate = dayjs(record.date).format('YYYY-MM-DD')
@@ -262,7 +292,7 @@ export default function ViewPage() {
     
     console.log('[dayRecords] Filtered records:', filtered.length)
     return filtered
-  }, [mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords, mappedItemRecords, date, currentUser])
+  }, [mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords, mappedItemRecords, mappedHealthRecords, date, currentUser])
 
   const handleBack = () => {
     router.push("/healthcalendar")
@@ -283,22 +313,23 @@ export default function ViewPage() {
     setIsSyncing(true)
     try {
       console.log('[handleCloudSync] 手动强制云端同步触发. currentUser:', currentUser)
-      console.log('[handleCloudSync] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length)
+      console.log('[handleCloudSync] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length)
       await Promise.all([
         poopRecordsApi.syncFromCloud(),
         periodRecordsApi.syncFromCloud(),
         mealRecordsApi.syncFromCloud(),
         myRecordsApi.syncFromCloud(),
-        itemRecordsApi.syncFromCloud()
+        itemRecordsApi.syncFromCloud(),
+        healthRecordsApi.syncFromCloud()
       ])
-      console.log('[handleCloudSync] 手动强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length)
+      console.log('[handleCloudSync] 手动强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length)
       setRefreshVersion(v => v + 1)
     } catch (err) {
       console.error('[handleCloudSync] 手动强制云端同步失败:', err)
     } finally {
       setIsSyncing(false)
     }
-  }, [currentUser, poopRecordsApi, periodRecordsApi, mealRecordsApi, myRecordsApi, itemRecordsApi])
+  }, [currentUser, poopRecordsApi, periodRecordsApi, mealRecordsApi, myRecordsApi, itemRecordsApi, healthRecordsApi])
 
   // Poop类型映射
   const getPoopTypeLabel = (type: string) => {
@@ -382,7 +413,7 @@ export default function ViewPage() {
     } else if (record.type === 'item') {
       router.push(`/healthcalendar/itemrecord?edit=${recordId}&date=${currentDate}` as any)
     } else if (record.type === 'health') {
-      router.push(`/healthcalendar/myrecord?edit=${recordId}&date=${currentDate}` as any)
+      router.push(`/healthcalendar/health?edit=${recordId}&date=${currentDate}` as any)
     }
   }
   const handleDeleteClick = (record: HealthRecord) => {
@@ -433,6 +464,13 @@ export default function ViewPage() {
         toast({
           title: "删除成功",
           description: "物品记录已删除并同步到云端",
+        });
+      } else if (healthRecordsApi.records.find(r => r.id === recordId)) {
+        // 删除健康记录
+        await healthRecordsApi.deleteRecord(recordId);
+        toast({
+          title: "删除成功",
+          description: "健康记录已删除并同步到云端",
         });
       } else {
         toast({
@@ -552,6 +590,7 @@ export default function ViewPage() {
                        record.type === 'meal' ? <Utensils className="h-4 w-4 text-orange-500" /> :
                        record.type === 'myrecord' ? <Heart className="h-4 w-4 text-green-500" /> :
                        record.type === 'item' ? <Package className="h-4 w-4 text-amber-500" /> :
+                       record.type === 'health' ? <Stethoscope className="h-4 w-4 text-blue-500" /> :
                        <FileText className="h-4 w-4 text-blue-500" />}
                       <div className={`w-3 h-3 rounded-full ${
                         record.type === 'period' ? 'bg-red-500' : 
@@ -559,7 +598,7 @@ export default function ViewPage() {
                         record.type === 'meal' ? 'bg-orange-500' :
                         record.type === 'myrecord' ? 'bg-green-500' :
                         record.type === 'item' ? 'bg-amber-500' :
-                        record.type === 'health' ? 'bg-green-500' :
+                        record.type === 'health' ? 'bg-blue-500' :
                         'bg-blue-500'
                       }`}></div>
                     </div>
@@ -569,8 +608,8 @@ export default function ViewPage() {
                       record.type === 'meal' ? '用餐记录' :
                       record.type === 'myrecord' ? '我的记录' :
                       record.type === 'item' ? '物品记录' :
-                      record.type === 'health' ? '其他记录' :
-                      '健康记录'
+                      record.type === 'health' ? '健康记录' :
+                      '其他记录'
                     }</span>
                   </CardTitle>
                   <div className="flex items-center space-x-2">
