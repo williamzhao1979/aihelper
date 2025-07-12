@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuth } from "@/components/auth/auth-context"
-import { LoginHealth } from "@/components/auth/login-health"
+import { LoginForm } from "@/components/auth/login-form"
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 
@@ -82,8 +82,8 @@ export default function EnvLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-green-50 to-emerald-50 flex items-center justify-center p-4">
-      <LoginHealth onSubmit={handleLogin} />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+      <LoginForm onSubmit={handleLogin} />
     </div>
   )
 } 

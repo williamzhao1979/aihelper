@@ -179,17 +179,33 @@
     "result_card_title": "認識結果"
   },
   "auth": {
-    "title": "健康カレンダー",
-    "subtitle": "ログイン",
+    "title": "家族健康記録",
+    "subtitle": "ご家族の健康的な生活を記録",
     "username": "ユーザー名",
     "password": "パスワード",
+    "phone": "電話番号",
+    "verificationCode": "認証コード",
     "usernamePlaceholder": "ユーザー名を入力してください",
     "passwordPlaceholder": "パスワードを入力してください",
+    "phonePlaceholder": "電話番号を入力してください",
+    "verificationCodePlaceholder": "認証コードを入力してください",
+    "usernameLogin": "ユーザー名ログイン",
+    "phoneLogin": "電話番号ログイン",
+    "getVerificationCode": "コード取得",
+    "rememberMe": "ログイン状態を保持",
+    "forgotPassword": "パスワードをお忘れですか？",
     "login": "ログイン",
     "loggingIn": "ログイン中...",
+    "loginSuccess": "ログイン成功！健康ダッシュボードにリダイレクトしています...",
     "loginFailed": "ログインに失敗しました",
     "loginFailedRetry": "ログインに失敗しました。再試行してください",
     "usernamePasswordError": "ユーザー名またはパスワードが無効です",
-    "accountLocked": "アカウントがロックされました。{time}秒後に再試行してください"
+    "accountLocked": "アカウントがロックされました。{time}秒後に再試行してください",
+    "orLoginWith": "または以下の方法でログイン",
+    "noAccount": "アカウントをお持ちでないですか？",
+    "signUp": "今すぐ登録",
+    "appleLogin": "Appleログイン",
+    "wechatLogin": "WeChat ログイン",
+    "googleLogin": "Google ログイン"
   }
 }
