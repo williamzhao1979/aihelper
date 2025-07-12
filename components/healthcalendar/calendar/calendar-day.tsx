@@ -26,36 +26,82 @@ export default function CalendarDay({
       records: records,
       recordCount: records.length,
       recordTypes: records.map(r => r.type),
+      recordIds: records.map(r => r.id),
+      recordDates: records.map(r => r.date),
+      recordOwners: records.map(r => r.ownerId || r.uniqueOwnerId),
+      hasPeriodRecords: records.some(r => r.type === "period"),
+      periodRecords: records.filter(r => r.type === "period"),
+      hasPoopRecords: records.some(r => r.type === "poop"),
+      poopRecords: records.filter(r => r.type === "poop"),
+      hasMealRecords: records.some(r => r.type === "meal"),
+      mealRecords: records.filter(r => r.type === "meal"),
+      hasMyRecords: records.some(r => r.type === "myrecord"),
+      myRecords: records.filter(r => r.type === "myrecord"),
       hasItemRecords: records.some(r => r.type === "item"),
-      itemRecords: records.filter(r => r.type === "item")
+      itemRecords: records.filter(r => r.type === "item"),
+      hasHealthRecords: records.some(r => r.type === "health"),
+      healthRecords: records.filter(r => r.type === "health"),
+      hasMoodRecords: records.some(r => r.type === "mood"),
+      moodRecords: records.filter(r => r.type === "mood"),
+      hasMedicationRecords: records.some(r => r.type === "medication"),
+      medicationRecords: records.filter(r => r.type === "medication"),
+      hasMeditationRecords: records.some(r => r.type === "meditation"),
+      meditationRecords: records.filter(r => r.type === "meditation"),
+      hasCheckupRecords: records.some(r => r.type === "checkup"),
+      checkupRecords: records.filter(r => r.type === "checkup"),
+      hasThoughtRecords: records.some(r => r.type === "thought"),
+      thoughtRecords: records.filter(r => r.type === "thought"),
+      hasExerciseRecords: records.some(r => r.type === "exercise"),
+      exerciseRecords: records.filter(r => r.type === "exercise")
     })
   }
 
   // 获取健康状态指示器
   const getHealthIndicators = () => {
-    const indicators: string[] = []
+    const indicatorSet = new Set<string>()
     
     records.forEach(record => {
       switch (record.type) {
         case "period":
-          indicators.push("bg-red-500")
+          indicatorSet.add("bg-red-500")
           break
         case "myrecord":
-          indicators.push("bg-green-500")
+          indicatorSet.add("bg-green-500")
           break
         case "poop":
-          indicators.push("bg-yellow-500")
+          indicatorSet.add("bg-yellow-500")
           break
         case "meal":
-          indicators.push("bg-orange-500")
+          indicatorSet.add("bg-orange-500")
           break
         case "item":
-          indicators.push("bg-amber-500")
+          indicatorSet.add("bg-amber-500")
+          break
+        case "health":
+          indicatorSet.add("bg-blue-500")
+          break
+        case "mood":
+          indicatorSet.add("bg-pink-500")
+          break
+        case "medication":
+          indicatorSet.add("bg-purple-500")
+          break
+        case "meditation":
+          indicatorSet.add("bg-purple-500")
+          break
+        case "checkup":
+          indicatorSet.add("bg-purple-500")
+          break
+        case "thought":
+          indicatorSet.add("bg-yellow-600")
+          break
+        case "exercise":
+          indicatorSet.add("bg-green-500")
           break
       }
     })
     
-    return indicators.slice(0, 3) // 最多显示3个指示器
+    return Array.from(indicatorSet).slice(0, 1) // 最多显示3个指示器
   }
 
   const healthIndicators = getHealthIndicators()
@@ -93,7 +139,7 @@ export default function CalendarDay({
       )}
       
       {/* 记录数量提示 */}
-      {records.length > 3 && (
+      {records.length > 1 && (
         <div className="absolute top-1 right-1">
           <div className="w-4 h-4 bg-gray-600 text-white text-xs rounded-full flex items-center justify-center">
             {records.length}
