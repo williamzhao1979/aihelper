@@ -8,6 +8,7 @@ import { useGlobalUserSelection } from "@/hooks/use-global-user-selection"
 import { HealthRecord } from "@/lib/health-database"
 import CalendarHeader from "./calendar-header"
 import CalendarDay from "./calendar-day"
+import RecordTypeLegend from "./record-type-legend"
 import type { UserProfile } from "../shared/user-selector"
 import dayjs from "dayjs"
 
@@ -157,6 +158,11 @@ export default function HealthCalendar({
         onRefresh={onCloudSync}
         isRefreshing={isSyncing}
       />
+
+      {/* Record Type Legend */}
+      {/* <div className="mt-4">
+        <RecordTypeLegend />
+      </div> */}
 
       {/* Calendar Grid */}
       <div className="grid grid-cols-7 gap-1 mt-4">

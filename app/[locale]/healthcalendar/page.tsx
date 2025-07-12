@@ -14,6 +14,7 @@ import { useMealRecords } from "@/hooks/use-meal-records"
 import { useMyRecords } from "@/hooks/use-my-records"
 import { useItemRecords } from "@/hooks/use-item-records"
 import { useHealthRecords } from "@/hooks/use-health-records"
+import { useCheckupRecords } from "@/hooks/use-checkup-records"
 import { useUserManagement } from "@/hooks/use-user-management"
 import { useGlobalUserSelection, initializeGlobalUserSelection } from "@/hooks/use-global-user-selection"
 import { useHealthDatabase } from "@/hooks/use-health-database"
@@ -21,6 +22,7 @@ import { HealthRecord } from "@/lib/health-database"
 import HealthCalendar from "@/components/healthcalendar/calendar/health-calendar"
 import { SingleUserSelector } from "@/components/healthcalendar/shared/single-user-selector"
 import RecordTypeSelector from "@/components/healthcalendar/shared/record-type-selector"
+import CompactLegend from "@/components/healthcalendar/calendar/compact-legend"
 import type { UserProfile } from "@/components/healthcalendar/shared/user-selector"
 import { generatePoopSummary } from "@/lib/poop-options"
 import { getMealTypeLabel, getFoodTypeLabel, getMealPortionLabel, getMealConditionLabel } from "@/lib/meal-options"
@@ -145,12 +147,14 @@ export default function HealthCalendarPage() {
   const myRecordsApi = useMyRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const itemRecordsApi = useItemRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const healthRecordsApi = useHealthRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
+  const checkupRecordsApi = useCheckupRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const { records: poopRecords } = poopRecordsApi
   const { records: periodRecords } = periodRecordsApi
   const { records: mealRecords } = mealRecordsApi
   const { records: myRecords } = myRecordsApi
   const { records: itemRecords } = itemRecordsApi
   const { records: healthRecords } = healthRecordsApi
+  const { records: checkupRecords } = checkupRecordsApi
 
   // Map PoopRecord[] to HealthRecord[] for calendar/stats
   const mappedPoopRecords: HealthRecord[] = useMemo(() => {
@@ -330,6 +334,37 @@ export default function HealthCalendarPage() {
     return mapped
   }, [healthRecords, currentUser, refreshVersion])
 
+  // Map CheckupRecord[] to HealthRecord[] for calendar/stats
+  const mappedCheckupRecords: HealthRecord[] = useMemo(() => {
+    console.log('[mappedCheckupRecords] mapping records, refreshVersion:', refreshVersion, 'checkupRecords:', checkupRecords)
+    const mapped = checkupRecords.map((r) => ({
+      id: r.id,
+      recordId: r.id,
+      uniqueOwnerId: currentUser?.uniqueOwnerId || "",
+      ownerId: currentUser?.uniqueOwnerId || "",
+      ownerName: currentUser?.nickname || "",
+      date: r.date,
+      datetime: r.datetime, // 映射datetime字段
+      type: "checkup" as const, // Using as const to ensure TypeScript knows this is a literal type
+      content: r.content,
+      tags: r.tags,
+      attachments: r.attachments?.map(a => ({
+        id: a.id,
+        name: a.name,
+        type: a.type,
+        size: a.size,
+        url: a.url, // 添加 url 字段
+      })) || [],
+      createdAt: new Date(r.createdAt),
+      updatedAt: new Date(r.updatedAt),
+    }))
+    console.log('[mappedCheckupRecords] mapped results:', {
+      count: mapped.length,
+      first: mapped.length > 0 ? mapped[0] : null
+    })
+    return mapped
+  }, [checkupRecords, currentUser, refreshVersion])
+
   // Sync from cloud on mount and when currentUser changes - 强制获取最新数据
   useEffect(() => {
     if (!currentUser?.uniqueOwnerId) return
@@ -345,9 +380,10 @@ export default function HealthCalendarPage() {
           mealRecordsApi.syncFromCloud(),
           myRecordsApi.syncFromCloud(),
           itemRecordsApi.syncFromCloud(),
-          healthRecordsApi.syncFromCloud()
+          healthRecordsApi.syncFromCloud(),
+          checkupRecordsApi.syncFromCloud()
         ])
-        console.log('[useEffect] 强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length)
+        console.log('[useEffect] 强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length, 'checkupRecords:', checkupRecordsApi.records.length)
       } catch (err) {
         console.error('[useEffect] 强制云端同步失败:', err)
       }
@@ -366,7 +402,7 @@ export default function HealthCalendarPage() {
       })
       return
     }
-    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords, ...mappedHealthRecords]
+    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords, ...mappedHealthRecords, ...mappedCheckupRecords]
     const selectedUserIds = selectedUsers.map(user => user.uniqueOwnerId)
     const filteredRecords = allRecords.filter(record => 
       selectedUserIds.includes(record.ownerId || record.uniqueOwnerId || '')
@@ -392,7 +428,7 @@ export default function HealthCalendarPage() {
       monthlyPoopRecords,
       periodCycle: "28天"
     })
-  }, [isInitialized, selectedUsers, mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords, mappedItemRecords, mappedHealthRecords])
+  }, [isInitialized, selectedUsers, mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords, mappedItemRecords, mappedHealthRecords, mappedCheckupRecords])
 
   // 当用户选择或数据变化时重新计算统计
   useEffect(() => {
@@ -455,17 +491,18 @@ const handleAddRecord = () => {
     setIsSyncing(true)
     try {
       console.log('[handleCloudSync] 手动强制云端同步触发. currentUser:', currentUser)
-      console.log('[handleCloudSync] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length)
+      console.log('[handleCloudSync] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length, 'checkupRecords:', checkupRecordsApi.records.length)
       
       // 同时刷新用户数据和健康记录数据
-      const [userRefreshResult, poopRecordsRefreshResult, periodRecordsRefreshResult, mealRecordsRefreshResult, myRecordsRefreshResult, itemRecordsRefreshResult, healthRecordsRefreshResult] = await Promise.allSettled([
+      const [userRefreshResult, poopRecordsRefreshResult, periodRecordsRefreshResult, mealRecordsRefreshResult, myRecordsRefreshResult, itemRecordsRefreshResult, healthRecordsRefreshResult, checkupRecordsRefreshResult] = await Promise.allSettled([
         forceRefreshUsers(),
         poopRecordsApi.syncFromCloud(),
         periodRecordsApi.syncFromCloud(),
         mealRecordsApi.syncFromCloud(),
         myRecordsApi.syncFromCloud(),
         itemRecordsApi.syncFromCloud(),
-        healthRecordsApi.syncFromCloud()
+        healthRecordsApi.syncFromCloud(),
+        checkupRecordsApi.syncFromCloud()
       ])
       
       // 检查用户数据刷新结果
@@ -517,13 +554,20 @@ const handleAddRecord = () => {
         console.error('[handleCloudSync] 健康记录数据刷新失败:', healthRecordsRefreshResult.reason)
       }
       
+      // 检查体检记录数据刷新结果
+      if (checkupRecordsRefreshResult.status === 'fulfilled') {
+        console.log('[handleCloudSync] 体检记录数据刷新成功，同步后记录数量:', checkupRecordsApi.records.length)
+      } else {
+        console.error('[handleCloudSync] 体检记录数据刷新失败:', checkupRecordsRefreshResult.reason)
+      }
+      
       setRefreshVersion(v => v + 1)
     } catch (err) {
       console.error('[handleCloudSync] 手动强制云端同步失败:', err)
     } finally {
       setIsSyncing(false)
     }
-  }, [currentUser, poopRecordsApi, periodRecordsApi, mealRecordsApi, myRecordsApi, itemRecordsApi, healthRecordsApi, forceRefreshUsers])
+  }, [currentUser, poopRecordsApi, periodRecordsApi, mealRecordsApi, myRecordsApi, itemRecordsApi, healthRecordsApi, checkupRecordsApi, forceRefreshUsers])
 
   // 获取当前显示的用户信息
   const getDisplayUsersText = () => {
@@ -535,7 +579,7 @@ const handleAddRecord = () => {
 
   // 获取最近记录（按发生时间排序，取最新的5条）
   const recentRecords = useMemo(() => {
-    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords, ...mappedHealthRecords]
+    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords, ...mappedHealthRecords, ...mappedCheckupRecords]
     const selectedUserIds = selectedUsers.map(user => user.uniqueOwnerId)
     const filteredRecords = allRecords.filter(record => 
       selectedUserIds.includes(record.ownerId || record.uniqueOwnerId || '')
@@ -566,7 +610,7 @@ const handleAddRecord = () => {
     console.log('[recentRecords] 今天的记录:', todayRecords)
     
     return sortedRecords
-  }, [mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords, mappedItemRecords, mappedHealthRecords, selectedUsers])
+  }, [mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords, mappedItemRecords, mappedHealthRecords, mappedCheckupRecords, selectedUsers])
 
   // 获取记录类型图标和颜色
   const getRecordTypeInfo = (record: HealthRecord) => {
@@ -613,6 +657,13 @@ const handleAddRecord = () => {
           dotColor: "bg-blue-500",
           title: "健康记录"
         }
+      case "checkup":
+        return {
+          icon: <Camera className="h-4 w-4" />,
+          color: "bg-purple-50",
+          dotColor: "bg-purple-500",
+          title: "体检记录"
+        }
       default:
         return {
           icon: <FileText className="h-4 w-4" />,
@@ -651,6 +702,9 @@ const handleAddRecord = () => {
     }
     if (record.type === "health") {
       return record.content?.slice(0, 20) + (record.content && record.content.length > 20 ? '...' : '') || '健康记录'
+    }
+    if (record.type === "checkup") {
+      return record.content?.slice(0, 20) + (record.content && record.content.length > 20 ? '...' : '') || '体检记录'
     }
     return record.content?.slice(0, 20) + (record.content && record.content.length > 20 ? '...' : '') || '其他记录'
   }
@@ -704,6 +758,11 @@ const handleAddRecord = () => {
     } else if (record.type === "health") {
       // 健康记录跳转到健康记录页面
       router.push(`/healthcalendar/health?date=${record.date}&edit=${record.id}` as any)
+      // 使用 localStorage 传递编辑信息
+      localStorage.setItem('editRecordId', record.id)
+    } else if (record.type === "checkup") {
+      // 体检记录跳转到体检记录页面
+      router.push(`/healthcalendar/checkup?date=${record.date}&edit=${record.id}` as any)
       // 使用 localStorage 传递编辑信息
       localStorage.setItem('editRecordId', record.id)
     } else {
@@ -826,12 +885,22 @@ const handleAddRecord = () => {
             onUserSelectionChange={handleUserSelectionChange}
             availableUsers={availableUsers}
             userSelectionVersion={userSelectionVersion}
-            records={[...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords]}
+            records={[...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords, ...mappedHealthRecords, ...mappedCheckupRecords]}
             onCloudSync={handleCloudSync}
             isSyncing={isSyncing}
           />
         </CardContent>
       </Card>
+
+      {/* Compact Legend - 记录类型说明 */}
+      <div className="mt-6">
+        <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
+          <CardContent className="p-4">
+            <CompactLegend />
+          </CardContent>
+        </Card>
+      </div>
+
 
       {/* Recent Records */}
       <div className="mt-6">

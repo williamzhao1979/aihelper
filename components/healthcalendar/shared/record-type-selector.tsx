@@ -132,7 +132,7 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       description: "记录体检报告和结果",
       icon: <Stethoscope className="h-6 w-6 text-green-600" />,
       color: "bg-green-50 hover:bg-green-100 border-green-200",
-      route: "/healthcalendar/record"
+      route: "/healthcalendar/checkup"
     },
     {
       id: "photo",

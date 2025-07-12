@@ -27,7 +27,11 @@ export default function CalendarDay({
       recordCount: records.length,
       recordTypes: records.map(r => r.type),
       hasItemRecords: records.some(r => r.type === "item"),
-      itemRecords: records.filter(r => r.type === "item")
+      itemRecords: records.filter(r => r.type === "item"),
+      hasHealthRecords: records.some(r => r.type === "health"),
+      healthRecords: records.filter(r => r.type === "health"),
+      hasCheckupRecords: records.some(r => r.type === "checkup"),
+      checkupRecords: records.filter(r => r.type === "checkup")
     })
   }
 
@@ -51,6 +55,12 @@ export default function CalendarDay({
           break
         case "item":
           indicators.push("bg-amber-500")
+          break
+        case "health":
+          indicators.push("bg-blue-500")
+          break
+        case "checkup":
+          indicators.push("bg-purple-500")
           break
       }
     })

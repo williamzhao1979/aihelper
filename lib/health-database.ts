@@ -10,7 +10,7 @@ export interface HealthRecord {
   groupId?: string         // Family/group identifier (optional for single user)
   date: string
   datetime?: string
-  type: "health" | "period" | "poop" | "meal" | "myrecord" | "item"
+  type: "health" | "period" | "poop" | "meal" | "myrecord" | "item" | "checkup"
   content?: string
   tags?: string[]
   attachments?: Array<{
