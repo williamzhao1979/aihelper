@@ -92,7 +92,7 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       description: "记录想法和灵感",
       icon: <Lightbulb className="h-6 w-6 text-yellow-600" />,
       color: "bg-yellow-50 hover:bg-yellow-100 border-yellow-200",
-      route: "/healthcalendar/record"
+      route: "/healthcalendar/thoughts"
     },
     {
       id: "items",

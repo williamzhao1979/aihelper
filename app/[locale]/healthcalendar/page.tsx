@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Calendar, Heart, Activity, Plus, Users, Droplets, Stethoscope, Pill, Camera, FileText, RefreshCw, Utensils, Package } from "lucide-react"
+import { Calendar, Heart, Activity, Plus, Users, Droplets, Stethoscope, Pill, Camera, FileText, RefreshCw, Utensils, Package, Lightbulb } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
 import { useToast } from "@/hooks/use-toast"
 import { usePathname } from "next/navigation"
@@ -14,6 +14,7 @@ import { useMealRecords } from "@/hooks/use-meal-records"
 import { useMyRecords } from "@/hooks/use-my-records"
 import { useItemRecords } from "@/hooks/use-item-records"
 import { useHealthRecords } from "@/hooks/use-health-records"
+import { useThoughtRecords } from "@/hooks/use-thoughts-records"
 import { useCheckupRecords } from "@/hooks/use-checkup-records"
 import { useUserManagement } from "@/hooks/use-user-management"
 import { useGlobalUserSelection, initializeGlobalUserSelection } from "@/hooks/use-global-user-selection"
@@ -147,6 +148,7 @@ export default function HealthCalendarPage() {
   const myRecordsApi = useMyRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const itemRecordsApi = useItemRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const healthRecordsApi = useHealthRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
+  const thoughtRecordsApi = useThoughtRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const checkupRecordsApi = useCheckupRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const { records: poopRecords } = poopRecordsApi
   const { records: periodRecords } = periodRecordsApi
@@ -154,6 +156,7 @@ export default function HealthCalendarPage() {
   const { records: myRecords } = myRecordsApi
   const { records: itemRecords } = itemRecordsApi
   const { records: healthRecords } = healthRecordsApi
+  const { records: thoughtRecords } = thoughtRecordsApi
   const { records: checkupRecords } = checkupRecordsApi
 
   // Map PoopRecord[] to HealthRecord[] for calendar/stats
@@ -364,6 +367,37 @@ export default function HealthCalendarPage() {
     })
     return mapped
   }, [checkupRecords, currentUser, refreshVersion])
+  
+  // Map ThoughtRecord[] to HealthRecord[] for calendar/stats
+  const mappedThoughtRecords: HealthRecord[] = useMemo(() => {
+    console.log('[mappedThoughtRecords] mapping records, refreshVersion:', refreshVersion, 'thoughtRecords:', thoughtRecords)
+    const mapped = thoughtRecords.map((r) => ({
+      id: r.id,
+      recordId: r.id,
+      uniqueOwnerId: currentUser?.uniqueOwnerId || "",
+      ownerId: currentUser?.uniqueOwnerId || "",
+      ownerName: currentUser?.nickname || "",
+      date: r.date,
+      datetime: r.datetime, // 映射datetime字段
+      type: "thought" as const, // Using as const to ensure TypeScript knows this is a literal type
+      content: r.content,
+      tags: r.tags,
+      attachments: r.attachments?.map(a => ({
+        id: a.id,
+        name: a.name,
+        type: a.type,
+        size: a.size,
+        url: a.url, // 添加 url 字段
+      })) || [],
+      createdAt: new Date(r.createdAt),
+      updatedAt: new Date(r.updatedAt),
+    }))
+    console.log('[mappedThoughtRecords] mapped results:', {
+      count: mapped.length,
+      first: mapped.length > 0 ? mapped[0] : null
+    })
+    return mapped
+  }, [thoughtRecords, currentUser, refreshVersion])
 
   // Sync from cloud on mount and when currentUser changes - 强制获取最新数据
   useEffect(() => {
@@ -381,9 +415,10 @@ export default function HealthCalendarPage() {
           myRecordsApi.syncFromCloud(),
           itemRecordsApi.syncFromCloud(),
           healthRecordsApi.syncFromCloud(),
+          thoughtRecordsApi.syncFromCloud(),
           checkupRecordsApi.syncFromCloud()
         ])
-        console.log('[useEffect] 强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length, 'checkupRecords:', checkupRecordsApi.records.length)
+        console.log('[useEffect] 强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length, 'thoughtRecords:', thoughtRecordsApi.records.length, 'checkupRecords:', checkupRecordsApi.records.length)
       } catch (err) {
         console.error('[useEffect] 强制云端同步失败:', err)
       }
@@ -402,7 +437,7 @@ export default function HealthCalendarPage() {
       })
       return
     }
-    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords, ...mappedHealthRecords, ...mappedCheckupRecords]
+    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords, ...mappedHealthRecords, ...mappedThoughtRecords, ...mappedCheckupRecords]
     const selectedUserIds = selectedUsers.map(user => user.uniqueOwnerId)
     const filteredRecords = allRecords.filter(record => 
       selectedUserIds.includes(record.ownerId || record.uniqueOwnerId || '')
@@ -428,7 +463,7 @@ export default function HealthCalendarPage() {
       monthlyPoopRecords,
       periodCycle: "28天"
     })
-  }, [isInitialized, selectedUsers, mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords, mappedItemRecords, mappedHealthRecords, mappedCheckupRecords])
+  }, [isInitialized, selectedUsers, mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords, mappedItemRecords, mappedHealthRecords, mappedThoughtRecords, mappedCheckupRecords])
 
   // 当用户选择或数据变化时重新计算统计
   useEffect(() => {
@@ -491,10 +526,10 @@ const handleAddRecord = () => {
     setIsSyncing(true)
     try {
       console.log('[handleCloudSync] 手动强制云端同步触发. currentUser:', currentUser)
-      console.log('[handleCloudSync] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length, 'checkupRecords:', checkupRecordsApi.records.length)
+      console.log('[handleCloudSync] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length, 'thoughtRecords:', thoughtRecordsApi.records.length, 'checkupRecords:', checkupRecordsApi.records.length)
       
       // 同时刷新用户数据和健康记录数据
-      const [userRefreshResult, poopRecordsRefreshResult, periodRecordsRefreshResult, mealRecordsRefreshResult, myRecordsRefreshResult, itemRecordsRefreshResult, healthRecordsRefreshResult, checkupRecordsRefreshResult] = await Promise.allSettled([
+      const [userRefreshResult, poopRecordsRefreshResult, periodRecordsRefreshResult, mealRecordsRefreshResult, myRecordsRefreshResult, itemRecordsRefreshResult, healthRecordsRefreshResult, thoughtRecordsRefreshResult, checkupRecordsRefreshResult] = await Promise.allSettled([
         forceRefreshUsers(),
         poopRecordsApi.syncFromCloud(),
         periodRecordsApi.syncFromCloud(),
@@ -502,6 +537,7 @@ const handleAddRecord = () => {
         myRecordsApi.syncFromCloud(),
         itemRecordsApi.syncFromCloud(),
         healthRecordsApi.syncFromCloud(),
+        thoughtRecordsApi.syncFromCloud(),
         checkupRecordsApi.syncFromCloud()
       ])
       
@@ -554,6 +590,13 @@ const handleAddRecord = () => {
         console.error('[handleCloudSync] 健康记录数据刷新失败:', healthRecordsRefreshResult.reason)
       }
       
+      // 检查想法记录数据刷新结果
+      if (thoughtRecordsRefreshResult.status === 'fulfilled') {
+        console.log('[handleCloudSync] 想法记录数据刷新成功，同步后记录数量:', thoughtRecordsApi.records.length)
+      } else {
+        console.error('[handleCloudSync] 想法记录数据刷新失败:', thoughtRecordsRefreshResult.reason)
+      }
+      
       // 检查体检记录数据刷新结果
       if (checkupRecordsRefreshResult.status === 'fulfilled') {
         console.log('[handleCloudSync] 体检记录数据刷新成功，同步后记录数量:', checkupRecordsApi.records.length)
@@ -579,7 +622,7 @@ const handleAddRecord = () => {
 
   // 获取最近记录（按发生时间排序，取最新的5条）
   const recentRecords = useMemo(() => {
-    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords, ...mappedHealthRecords, ...mappedCheckupRecords]
+    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords, ...mappedHealthRecords, ...mappedThoughtRecords, ...mappedCheckupRecords]
     const selectedUserIds = selectedUsers.map(user => user.uniqueOwnerId)
     const filteredRecords = allRecords.filter(record => 
       selectedUserIds.includes(record.ownerId || record.uniqueOwnerId || '')
@@ -610,7 +653,7 @@ const handleAddRecord = () => {
     console.log('[recentRecords] 今天的记录:', todayRecords)
     
     return sortedRecords
-  }, [mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords, mappedItemRecords, mappedHealthRecords, mappedCheckupRecords, selectedUsers])
+  }, [mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords, mappedItemRecords, mappedHealthRecords, mappedThoughtRecords, mappedCheckupRecords, selectedUsers])
 
   // 获取记录类型图标和颜色
   const getRecordTypeInfo = (record: HealthRecord) => {
@@ -664,6 +707,13 @@ const handleAddRecord = () => {
           dotColor: "bg-purple-500",
           title: "体检记录"
         }
+      case "thought":
+        return {
+          icon: <Lightbulb className="h-4 w-4" />,
+          color: "bg-yellow-50",
+          dotColor: "bg-yellow-600",
+          title: "想法记录"
+        }
       default:
         return {
           icon: <FileText className="h-4 w-4" />,
@@ -705,6 +755,9 @@ const handleAddRecord = () => {
     }
     if (record.type === "checkup") {
       return record.content?.slice(0, 20) + (record.content && record.content.length > 20 ? '...' : '') || '体检记录'
+    }
+    if (record.type === "thought") {
+      return record.content?.slice(0, 20) + (record.content && record.content.length > 20 ? '...' : '') || '想法记录'
     }
     return record.content?.slice(0, 20) + (record.content && record.content.length > 20 ? '...' : '') || '其他记录'
   }
@@ -763,6 +816,11 @@ const handleAddRecord = () => {
     } else if (record.type === "checkup") {
       // 体检记录跳转到体检记录页面
       router.push(`/healthcalendar/checkup?date=${record.date}&edit=${record.id}` as any)
+      // 使用 localStorage 传递编辑信息
+      localStorage.setItem('editRecordId', record.id)
+    } else if (record.type === "thought") {
+      // 想法记录跳转到想法记录页面
+      router.push(`/healthcalendar/thoughts?date=${record.date}&edit=${record.id}` as any)
       // 使用 localStorage 传递编辑信息
       localStorage.setItem('editRecordId', record.id)
     } else {
@@ -885,7 +943,7 @@ const handleAddRecord = () => {
             onUserSelectionChange={handleUserSelectionChange}
             availableUsers={availableUsers}
             userSelectionVersion={userSelectionVersion}
-            records={[...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords, ...mappedHealthRecords, ...mappedCheckupRecords]}
+            records={[...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords, ...mappedHealthRecords, ...mappedThoughtRecords, ...mappedCheckupRecords]}
             onCloudSync={handleCloudSync}
             isSyncing={isSyncing}
           />

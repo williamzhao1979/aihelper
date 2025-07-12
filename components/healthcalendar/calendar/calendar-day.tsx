@@ -31,7 +31,9 @@ export default function CalendarDay({
       hasHealthRecords: records.some(r => r.type === "health"),
       healthRecords: records.filter(r => r.type === "health"),
       hasCheckupRecords: records.some(r => r.type === "checkup"),
-      checkupRecords: records.filter(r => r.type === "checkup")
+      checkupRecords: records.filter(r => r.type === "checkup"),
+      hasThoughtRecords: records.some(r => r.type === "thought"),
+      thoughtRecords: records.filter(r => r.type === "thought")
     })
   }
 
@@ -62,10 +64,13 @@ export default function CalendarDay({
         case "checkup":
           indicators.push("bg-purple-500")
           break
+        case "thought":
+          indicators.push("bg-yellow-600")
+          break
       }
     })
     
-    return indicators.slice(0, 3) // 最多显示3个指示器
+    return indicators.slice(0, 1) // 最多显示3个指示器
   }
 
   const healthIndicators = getHealthIndicators()
