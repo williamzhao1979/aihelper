@@ -14,7 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { ArrowLeft, Edit, Trash2, Plus, Calendar, Heart, Activity, Users, Clock, Tag, X, FileText, Package, Utensils, Droplets, Stethoscope, Lightbulb } from "lucide-react"
+import { ArrowLeft, Edit, Trash2, Plus, Calendar, Heart, Activity, Users, Clock, Tag, X, FileText, Package, Utensils, Droplets, Stethoscope, Lightbulb, Pill, Brain, Dumbbell } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
 import { useParams } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
@@ -24,6 +24,10 @@ import { useMealRecords } from "@/hooks/use-meal-records"
 import { useMyRecords } from "@/hooks/use-my-records"
 import { useItemRecords } from "@/hooks/use-item-records"
 import { useHealthRecords } from "@/hooks/use-health-records"
+import { useMoodRecords } from "@/hooks/use-mood-records"
+import { useExerciseRecords } from "@/hooks/use-exercise-records"
+import { useMedicationRecords } from "@/hooks/use-medication-records"
+import { useMeditationRecords } from "@/hooks/use-meditation-records"
 import { useThoughtRecords } from "@/hooks/use-thoughts-records"
 import { useCheckupRecords } from "@/hooks/use-checkup-records"
 import { useUserManagement } from "@/hooks/use-user-management"
@@ -66,6 +70,10 @@ export default function ViewPage() {
   const myRecordsApi = useMyRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const itemRecordsApi = useItemRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const healthRecordsApi = useHealthRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
+  const moodRecordsApi = useMoodRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
+  const exerciseRecordsApi = useExerciseRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
+  const medicationRecordsApi = useMedicationRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
+  const meditationRecordsApi = useMeditationRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const thoughtRecordsApi = useThoughtRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   const checkupRecordsApi = useCheckupRecords(currentUser?.uniqueOwnerId || "", currentUser?.uniqueOwnerId || "")
   console.log("[ViewPage] currentUser?.uniqueOwnerId:", currentUser?.uniqueOwnerId)
@@ -77,6 +85,10 @@ export default function ViewPage() {
   const { records: myRecords } = myRecordsApi
   const { records: itemRecords } = itemRecordsApi
   const { records: healthRecords } = healthRecordsApi
+  const { records: moodRecords } = moodRecordsApi
+  const { records: exerciseRecords } = exerciseRecordsApi
+  const { records: medicationRecords } = medicationRecordsApi
+  const { records: meditationRecords } = meditationRecordsApi
   const { records: thoughtRecords } = thoughtRecordsApi
   const { records: checkupRecords } = checkupRecordsApi
 
@@ -248,6 +260,110 @@ export default function ViewPage() {
     }))
   }, [healthRecords, currentUser, refreshVersion])
 
+  // Map MoodRecord[] to HealthRecord[] for calendar/stats
+  const mappedMoodRecords: HealthRecord[] = useMemo(() => {
+    console.log('[mappedMoodRecords] mapping records, refreshVersion:', refreshVersion, 'moodRecords:', moodRecords)
+    return moodRecords.map((r) => ({
+      id: r.id,
+      recordId: r.id,
+      uniqueOwnerId: currentUser?.uniqueOwnerId || "",
+      ownerId: currentUser?.uniqueOwnerId || "",
+      ownerName: currentUser?.nickname || "",
+      date: r.date,
+      datetime: r.datetime, // 映射datetime字段
+      type: "mood" as const,
+      content: r.content,
+      tags: r.tags,
+      attachments: r.attachments?.map(a => ({
+        id: a.id,
+        name: a.name,
+        type: a.type,
+        size: a.size,
+        url: a.url, // 添加 url 字段
+      })) || [],
+      createdAt: new Date(r.createdAt),
+      updatedAt: new Date(r.updatedAt),
+    }))
+  }, [moodRecords, currentUser, refreshVersion])
+
+  // Map ExerciseRecord[] to HealthRecord[] for calendar/stats
+  const mappedExerciseRecords: HealthRecord[] = useMemo(() => {
+    console.log('[mappedExerciseRecords] mapping records, refreshVersion:', refreshVersion, 'exerciseRecords:', exerciseRecords)
+    return exerciseRecords.map((r) => ({
+      id: r.id,
+      recordId: r.id,
+      uniqueOwnerId: currentUser?.uniqueOwnerId || "",
+      ownerId: currentUser?.uniqueOwnerId || "",
+      ownerName: currentUser?.nickname || "",
+      date: r.date,
+      datetime: r.datetime, // 映射datetime字段
+      type: "exercise",
+      content: r.content,
+      tags: r.tags,
+      attachments: r.attachments?.map(a => ({
+        id: a.id,
+        name: a.name,
+        type: a.type,
+        size: a.size,
+        url: a.url, // 添加 url 字段
+      })) || [],
+      createdAt: new Date(r.createdAt),
+      updatedAt: new Date(r.updatedAt),
+    }))
+  }, [exerciseRecords, currentUser, refreshVersion])
+
+  // Map MedicationRecord[] to HealthRecord[] for calendar/stats
+  const mappedMedicationRecords: HealthRecord[] = useMemo(() => {
+    console.log('[mappedMedicationRecords] mapping records, refreshVersion:', refreshVersion, 'medicationRecords:', medicationRecords)
+    return medicationRecords.map((r) => ({
+      id: r.id,
+      recordId: r.id,
+      uniqueOwnerId: currentUser?.uniqueOwnerId || "",
+      ownerId: currentUser?.uniqueOwnerId || "",
+      ownerName: currentUser?.nickname || "",
+      date: r.date,
+      datetime: r.datetime, // 映射datetime字段
+      type: "medication",
+      content: r.content,
+      tags: r.tags,
+      attachments: r.attachments?.map(a => ({
+        id: a.id,
+        name: a.name,
+        type: a.type,
+        size: a.size,
+        url: a.url, // 添加 url 字段
+      })) || [],
+      createdAt: new Date(r.createdAt),
+      updatedAt: new Date(r.updatedAt),
+    }))
+  }, [medicationRecords, currentUser, refreshVersion])
+
+  // Map MeditationRecord[] to HealthRecord[] for calendar/stats
+  const mappedMeditationRecords: HealthRecord[] = useMemo(() => {
+    console.log('[mappedMeditationRecords] mapping records, refreshVersion:', refreshVersion, 'meditationRecords:', meditationRecords)
+    return meditationRecords.map((r) => ({
+      id: r.id,
+      recordId: r.id,
+      uniqueOwnerId: currentUser?.uniqueOwnerId || "",
+      ownerId: currentUser?.uniqueOwnerId || "",
+      ownerName: currentUser?.nickname || "",
+      date: r.date,
+      datetime: r.datetime, // 映射datetime字段
+      type: "meditation",
+      content: r.content,
+      tags: r.tags,
+      attachments: r.attachments?.map(a => ({
+        id: a.id,
+        name: a.name,
+        type: a.type,
+        size: a.size,
+        url: a.url, // 添加 url 字段
+      })) || [],
+      createdAt: new Date(r.createdAt),
+      updatedAt: new Date(r.updatedAt),
+    }))
+  }, [meditationRecords, currentUser, refreshVersion])
+
   // Map CheckupRecord[] to HealthRecord[] for calendar/stats
   const mappedCheckupRecords: HealthRecord[] = useMemo(() => {
     console.log('[mappedCheckupRecords] mapping records, refreshVersion:', refreshVersion, 'checkupRecords:', checkupRecords)
@@ -304,7 +420,7 @@ export default function ViewPage() {
   useEffect(() => {
     if (!currentUser?.uniqueOwnerId) return
     console.log('[useEffect] 强制云端同步触发. currentUser:', currentUser)
-    console.log('[useEffect] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length, 'thoughtRecords:', thoughtRecordsApi.records.length, 'checkupRecords:', checkupRecordsApi.records.length)
+    console.log('[useEffect] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length, 'exerciseRecords:', exerciseRecordsApi.records.length, 'medicationRecords:', medicationRecordsApi.records.length, 'thoughtRecords:', thoughtRecordsApi.records.length, 'checkupRecords:', checkupRecordsApi.records.length)
     
     const doSync = async () => {
       try {
@@ -316,10 +432,14 @@ export default function ViewPage() {
           myRecordsApi.syncFromCloud(),
           itemRecordsApi.syncFromCloud(),
           healthRecordsApi.syncFromCloud(),
+          moodRecordsApi.syncFromCloud(),
+          exerciseRecordsApi.syncFromCloud(),
+          medicationRecordsApi.syncFromCloud(),
+          meditationRecordsApi.syncFromCloud(),
           thoughtRecordsApi.syncFromCloud(),
           checkupRecordsApi.syncFromCloud()
         ])
-        console.log('[useEffect] 强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length, 'thoughtRecords:', thoughtRecordsApi.records.length, 'checkupRecords:', checkupRecordsApi.records.length)
+        console.log('[useEffect] 强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length, 'moodRecords:', moodRecordsApi.records.length, 'exerciseRecords:', exerciseRecordsApi.records.length, 'medicationRecords:', medicationRecordsApi.records.length, 'meditationRecords:', meditationRecordsApi.records.length, 'thoughtRecords:', thoughtRecordsApi.records.length, 'checkupRecords:', checkupRecordsApi.records.length)
       } catch (err) {
         console.error('[useEffect] 强制云端同步失败:', err)
       }
@@ -334,10 +454,10 @@ export default function ViewPage() {
   // 获取指定日期的记录
   const dayRecords = useMemo(() => {
     console.log('[dayRecords] Filtering records for date:', date)
-    console.log('[dayRecords] Available records:', mappedPoopRecords.length, 'periodRecords:', mappedPeriodRecords.length, 'mealRecords:', mappedMealRecords.length, 'myRecords:', mappedMyRecords.length, 'itemRecords:', mappedItemRecords.length, 'healthRecords:', mappedHealthRecords.length, 'thoughtRecords:', mappedThoughtRecords.length, 'checkupRecords:', mappedCheckupRecords.length)
+    console.log('[dayRecords] Available records:', mappedPoopRecords.length, 'periodRecords:', mappedPeriodRecords.length, 'mealRecords:', mappedMealRecords.length, 'myRecords:', mappedMyRecords.length, 'itemRecords:', mappedItemRecords.length, 'healthRecords:', mappedHealthRecords.length, 'moodRecords:', mappedMoodRecords.length, 'exerciseRecords:', mappedExerciseRecords.length, 'medicationRecords:', mappedMedicationRecords.length, 'meditationRecords:', mappedMeditationRecords.length, 'thoughtRecords:', mappedThoughtRecords.length, 'checkupRecords:', mappedCheckupRecords.length)
     console.log('[dayRecords] Current user:', currentUser)
     
-    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords, ...mappedHealthRecords, ...mappedThoughtRecords, ...mappedCheckupRecords]
+    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords, ...mappedHealthRecords, ...mappedMoodRecords, ...mappedExerciseRecords, ...mappedMedicationRecords, ...mappedMeditationRecords, ...mappedThoughtRecords, ...mappedCheckupRecords]
     
     const filtered = allRecords.filter(record => {
       const recordDate = dayjs(record.date).format('YYYY-MM-DD')
@@ -352,7 +472,7 @@ export default function ViewPage() {
     
     console.log('[dayRecords] Filtered records:', filtered.length)
     return filtered
-  }, [mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords, mappedItemRecords, mappedHealthRecords, mappedThoughtRecords, mappedCheckupRecords, date, currentUser])
+  }, [mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords, mappedItemRecords, mappedHealthRecords, mappedMoodRecords, mappedExerciseRecords, mappedMedicationRecords, mappedMeditationRecords, mappedThoughtRecords, mappedCheckupRecords, date, currentUser])
 
   const handleBack = () => {
     router.push("/healthcalendar")
@@ -373,7 +493,7 @@ export default function ViewPage() {
     setIsSyncing(true)
     try {
       console.log('[handleCloudSync] 手动强制云端同步触发. currentUser:', currentUser)
-      console.log('[handleCloudSync] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length, 'thoughtRecords:', thoughtRecordsApi.records.length, 'checkupRecords:', checkupRecordsApi.records.length)
+      console.log('[handleCloudSync] 同步前记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length, 'moodRecords:', moodRecordsApi.records.length, 'exerciseRecords:', exerciseRecordsApi.records.length, 'medicationRecords:', medicationRecordsApi.records.length, 'meditationRecords:', meditationRecordsApi.records.length, 'thoughtRecords:', thoughtRecordsApi.records.length, 'checkupRecords:', checkupRecordsApi.records.length)
       await Promise.all([
         poopRecordsApi.syncFromCloud(),
         periodRecordsApi.syncFromCloud(),
@@ -381,17 +501,21 @@ export default function ViewPage() {
         myRecordsApi.syncFromCloud(),
         itemRecordsApi.syncFromCloud(),
         healthRecordsApi.syncFromCloud(),
+        moodRecordsApi.syncFromCloud(),
+        exerciseRecordsApi.syncFromCloud(),
+        medicationRecordsApi.syncFromCloud(),
+        meditationRecordsApi.syncFromCloud(),
         thoughtRecordsApi.syncFromCloud(),
         checkupRecordsApi.syncFromCloud()
       ])
-      console.log('[handleCloudSync] 手动强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length, 'thoughtRecords:', thoughtRecordsApi.records.length, 'checkupRecords:', checkupRecordsApi.records.length)
+      console.log('[handleCloudSync] 手动强制云端同步完成，同步后记录数量:', poopRecordsApi.records.length, 'periodRecords:', periodRecordsApi.records.length, 'mealRecords:', mealRecordsApi.records.length, 'myRecords:', myRecordsApi.records.length, 'itemRecords:', itemRecordsApi.records.length, 'healthRecords:', healthRecordsApi.records.length, 'moodRecords:', moodRecordsApi.records.length, 'exerciseRecords:', exerciseRecordsApi.records.length, 'medicationRecords:', medicationRecordsApi.records.length, 'meditationRecords:', meditationRecordsApi.records.length, 'thoughtRecords:', thoughtRecordsApi.records.length, 'checkupRecords:', checkupRecordsApi.records.length)
       setRefreshVersion(v => v + 1)
     } catch (err) {
       console.error('[handleCloudSync] 手动强制云端同步失败:', err)
     } finally {
       setIsSyncing(false)
     }
-  }, [currentUser, poopRecordsApi, periodRecordsApi, mealRecordsApi, myRecordsApi, itemRecordsApi, healthRecordsApi, thoughtRecordsApi, checkupRecordsApi])
+  }, [currentUser, poopRecordsApi, periodRecordsApi, mealRecordsApi, myRecordsApi, itemRecordsApi, healthRecordsApi, moodRecordsApi, exerciseRecordsApi, medicationRecordsApi, meditationRecordsApi, thoughtRecordsApi, checkupRecordsApi])
 
   // Poop类型映射
   const getPoopTypeLabel = (type: string) => {
@@ -476,6 +600,14 @@ export default function ViewPage() {
       router.push(`/healthcalendar/itemrecord?edit=${recordId}&date=${currentDate}` as any)
     } else if (record.type === 'health') {
       router.push(`/healthcalendar/health?edit=${recordId}&date=${currentDate}` as any)
+    } else if (record.type === 'mood') {
+      router.push(`/healthcalendar/mood?edit=${recordId}&date=${currentDate}` as any)
+    } else if (record.type === 'exercise') {
+      router.push(`/healthcalendar/exercise?edit=${recordId}&date=${currentDate}` as any)
+    } else if (record.type === 'medication') {
+      router.push(`/healthcalendar/medication?edit=${recordId}&date=${currentDate}` as any)
+    } else if (record.type === 'meditation') {
+      router.push(`/healthcalendar/meditation?edit=${recordId}&date=${currentDate}` as any)
     } else if (record.type === 'thought') {
       router.push(`/healthcalendar/thoughts?edit=${recordId}&date=${currentDate}` as any)
     } else if (record.type === 'checkup') {
@@ -537,6 +669,34 @@ export default function ViewPage() {
         toast({
           title: "删除成功",
           description: "健康记录已删除并同步到云端",
+        });
+      } else if (moodRecordsApi.records.find(r => r.id === recordId)) {
+        // 删除心情记录
+        await moodRecordsApi.deleteRecord(recordId);
+        toast({
+          title: "删除成功",
+          description: "心情记录已删除并同步到云端",
+        });
+      } else if (exerciseRecordsApi.records.find(r => r.id === recordId)) {
+        // 删除运动记录
+        await exerciseRecordsApi.deleteRecord(recordId);
+        toast({
+          title: "删除成功",
+          description: "运动记录已删除并同步到云端",
+        });
+      } else if (medicationRecordsApi.records.find(r => r.id === recordId)) {
+        // 删除用药记录
+        await medicationRecordsApi.deleteRecord(recordId);
+        toast({
+          title: "删除成功",
+          description: "用药记录已删除并同步到云端",
+        });
+      } else if (meditationRecordsApi.records.find(r => r.id === recordId)) {
+        // 删除冥想记录
+        await meditationRecordsApi.deleteRecord(recordId);
+        toast({
+          title: "删除成功",
+          description: "冥想记录已删除并同步到云端",
         });
       } else if (thoughtRecordsApi.records.find(r => r.id === recordId)) {
         // 删除想法记录
@@ -671,6 +831,10 @@ export default function ViewPage() {
                        record.type === 'myrecord' ? <Heart className="h-4 w-4 text-green-500" /> :
                        record.type === 'item' ? <Package className="h-4 w-4 text-amber-500" /> :
                        record.type === 'health' ? <Stethoscope className="h-4 w-4 text-blue-500" /> :
+                       record.type === 'mood' ? <Heart className="h-4 w-4 text-pink-500" /> :
+                       record.type === 'exercise' ? <Dumbbell className="h-4 w-4 text-green-600" /> :
+                       record.type === 'medication' ? <Pill className="h-4 w-4 text-purple-500" /> :
+                       record.type === 'meditation' ? <Brain className="h-4 w-4 text-purple-600" /> :
                        record.type === 'thought' ? <Lightbulb className="h-4 w-4 text-yellow-600" /> :
                        record.type === 'checkup' ? <Stethoscope className="h-4 w-4 text-green-600" /> :
                        <FileText className="h-4 w-4 text-blue-500" />}
@@ -681,6 +845,10 @@ export default function ViewPage() {
                         record.type === 'myrecord' ? 'bg-green-500' :
                         record.type === 'item' ? 'bg-amber-500' :
                         record.type === 'health' ? 'bg-blue-500' :
+                        record.type === 'mood' ? 'bg-pink-500' :
+                        record.type === 'exercise' ? 'bg-green-600' :
+                        record.type === 'medication' ? 'bg-purple-500' :
+                        record.type === 'meditation' ? 'bg-purple-600' :
                         record.type === 'thought' ? 'bg-yellow-600' :
                         record.type === 'checkup' ? 'bg-green-600' :
                         'bg-blue-500'
@@ -693,6 +861,10 @@ export default function ViewPage() {
                       record.type === 'myrecord' ? '我的记录' :
                       record.type === 'item' ? '物品记录' :
                       record.type === 'health' ? '健康记录' :
+                      record.type === 'mood' ? '心情记录' :
+                      record.type === 'exercise' ? '运动记录' :
+                      record.type === 'medication' ? '用药记录' :
+                      record.type === 'meditation' ? '冥想记录' :
                       record.type === 'thought' ? '想法记录' :
                       record.type === 'checkup' ? '体检记录' :
                       '其他记录'
@@ -910,6 +1082,10 @@ export default function ViewPage() {
                 recordToDelete?.type === 'myrecord' ? '我的' : 
                 recordToDelete?.type === 'item' ? '物品' : 
                 recordToDelete?.type === 'health' ? '健康' :
+                recordToDelete?.type === 'mood' ? '心情' :
+                recordToDelete?.type === 'exercise' ? '运动' :
+                recordToDelete?.type === 'medication' ? '用药' :
+                recordToDelete?.type === 'meditation' ? '冥想' :
                 recordToDelete?.type === 'thought' ? '想法' :
                 recordToDelete?.type === 'checkup' ? '体检' : '其他'
               }记录吗？

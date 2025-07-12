@@ -48,6 +48,12 @@ const recordTypes = [
     description: "健康状况记录"
   },
   {
+    type: "mood",
+    label: "心情记录",
+    color: "bg-pink-500",
+    description: "情绪和心理健康记录"
+  },
+  {
     type: "checkup",
     label: "体检记录",
     color: "bg-purple-500",

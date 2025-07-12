@@ -142,7 +142,14 @@ export default function HealthCalendar({
         period: records.filter(r => r.type === 'period').length,
         meal: records.filter(r => r.type === 'meal').length,
         myrecord: records.filter(r => r.type === 'myrecord').length,
-        item: records.filter(r => r.type === 'item').length
+        item: records.filter(r => r.type === 'item').length,
+        health: records.filter(r => r.type === 'health').length,
+        mood: records.filter(r => r.type === 'mood').length,
+        medication: records.filter(r => r.type === 'medication').length,
+        meditation: records.filter(r => r.type === 'meditation').length,
+        thought: records.filter(r => r.type === 'thought').length,
+        checkup: records.filter(r => r.type === 'checkup').length,
+        exercise: records.filter(r => r.type === 'exercise').length
       }
     });
   }, [records]);

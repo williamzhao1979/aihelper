@@ -14,7 +14,12 @@ const recordTypes = [
   { type: "myrecord", label: "记录", color: "bg-green-500" },
   { type: "item", label: "物品", color: "bg-amber-500" },
   { type: "health", label: "健康", color: "bg-blue-500" },
-  { type: "checkup", label: "体检", color: "bg-purple-500" }
+  { type: "mood", label: "心情", color: "bg-pink-500" },
+  { type: "medication", label: "用药", color: "bg-purple-500" },
+  { type: "meditation", label: "冥想", color: "bg-purple-500" },
+  { type: "checkup", label: "体检", color: "bg-purple-500" },
+  { type: "thought", label: "想法", color: "bg-yellow-600" },
+  { type: "exercise", label: "运动", color: "bg-green-500" }
 ]
 
 export default function CompactLegend({ className }: CompactLegendProps) {
