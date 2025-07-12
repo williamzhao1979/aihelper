@@ -18,7 +18,8 @@ import {
   Dumbbell,
   MoreHorizontal,
   Package,
-  Lightbulb
+  Lightbulb,
+  Brain
 } from "lucide-react"
 import { useRouter } from "@/i18n/routing"
 import PoopDetectiveIcon from "./poop-detective-icon"
@@ -87,6 +88,14 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       route: "/healthcalendar/myrecord"
     },
     {
+      id: "thoughts",
+      title: "想法记录",
+      description: "记录想法和灵感",
+      icon: <Lightbulb className="h-6 w-6 text-yellow-600" />,
+      color: "bg-yellow-50 hover:bg-yellow-100 border-yellow-200",
+      route: "/healthcalendar/thoughts"
+    },
+    {
       id: "items",
       title: "物品记录",
       description: "记录购买或使用的物品",
@@ -95,12 +104,20 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       route: "/healthcalendar/itemrecord"
     },
     {
-      id: "thoughts",
-      title: "想法记录",
-      description: "记录想法和灵感",
-      icon: <Lightbulb className="h-6 w-6 text-yellow-600" />,
-      color: "bg-yellow-50 hover:bg-yellow-100 border-yellow-200",
-      route: "/healthcalendar/record"
+      id: "mood",
+      title: "心情记录",
+      description: "记录情绪和心理健康",
+      icon: <Heart className="h-6 w-6 text-pink-600" />,
+      color: "bg-pink-50 hover:bg-pink-100 border-pink-200",
+      route: "/healthcalendar/mood"
+    },
+    {
+      id: "health",
+      title: "健康记录",
+      description: "记录身体状况、症状等",
+      icon: <FileText className="h-6 w-6 text-blue-600" />,
+      color: "bg-blue-50 hover:bg-blue-100 border-blue-200",
+      route: "/healthcalendar/health"
     },
     {
       id: "medication",
@@ -108,7 +125,7 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       description: "记录药物使用情况",
       icon: <Pill className="h-6 w-6 text-purple-600" />,
       color: "bg-purple-50 hover:bg-purple-100 border-purple-200",
-      route: "/healthcalendar/record"
+      route: "/healthcalendar/medication"
     },
     {
       id: "checkup",
@@ -116,31 +133,15 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       description: "记录体检报告和结果",
       icon: <Stethoscope className="h-6 w-6 text-green-600" />,
       color: "bg-green-50 hover:bg-green-100 border-green-200",
-      route: "/healthcalendar/record"
+      route: "/healthcalendar/checkup"
     },
     {
-      id: "general",
-      title: "健康记录",
-      description: "记录身体状况、症状等",
-      icon: <FileText className="h-6 w-6 text-blue-600" />,
-      color: "bg-blue-50 hover:bg-blue-100 border-blue-200",
-      route: "/healthcalendar/record"
-    },
-    {
-      id: "mood",
-      title: "心情记录",
-      description: "记录情绪和心理健康",
-      icon: <Heart className="h-6 w-6 text-pink-600" />,
-      color: "bg-pink-50 hover:bg-pink-100 border-pink-200",
-      route: "/healthcalendar/record"
-    },
-    {
-      id: "photo",
-      title: "照片记录",
-      description: "上传照片",
-      icon: <Camera className="h-6 w-6 text-indigo-600" />,
-      color: "bg-indigo-50 hover:bg-indigo-100 border-indigo-200",
-      route: "/healthcalendar/record"
+      id: "meditation",
+      title: "冥想记录",
+      description: "冥想",
+      icon: <Brain className="h-6 w-6 text-purple-600" />,
+      color: "bg-purple-50 hover:bg-purple-100 border-purple-200",
+      route: "/healthcalendar/meditation"
     },
     {
       id: "exercise",
@@ -148,7 +149,7 @@ export default function RecordTypeSelector({ isOpen, onClose, date }: RecordType
       description: "记录运动锻炼情况",
       icon: <Dumbbell className="h-6 w-6 text-cyan-600" />,
       color: "bg-cyan-50 hover:bg-cyan-100 border-cyan-200",
-      route: "/healthcalendar/record"
+      route: "/healthcalendar/exercise"
     }
   ]
 

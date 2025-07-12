@@ -8,6 +8,7 @@ import { useGlobalUserSelection } from "@/hooks/use-global-user-selection"
 import { HealthRecord } from "@/lib/health-database"
 import CalendarHeader from "./calendar-header"
 import CalendarDay from "./calendar-day"
+import RecordTypeLegend from "./record-type-legend"
 import type { UserProfile } from "../shared/user-selector"
 import dayjs from "dayjs"
 
@@ -132,6 +133,27 @@ export default function HealthCalendar({
     onUserSelectionChange(users)
   }, [updateSelectedUsers, onUserSelectionChange])
 
+  // Log records when they change
+  useEffect(() => {
+    console.log('[HealthCalendar] Records updated:', {
+      total: records.length,
+      types: {
+        poop: records.filter(r => r.type === 'poop').length,
+        period: records.filter(r => r.type === 'period').length,
+        meal: records.filter(r => r.type === 'meal').length,
+        myrecord: records.filter(r => r.type === 'myrecord').length,
+        item: records.filter(r => r.type === 'item').length,
+        health: records.filter(r => r.type === 'health').length,
+        mood: records.filter(r => r.type === 'mood').length,
+        medication: records.filter(r => r.type === 'medication').length,
+        meditation: records.filter(r => r.type === 'meditation').length,
+        thought: records.filter(r => r.type === 'thought').length,
+        checkup: records.filter(r => r.type === 'checkup').length,
+        exercise: records.filter(r => r.type === 'exercise').length
+      }
+    });
+  }, [records]);
+
   return (
     <div className="p-6">
       {/* Calendar Header */}
@@ -143,6 +165,11 @@ export default function HealthCalendar({
         onRefresh={onCloudSync}
         isRefreshing={isSyncing}
       />
+
+      {/* Record Type Legend */}
+      {/* <div className="mt-4">
+        <RecordTypeLegend />
+      </div> */}
 
       {/* Calendar Grid */}
       <div className="grid grid-cols-7 gap-1 mt-4">
