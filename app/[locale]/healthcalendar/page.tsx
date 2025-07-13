@@ -1281,11 +1281,11 @@ const handleAddRecord = () => {
                             </div>
                             <div className="text-xs text-gray-700 mt-0.5 max-w-[320px] whitespace-normal break-words">{summary}</div>
                             <div className="text-xs text-gray-500 mt-0.5">
-                              {t('healthcalendar.recordTime')}: {record.datetime ? dayjs(record.datetime).format('YYYY-MM-DD HH:mm') : dayjs(record.createdAt).format('YYYY-MM-DD HH:mm')} ({formatTimeAgo(new Date(record.datetime || record.createdAt))})
+                              {t('healthcalendar.recordTime')}: {record.datetime ? dayjs(record.datetime).format('MM-DD HH:mm') : dayjs(record.createdAt).format('MM-DD HH:mm')} ({formatTimeAgo(new Date(record.datetime || record.createdAt))})
                             </div>
                             {record.updatedAt && (
                               <div className="text-xs text-gray-400 mt-0.5">
-                                {t('healthcalendar.updateTime')}: {dayjs(record.updatedAt).format('YYYY-MM-DD HH:mm')} ({formatTimeAgo(new Date(record.updatedAt))})
+                                {t('healthcalendar.updateTime')}: {dayjs(record.updatedAt).format('MM-DD HH:mm')} ({formatTimeAgo(new Date(record.updatedAt))})
                               </div>
                             )}
                           </div>
