@@ -101,7 +101,7 @@ export function usePeriodRecords(currentUserId: string, uniqueOwnerId: string): 
   const uploadImage = useCallback(async (file: File) => {
     setLoading(true);
     setError(null);
-    const filePath = `users/${uniqueOwnerId}/attachments/${Date.now()}_${file.name}`;
+    const filePath = `users/${uniqueOwnerId}/period_attachments/${Date.now()}_${file.name}`;
     const { error } = await supabase.storage.from('healthcalendar').upload(filePath, file, { upsert: true });
     if (error) {
       setLoading(false);

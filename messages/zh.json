@@ -191,5 +191,38 @@
     "loginFailedRetry": "登录失败，请重试",
     "usernamePasswordError": "用户名或密码错误",
     "accountLocked": "账户被锁定，请 {time} 秒后重试"
+  },
+  "healthcalendar": {
+    "all": "全部类型",
+    "period": "生理记录",
+    "poop": "排便记录",
+    "meal": "用餐记录",
+    "myrecord": "我的记录",
+    "item": "物品记录",
+    "health": "健康记录",
+    "checkup": "体检记录",
+    "thought": "想法记录",
+    "medication": "用药记录",
+    "meditation": "冥想记录",
+    "exercise": "运动记录",
+    "mood": "心情记录",
+    "search": {
+      "title": "检索健康记录",
+      "result": "检索结果",
+      "total": "共 {count} 条",
+      "empty": "暂无记录"
+    },
+    "unknownUser": "未知用户",
+    "view": "查看",
+    "reset": "重置",
+    "dateFrom": "起始日期",
+    "dateTo": "结束日期",
+    "searchKeyword": "关键字",
+    "prevPage": "上一页",
+    "nextPage": "下一页",
+    "page": "第 {page} 页",
+    "recordTime": "记录时间",
+    "updateTime": "更新时间",
+    "recentlyUpdated": "最近更新"
   }
 }
