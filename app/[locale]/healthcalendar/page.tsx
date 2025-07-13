@@ -32,6 +32,8 @@ import type { UserProfile } from "@/components/healthcalendar/shared/user-select
 import { generatePoopSummary } from "@/lib/poop-options"
 import { getMealTypeLabel, getFoodTypeLabel, getMealPortionLabel, getMealConditionLabel } from "@/lib/meal-options"
 import dayjs from 'dayjs'
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useTranslations } from 'next-intl'
 
 export default function HealthCalendarPage() {
   const router = useRouter()
@@ -47,6 +49,8 @@ export default function HealthCalendarPage() {
   })
   const [isSyncing, setIsSyncing] = useState(false)
   const [refreshVersion, setRefreshVersion] = useState(0)
+  const [recentTab, setRecentTab] = useState<'recent' | 'updated'>('recent')
+  const t = useTranslations()
 
   // useEffect(() => {
   //   // 页面加载时执行一次
@@ -792,14 +796,26 @@ const handleAddRecord = () => {
     return `${selectedUsers.length}个用户`
   }
 
-  // 获取最近记录（按发生时间排序，取最新的5条）
+  // 最近记录（按发生时间排序）
   const recentRecords = useMemo(() => {
-    const allRecords = [...mappedPoopRecords, ...mappedPeriodRecords, ...mappedMealRecords, ...mappedMyRecords, ...mappedItemRecords, ...mappedHealthRecords, ...mappedMoodRecords, ...mappedMedicationRecords, ...mappedMeditationRecords, ...mappedThoughtRecords, ...mappedCheckupRecords, ...mappedExerciseRecords]
-    const selectedUserIds = selectedUsers.map(user => user.uniqueOwnerId)
-    const filteredRecords = allRecords.filter(record => 
+    const allRecords = [
+      ...mappedPoopRecords,
+      ...mappedPeriodRecords,
+      ...mappedMealRecords,
+      ...mappedMyRecords,
+      ...mappedItemRecords,
+      ...mappedHealthRecords,
+      ...mappedMoodRecords,
+      ...mappedMedicationRecords,
+      ...mappedMeditationRecords,
+      ...mappedThoughtRecords,
+      ...mappedCheckupRecords,
+      ...mappedExerciseRecords
+    ]
+    const selectedUserIds = selectedUsers.map(u => u.uniqueOwnerId)
+    const filteredRecords = allRecords.filter(record =>
       selectedUserIds.includes(record.ownerId || record.uniqueOwnerId || '')
     )
-    
     // 按发生时间排序，取最新的5条
     const sortedRecords = filteredRecords
       .sort((a, b) => {
@@ -808,22 +824,37 @@ const handleAddRecord = () => {
         return bTime - aTime
       })
       .slice(0, 5)
-    
-    console.log('[recentRecords] 最近记录计算:', {
-      totalRecords: allRecords.length,
-      filteredRecords: filteredRecords.length,
-      recentRecords: sortedRecords.length,
-      selectedUsers: selectedUserIds
-    })
-    
-    // 调试：检查今天的记录
-    const todayRecords = allRecords.filter(record => {
-      const recordDate = new Date(record.date).toISOString().split('T')[0]
-      const today = new Date().toISOString().split('T')[0]
-      return recordDate === today && selectedUserIds.includes(record.ownerId || record.uniqueOwnerId || '')
-    })
-    console.log('[recentRecords] 今天的记录:', todayRecords)
-    
+    return sortedRecords
+  }, [mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords, mappedItemRecords, mappedHealthRecords, mappedMoodRecords, mappedMedicationRecords, mappedMeditationRecords, mappedThoughtRecords, mappedCheckupRecords, mappedExerciseRecords, selectedUsers])
+
+  // 最近更新记录（按更新时间排序）
+  const recentUpdatedRecords = useMemo(() => {
+    const allRecords = [
+      ...mappedPoopRecords,
+      ...mappedPeriodRecords,
+      ...mappedMealRecords,
+      ...mappedMyRecords,
+      ...mappedItemRecords,
+      ...mappedHealthRecords,
+      ...mappedMoodRecords,
+      ...mappedMedicationRecords,
+      ...mappedMeditationRecords,
+      ...mappedThoughtRecords,
+      ...mappedCheckupRecords,
+      ...mappedExerciseRecords
+    ]
+    const selectedUserIds = selectedUsers.map(u => u.uniqueOwnerId)
+    const filteredRecords = allRecords.filter(record =>
+      selectedUserIds.includes(record.ownerId || record.uniqueOwnerId || '')
+    )
+    // 按更新时间排序，取最新的5条
+    const sortedRecords = filteredRecords
+      .sort((a, b) => {
+        const aTime = new Date(a.updatedAt || a.createdAt).getTime()
+        const bTime = new Date(b.updatedAt || b.createdAt).getTime()
+        return bTime - aTime
+      })
+      .slice(0, 5)
     return sortedRecords
   }, [mappedPoopRecords, mappedPeriodRecords, mappedMealRecords, mappedMyRecords, mappedItemRecords, mappedHealthRecords, mappedMoodRecords, mappedMedicationRecords, mappedMeditationRecords, mappedThoughtRecords, mappedCheckupRecords, mappedExerciseRecords, selectedUsers])
 
@@ -1197,13 +1228,14 @@ const handleAddRecord = () => {
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">最近记录</CardTitle>
+              <CardTitle className="text-lg">{recentTab === 'recent' ? '最近记录' : '最近更新'}</CardTitle>
               <div className="flex items-center space-x-2">
-                {recentRecords.length > 0 && (
-                  <span className="text-sm text-gray-500">
-                    共 {recentRecords.length} 条记录
-                  </span>
-                )}
+                <Tabs value={recentTab} onValueChange={v => setRecentTab(v as 'recent' | 'updated')}>
+                  <TabsList>
+                    <TabsTrigger value="recent">最近记录</TabsTrigger>
+                    <TabsTrigger value="updated">最近更新</TabsTrigger>
+                  </TabsList>
+                </Tabs>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1217,7 +1249,7 @@ const handleAddRecord = () => {
             </div>
           </CardHeader>
           <CardContent>
-            {recentRecords.length === 0 ? (
+            {(recentTab === 'recent' ? recentRecords : recentUpdatedRecords).length === 0 ? (
               <div className="text-center py-8">
                 <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">暂无记录</p>
@@ -1225,7 +1257,7 @@ const handleAddRecord = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {recentRecords.map((record) => {
+                {(recentTab === 'recent' ? recentRecords : recentUpdatedRecords).map((record) => {
                   const typeInfo = getRecordTypeInfo(record)
                   const summary = getRecordSummary(record)
                   const timeAgo = formatTimeAgo(new Date(record.datetime || record.date))
@@ -1233,21 +1265,29 @@ const handleAddRecord = () => {
                   return (
                     <div 
                       key={record.id}
-                      className={`flex items-center justify-between p-3 ${typeInfo.color} rounded-lg cursor-pointer hover:opacity-80 transition-opacity`}
+                      className={`flex items-center justify-between p-2 ${typeInfo.color} rounded-lg cursor-pointer hover:opacity-80 transition-opacity`}
                       onClick={() => handleViewRecord(record)}
                     >
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2">
                         <div className={`w-2 h-2 ${typeInfo.dotColor} rounded-full`}></div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-1">
                           {typeInfo.icon}
                           <div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-1">
                               <p className="text-sm font-medium text-gray-900">{typeInfo.title}</p>
-                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                              <span className="text-xs text-gray-500 bg-gray-100 px-1 py-0.5 rounded-full">
                                 {record.ownerName || '未知用户'}
                               </span>
                             </div>
-                            <p className="text-xs text-gray-600">{timeAgo} · {summary}</p>
+                            <div className="text-xs text-gray-700 mt-0.5 max-w-[320px] whitespace-normal break-words">{summary}</div>
+                            <div className="text-xs text-gray-500 mt-0.5">
+                              {t('healthcalendar.recordTime')}: {record.datetime ? dayjs(record.datetime).format('MM-DD HH:mm') : dayjs(record.createdAt).format('MM-DD HH:mm')} ({formatTimeAgo(new Date(record.datetime || record.createdAt))})
+                            </div>
+                            {record.updatedAt && (
+                              <div className="text-xs text-gray-400 mt-0.5">
+                                {t('healthcalendar.updateTime')}: {dayjs(record.updatedAt).format('MM-DD HH:mm')} ({formatTimeAgo(new Date(record.updatedAt))})
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1259,7 +1299,7 @@ const handleAddRecord = () => {
                 })}
                 
                 {/* 查看更多按钮 */}
-                {recentRecords.length >= 5 && (
+                {(recentTab === 'recent' ? recentRecords : recentUpdatedRecords).length >= 5 && (
                   <div className="pt-2">
                     <Button 
                       variant="outline" 
@@ -1288,39 +1328,100 @@ const handleAddRecord = () => {
           </Button>
         </div>
 
-        {/* Management Accordion Card */}
+        {/* Management Section */}
         <div className="mt-4">
           <Accordion type="single" collapsible defaultValue="">
             <AccordionItem value="management">
-              <AccordionTrigger>管理</AccordionTrigger>
-              <AccordionContent>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    onClick={handleUserManagement}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center space-x-1"
-                  >
-                    <Users className="h-4 w-4" />
-                    <span>用户管理</span>
-                  </Button>
-                  <Button
-                    onClick={() => router.push("/healthcalendar/test-global-user" as any)}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center space-x-1"
-                  >
-                    <span>测试全局用户选择</span>
-                  </Button>
-                  <Button
-                    onClick={() => router.push("/healthcalendar/test-recent-records" as any)}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center space-x-1"
-                  >
-                    <span>测试最近记录</span>
-                  </Button>
-                </div>
+              <AccordionTrigger className="px-4 py-3 bg-white/90 backdrop-blur-sm shadow-lg rounded-t-lg flex items-center space-x-2 text-lg">
+                <Users className="w-5 h-5 text-blue-600" />
+                <span>系统管理</span>
+              </AccordionTrigger>
+              <AccordionContent className="p-0">
+                <Card className="bg-white/90 backdrop-blur-sm shadow-lg rounded-t-none rounded-b-lg border-t-0">
+                  <CardContent>
+                    <div className="space-y-3">
+                      {/* User Management */}
+                      <div 
+                        className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
+                        onClick={handleUserManagement}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <div className="flex items-center space-x-2">
+                            <Users className="h-4 w-4 text-blue-600" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">用户管理</p>
+                              <p className="text-xs text-gray-600">管理家庭成员和权限设置</p>
+                            </div>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="sm">
+                          进入
+                        </Button>
+                      </div>
+
+                      {/* Test Global User Selection */}
+                      <div 
+                        className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg cursor-pointer hover:bg-green-100 transition-colors"
+                        onClick={() => router.push("/healthcalendar/test-global-user" as any)}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <div className="flex items-center space-x-2">
+                            <Users className="h-4 w-4 text-green-600" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">测试全局用户选择</p>
+                              <p className="text-xs text-gray-600">测试多用户数据切换功能</p>
+                            </div>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="sm">
+                          测试
+                        </Button>
+                      </div>
+
+                      {/* Test Recent Records */}
+                      <div 
+                        className="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-lg cursor-pointer hover:bg-purple-100 transition-colors"
+                        onClick={() => router.push("/healthcalendar/test-recent-records" as any)}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                          <div className="flex items-center space-x-2">
+                            <FileText className="h-4 w-4 text-purple-600" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">测试最近记录</p>
+                              <p className="text-xs text-gray-600">测试记录显示和同步功能</p>
+                            </div>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="sm">
+                          测试
+                        </Button>
+                      </div>
+
+                      {/* Debug Page */}
+                      <div 
+                        className="flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors"
+                        onClick={handleDebug}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                          <div className="flex items-center space-x-2">
+                            <Activity className="h-4 w-4 text-orange-600" />
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">调试工具</p>
+                              <p className="text-xs text-gray-600">系统调试和数据修复工具</p>
+                            </div>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="sm">
+                          调试
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
