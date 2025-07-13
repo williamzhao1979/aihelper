@@ -191,5 +191,38 @@
     "loginFailedRetry": "Login failed, please try again",
     "usernamePasswordError": "Invalid username or password",
     "accountLocked": "Account locked, please try again in {time} seconds"
+  },
+  "healthcalendar": {
+    "all": "All Types",
+    "period": "Period Record",
+    "poop": "Poop Record",
+    "meal": "Meal Record",
+    "myrecord": "My Record",
+    "item": "Item Record",
+    "health": "Health Record",
+    "checkup": "Checkup Record",
+    "thought": "Thought Record",
+    "medication": "Medication Record",
+    "meditation": "Meditation Record",
+    "exercise": "Exercise Record",
+    "mood": "Mood Record",
+    "search": {
+      "title": "Search Health Records",
+      "result": "Search Results",
+      "total": "{count} records",
+      "empty": "No records found"
+    },
+    "unknownUser": "Unknown User",
+    "view": "View",
+    "reset": "Reset",
+    "dateFrom": "Start Date",
+    "dateTo": "End Date",
+    "searchKeyword": "Keyword",
+    "prevPage": "Previous",
+    "nextPage": "Next",
+    "page": "Page {page}",
+    "recordTime": "Record Time",
+    "updateTime": "Update Time",
+    "recentlyUpdated": "Recently Updated"
   }
 }

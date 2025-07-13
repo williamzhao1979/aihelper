@@ -191,5 +191,38 @@
     "loginFailedRetry": "ログインに失敗しました。再試行してください",
     "usernamePasswordError": "ユーザー名またはパスワードが無効です",
     "accountLocked": "アカウントがロックされました。{time}秒後に再試行してください"
+  },
+  "healthcalendar": {
+    "all": "すべての種類",
+    "period": "生理記録",
+    "poop": "排便記録",
+    "meal": "食事記録",
+    "myrecord": "マイ記録",
+    "item": "アイテム記録",
+    "health": "健康記録",
+    "checkup": "健診記録",
+    "thought": "思考記録",
+    "medication": "服薬記録",
+    "meditation": "瞑想記録",
+    "exercise": "運動記録",
+    "mood": "気分記録",
+    "search": {
+      "title": "健康記録を検索",
+      "result": "検索結果",
+      "total": "{count} 件",
+      "empty": "記録がありません"
+    },
+    "unknownUser": "不明なユーザー",
+    "view": "表示",
+    "reset": "リセット",
+    "dateFrom": "開始日",
+    "dateTo": "終了日",
+    "searchKeyword": "キーワード",
+    "prevPage": "前へ",
+    "nextPage": "次へ",
+    "page": "{page} ページ",
+    "recordTime": "記録時間",
+    "updateTime": "更新時間",
+    "recentlyUpdated": "最近の更新"
   }
 }

@@ -122,7 +122,7 @@ export function usePoopRecords(currentUserId: string, uniqueOwnerId: string): Us
       // 统一用户ID格式，确保只有一个 user_ 前缀
       const cleanUserId = uniqueOwnerId.replace(/^user_/, ''); // 移除现有的 user_ 前缀
       const userPrefix = `user_${cleanUserId}`; // 添加统一的 user_ 前缀
-      const filePath = `users/${userPrefix}/attachments/${Date.now()}_${cleanFileName}`;
+      const filePath = `users/${userPrefix}/poop_attachments/${Date.now()}_${cleanFileName}`;
       
       console.log('[uploadImage] 统一后的用户ID:', userPrefix);
       console.log('[uploadImage] 上传路径:', filePath);
