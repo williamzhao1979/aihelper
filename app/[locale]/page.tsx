@@ -1,5 +1,5 @@
-import TextReviewPage from "./textreview/page"
+import MyToolsPage from "../../components/my-tools-page"
 
 export default function Home() {
-  return <TextReviewPage />
+  return <MyToolsPage />
 }
