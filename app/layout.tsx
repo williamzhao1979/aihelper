@@ -3,19 +3,19 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "一个 AI 助手，畅享多平台 AI 智能服务！",
-  description: "AI助手 - 使用多个主流AI平台 - Ask once, get answers from multiple AI platforms",
-  keywords: ["AI", "ChatGPT", "DeepSeek", "GitHub Copilot", "Microsoft Copilot", "多平台AI"],
-  authors: [{ name: "Multi-Platform AI" }],
+  title: "我的工具箱 - 精选工具，让生活更顺心",
+  description: "我的工具箱 - 包含URL提取器、音频提取器、AI助手等多种实用工具，提升工作效率，简化日常任务",
+  keywords: ["工具箱", "URL提取器", "音频提取器", "AI助手", "文本工具", "实用工具", "效率工具"],
+  authors: [{ name: "William Zhao" }],
   openGraph: {
-    title: "一个 AI 助手，畅享多平台 AI 智能服务！",
-    description: "一次提问，多个AI平台同时回答",
+    title: "我的工具箱 - 精选工具，让生活更顺心",
+    description: "包含URL提取器、音频提取器、AI助手等多种实用工具，提升工作效率",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "一个 AI 助手，畅享多平台 AI 智能服务！",
-    description: "一次提问，多个AI平台同时回答",
+    title: "我的工具箱 - 精选工具，让生活更顺心",
+    description: "包含URL提取器、音频提取器、AI助手等多种实用工具，提升工作效率",
   },
     generator: 'v0.dev'
 }
