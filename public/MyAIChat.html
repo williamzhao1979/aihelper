@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MyAIChat</title>
+    <style>
+        :root {
+            --primary-color: #6e6ed7;
+            --primary-dark: #5a5ac2;
+            --bg-color: #ffffff;
+            --chat-bg: #f7f7f8;
+            --user-bg: #ffffff;
+            --ai-bg: #f7f7f8;
+            --text-color: #333333;
+            --border-color: #e5e5e6;
+            --input-bg: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 16px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            position: relative;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            padding-bottom: 120px;
+            background-color: var(--chat-bg);
+        }
+
+        .message {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--user-bg);
+            border-radius: 18px 18px 0 18px;
+            padding: 12px 16px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .ai-message {
+            align-self: flex-start;
+            background-color: var(--ai-bg);
+            border-radius: 18px 18px 18px 0;
+            padding: 12px 16px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-content {
+            line-height: 1.5;
+            font-size: 16px;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .input-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--bg-color);
+            padding: 8px 12px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+        }
+
+        .input-box {
+            flex: 1;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 12px 16px;
+            font-size: 16px;
+            outline: none;
+            resize: none;
+            max-height: 120px;
+            min-height: 48px;
+            height: 60px; /* Fixed 2-line height */
+        }
+
+        .button-group {
+            display: flex;
+            margin-left: 8px;
+        }
+
+        .action-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+            cursor: pointer;
+        }
+
+        .action-button:active {
+            background-color: var(--primary-dark);
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+        }
+
+        .tool-button {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 16px;
+            cursor: pointer;
+        }
+
+        .tool-button:active {
+            background-color: rgba(110, 110, 215, 0.1);
+        }
+
+        .tool-button svg {
+            margin-right: 4px;
+            width: 16px;
+            height: 16px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .typing-indicator {
+            display: flex;
+            padding: 12px 16px;
+            align-self: flex-start;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #aaa;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .message {
+                max-width: 90%;
+            }
+            
+            .toolbar {
+                font-size: 12px;
+            }
+            
+            .tool-button {
+                padding: 4px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">MyAIChat</div>
+    
+    <div class="chat-container" id="chatContainer">
+        <!-- Messages will be added here dynamically -->
+        <div class="message ai-message">
+            <div class="message-content">Hello! I'm your AI assistant. How can I help you today?</div>
+            <div class="message-time">Just now</div>
+        </div>
+    </div>
+    
+    <div class="input-container">
+        <div class="input-row">
+            <textarea class="input-box" id="messageInput" placeholder="Type your message..." rows="2"></textarea>
+            
+            <div class="button-group">
+                <button class="action-button" id="fileButton" title="Attach files">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="white"/>
+                        <path d="M18 20H6V4H13V9H18V20Z" fill="white"/>
+                    </svg>
+                </button>
+                <button class="action-button" id="cameraButton" title="Take photo">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" fill="white"/>
+                        <path d="M20 4H16.83L15.59 2.65C15.22 2.24 14.68 2 14.12 2H9.88C9.32 2 8.78 2.24 8.4 2.65L7.17 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17Z" fill="white"/>
+                    </svg>
+                </button>
+                <button class="action-button" id="sendButton" title="Send message">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="white"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="toolbar">
+            <button class="tool-button" id="urlButton">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10.59 13.41c.41.39.41 1.03 0 1.42-.39.39-1.03.39-1.42 0a5.003 5.003 0 0 1 0-7.07l3.54-3.54a5.003 5.003 0 0 1 7.07 0 5.003 5.003 0 0 1 0 7.07l-1.49 1.49c.01-.82-.12-1.64-.4-2.42l.47-.48a2.982 2.982 0 0 0 0-4.24 2.982 2.982 0 0 0-4.24 0l-3.53 3.53a2.982 2.982 0 0 0 0 4.24zm2.82-4.24c.39-.39 1.03-.39 1.42 0a5.003 5.003 0 0 1 0 7.07l-3.54 3.54a5.003 5.003 0 0 1-7.07 0 5.003 5.003 0 0 1 0-7.07l1.49-1.49c-.01.82.12 1.64.4 2.43l-.47.47a2.982 2.982 0 0 0 0 4.24 2.982 2.982 0 0 0 4.24 0l3.53-3.53a2.982 2.982 0 0 0 0-4.24.973.973 0 0 1 0-1.42z"/>
+                </svg>
+                URL提取
+            </button>
+            <button class="tool-button" id="editButton">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                </svg>
+                文章修改
+            </button>
+            <button class="tool-button" id="artButton">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                    <path d="M8.5 15.5l4.71-4.71 2.79 2.79 1.41-1.41-2.79-2.79L15.5 8.5z"/>
+                </svg>
+                绘画点评
+            </button>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" class="file-input" accept="image/*,.pdf,.doc,.docx,.txt" multiple>
+    <input type="file" id="cameraInput" class="file-input" accept="image/*" capture="camera">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+            const fileButton = document.getElementById('fileButton');
+            const cameraButton = document.getElementById('cameraButton');
+            const fileInput = document.getElementById('fileInput');
+            const cameraInput = document.getElementById('cameraInput');
+            const urlButton = document.getElementById('urlButton');
+            const editButton = document.getElementById('editButton');
+            const artButton = document.getElementById('artButton');
+            
+            // Auto-resize textarea (with minimum 2 lines)
+            messageInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.max(this.scrollHeight, 60) + 'px'; // Minimum 60px (2 lines)
+            });
+            
+            // Initialize textarea to 2 lines
+            messageInput.style.height = '60px';
+            
+            // Send message function
+            function sendMessage() {
+                const messageText = messageInput.value.trim();
+                if (messageText === '') return;
+                
+                // Add user message
+                addMessage(messageText, 'user');
+                messageInput.value = '';
+                messageInput.style.height = '60px'; // Reset to 2 lines
+                
+                // Show typing indicator
+                showTypingIndicator();
+                
+                // Simulate AI response after a delay
+                setTimeout(() => {
+                    removeTypingIndicator();
+                    addMessage(getAIResponse(messageText), 'ai');
+                }, 1500);
+            }
+            
+            // Add message to chat
+            function addMessage(text, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.textContent = text;
+                
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'message-time';
+                timeDiv.textContent = getCurrentTime();
+                
+                messageDiv.appendChild(contentDiv);
+                messageDiv.appendChild(timeDiv);
+                
+                chatContainer.appendChild(messageDiv);
+                scrollToBottom();
+            }
+            
+            // Show typing indicator
+            function showTypingIndicator() {
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'message typing-indicator';
+                typingDiv.id = 'typingIndicator';
+                
+                for (let i = 0; i < 3; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'typing-dot';
+                    typingDiv.appendChild(dot);
+                }
+                
+                chatContainer.appendChild(typingDiv);
+                scrollToBottom();
+            }
+            
+            // Remove typing indicator
+            function removeTypingIndicator() {
+                const typingIndicator = document.getElementById('typingIndicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+            }
+            
+            // Get current time in HH:MM format
+            function getCurrentTime() {
+                const now = new Date();
+                return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+            
+            // Scroll to bottom of chat
+            function scrollToBottom() {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+            
+            // Simple AI response generator
+            function getAIResponse(userMessage) {
+                const responses = [
+                    "I understand what you're saying. Can you tell me more about it?",
+                    "That's an interesting point. Here's what I think about that...",
+                    "Thanks for sharing that information with me.",
+                    "I'm designed to assist with a variety of topics. How else can I help you?",
+                    "Let me think about that for a moment... Based on my knowledge, I'd say...",
+                    "I appreciate your message. Here's some information that might be helpful."
+                ];
+                return responses[Math.floor(Math.random() * responses.length)];
+            }
+            
+            // Handle multiple file uploads
+            function handleFileUpload(files) {
+                if (files.length === 1) {
+                    addMessage(`[File attached: ${files[0].name}]`, 'user');
+                } else {
+                    const fileList = Array.from(files).map(file => file.name).join(', ');
+                    addMessage(`[Multiple files attached: ${fileList}]`, 'user');
+                }
+                // In a real app, you would upload the files here
+            }
+            
+            // Event listeners
+            sendButton.addEventListener('click', sendMessage);
+            
+            messageInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            fileButton.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            cameraButton.addEventListener('click', function() {
+                cameraInput.click();
+            });
+            
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files.length > 0) {
+                    handleFileUpload(this.files);
+                }
+            });
+            
+            cameraInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    addMessage(`[Photo taken: ${this.files[0].name}]`, 'user');
+                    // In a real app, you would upload the photo here
+                }
+            });
+            
+            // Toolbar button handlers
+            urlButton.addEventListener('click', function() {
+                const message = messageInput.value.trim();
+                if (message) {
+                    addMessage(`[URL提取]: ${extractURLs(message)}`, 'ai');
+                } else {
+                    addMessage("请先输入包含URL的文本", 'ai');
+                }
+            });
+            
+            editButton.addEventListener('click', function() {
+                const message = messageInput.value.trim();
+                if (message) {
+                    addMessage(`[文章修改建议]: ${getEditingSuggestions(message)}`, 'ai');
+                } else {
+                    addMessage("请先输入需要修改的文章", 'ai');
+                }
+            });
+            
+            artButton.addEventListener('click', function() {
+                addMessage("[绘画点评]: 请上传您的绘画作品，我将为您提供专业的点评和建议", 'ai');
+            });
+            
+            // Helper functions for toolbar features
+            function extractURLs(text) {
+                // Simple URL extraction - in a real app you'd use a more robust regex
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                const urls = text.match(urlRegex);
+                return urls ? urls.join('\n') : "未检测到URL";
+            }
+            
+            function getEditingSuggestions(text) {
+                // Simple editing suggestions - in a real app you'd use NLP
+                const suggestions = [
+                    "建议缩短长句，增加可读性",
+                    "可以考虑添加更多细节来支持你的观点",
+                    "开头可以更吸引人一些",
+                    "结构清晰，但过渡可以更自然",
+                    "用词准确，但可以增加一些变化"
+                ];
+                return suggestions[Math.floor(Math.random() * suggestions.length)];
+            }
+            
+            // Initial scroll to bottom
+            scrollToBottom();
+        });
+    </script>
+</body>
+</html>

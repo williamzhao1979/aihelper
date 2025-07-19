@@ -14,6 +14,7 @@ export const routing = defineRouting({
     "/chat": "/chat",
     "/chat/desktop": "/chat/desktop",
     "/chat/mobile": "/chat/mobile",
+    "/myaichat": "/myaichat",
     "/textreview": "/textreview",
     "/textreview/desktop": "/textreview/desktop",
     "/textreview/mobile": "/textreview/mobile",

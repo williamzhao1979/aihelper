@@ -224,5 +224,26 @@
     "recordTime": "記録時間",
     "updateTime": "更新時間",
     "recentlyUpdated": "最近の更新"
+  },
+  "myaichat": {
+    "title": "MyAIChat",
+    "welcomeMessage": "こんにちは！私はあなたのAIアシスタントです。今日はどのようにお手伝いできますか？",
+    "placeholder": "メッセージを入力してください...",
+    "attachFiles": "ファイルを添付",
+    "takePhoto": "写真を撮る",
+    "sendMessage": "メッセージを送信",
+    "urlExtraction": "URL抽出",
+    "articleEdit": "記事編集",
+    "artCritique": "芸術批評",
+    "fileAttached": "ファイルが添付されました",
+    "multipleFilesAttached": "複数のファイルが添付されました",
+    "photoTaken": "写真が撮影されました",
+    "urlExtractionResult": "URL抽出",
+    "articleEditSuggestion": "記事編集の提案",
+    "artCritiquePrompt": "作品をアップロードしてください。専門的な批評と提案をいたします",
+    "pleaseEnterText": "まずURLを含むテキストを入力してください",
+    "pleaseEnterArticle": "まず編集したい記事を入力してください",
+    "noUrlDetected": "URLが検出されませんでした",
+    "justNow": "たった今"
   }
 }

@@ -224,5 +224,26 @@
     "recordTime": "Record Time",
     "updateTime": "Update Time",
     "recentlyUpdated": "Recently Updated"
+  },
+  "myaichat": {
+    "title": "MyAIChat",
+    "welcomeMessage": "Hello! I'm your AI assistant. How can I help you today?",
+    "placeholder": "Type your message...",
+    "attachFiles": "Attach files",
+    "takePhoto": "Take photo",
+    "sendMessage": "Send message",
+    "urlExtraction": "URL Extraction",
+    "articleEdit": "Article Edit",
+    "artCritique": "Art Critique",
+    "fileAttached": "File attached",
+    "multipleFilesAttached": "Multiple files attached",
+    "photoTaken": "Photo taken",
+    "urlExtractionResult": "URL Extraction",
+    "articleEditSuggestion": "Article Edit Suggestion",
+    "artCritiquePrompt": "Please upload your artwork, and I will provide professional critique and suggestions",
+    "pleaseEnterText": "Please enter text containing URLs first",
+    "pleaseEnterArticle": "Please enter the article to be edited first",
+    "noUrlDetected": "No URLs detected",
+    "justNow": "Just now"
   }
 }
