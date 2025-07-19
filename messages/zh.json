@@ -224,5 +224,26 @@
     "recordTime": "记录时间",
     "updateTime": "更新时间",
     "recentlyUpdated": "最近更新"
+  },
+  "myaichat": {
+    "title": "MyAIChat",
+    "welcomeMessage": "你好！我是你的AI助手。今天我能为你做些什么？",
+    "placeholder": "输入您的消息...",
+    "attachFiles": "附加文件",
+    "takePhoto": "拍照",
+    "sendMessage": "发送消息",
+    "urlExtraction": "URL提取",
+    "articleEdit": "文章修改",
+    "artCritique": "绘画点评",
+    "fileAttached": "文件已附加",
+    "multipleFilesAttached": "多个文件已附加",
+    "photoTaken": "照片已拍摄",
+    "urlExtractionResult": "URL提取",
+    "articleEditSuggestion": "文章修改建议",
+    "artCritiquePrompt": "请上传您的绘画作品，我将为您提供专业的点评和建议",
+    "pleaseEnterText": "请先输入包含URL的文本",
+    "pleaseEnterArticle": "请先输入需要修改的文章",
+    "noUrlDetected": "未检测到URL",
+    "justNow": "刚刚"
   }
 }
