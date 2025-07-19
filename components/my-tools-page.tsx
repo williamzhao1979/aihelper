@@ -13,32 +13,33 @@ interface ToolCard {
 }
 
 const toolsData: ToolCard[] = [
+  { icon: '🤖', name: 'MyAIChat', description: '我的AI助手', category: 'myaichat', type: 'available', isSelfDeveloped: true },
   { icon: '🔗', name: 'URL提取器', description: '快速提取文本中的链接', category: 'utility', type: 'available', isSelfDeveloped: true },
   { icon: '🎵', name: '音频提取器', description: '从视频中提取音频', category: 'media', type: 'available', isSelfDeveloped: true },
   { icon: '📝', name: '文章点评助手', description: 'AI智能文章分析', category: 'ai', type: 'available', isSelfDeveloped: true },
   { icon: '🎨', name: '绘画评价助手', description: '专业绘画作品点评', category: 'ai', type: 'available', isSelfDeveloped: true },
   { icon: '📅', name: '健康日历(私用)', description: '记录全家吃喝拉撒', category: 'ai', type: 'available', isSelfDeveloped: true },
-  { icon: '📷', name: '图片压缩器', description: '无损压缩图片大小', category: 'media', type: 'available' },
-  { icon: '🔤', name: '文本格式化', description: '美化文本排版格式', category: 'text', type: 'available' },
-  { icon: '🏠', name: '二维码生成', description: '快速生成二维码', category: 'utility', type: 'available' },
-  { icon: '🌐', name: '翻译助手', description: '多语言实时翻译', category: 'text', type: 'available' },
-  { icon: '🔐', name: '密码生成器', description: '生成安全密码', category: 'utility', type: 'available' },
-  { icon: '🎬', name: '视频转换器', description: '转换视频格式', category: 'media', type: 'available' },
-  { icon: '📊', name: 'Markdown编辑器', description: '在线Markdown编辑', category: 'text', type: 'available' },
-  { icon: '⏰', name: '时间戳转换', description: '时间格式转换工具', category: 'utility', type: 'available' },
-  { icon: '📋', name: 'JSON格式化', description: 'JSON数据美化', category: 'text', type: 'available' },
-  { icon: '🖼️', name: '图片格式转换', description: '转换图片格式', category: 'media', type: 'available' },
-  { icon: '📏', name: '单位转换器', description: '各种单位换算', category: 'utility', type: 'available' },
-  { icon: '🤖', name: '代码生成器', description: 'AI代码生成助手', category: 'ai', type: 'available' },
-  { icon: '📄', name: 'PDF工具', description: 'PDF合并分割工具', category: 'text', type: 'available' },
-  { icon: '🎲', name: '随机数生成', description: '生成随机数字', category: 'utility', type: 'available' },
-  { icon: '📹', name: 'GIF制作器', description: '制作动态GIF图', category: 'media', type: 'available' },
-  { icon: '📱', name: '设备信息检测', description: '检测设备详细信息', category: 'utility', type: 'available' },
   
   // 开发中工具
   { icon: '📅', name: '健康日历', description: '个人健康管理日程', category: 'developing', type: 'developing', isSelfDeveloped: true },
   
   // 待开发工具
+  { icon: '📷', name: '图片压缩器', description: '无损压缩图片大小', category: 'upcoming', type: 'upcoming' },
+  { icon: '🔤', name: '文本格式化', description: '美化文本排版格式', category: 'upcoming', type: 'upcoming' },
+  { icon: '🏠', name: '二维码生成', description: '快速生成二维码', category: 'upcoming', type: 'upcoming' },
+  { icon: '🌐', name: '翻译助手', description: '多语言实时翻译', category: 'upcoming', type: 'upcoming' },
+  { icon: '🔐', name: '密码生成器', description: '生成安全密码', category: 'upcoming', type: 'upcoming' },
+  { icon: '🎬', name: '视频转换器', description: '转换视频格式', category: 'upcoming', type: 'upcoming' },
+  { icon: '📊', name: 'Markdown编辑器', description: '在线Markdown编辑', category: 'upcoming', type: 'upcoming' },
+  { icon: '⏰', name: '时间戳转换', description: '时间格式转换工具', category: 'upcoming', type: 'upcoming' },
+  { icon: '📋', name: 'JSON格式化', description: 'JSON数据美化', category: 'upcoming', type: 'upcoming' },
+  { icon: '🖼️', name: '图片格式转换', description: '转换图片格式', category: 'upcoming', type: 'upcoming' },
+  { icon: '📏', name: '单位转换器', description: '各种单位换算', category: 'upcoming', type: 'upcoming' },
+  { icon: '🤖', name: '代码生成器', description: 'AI代码生成助手', category: 'upcoming', type: 'upcoming' },
+  { icon: '📄', name: 'PDF工具', description: 'PDF合并分割工具', category: 'upcoming', type: 'upcoming' },
+  { icon: '🎲', name: '随机数生成', description: '生成随机数字', category: 'upcoming', type: 'upcoming' },
+  { icon: '📹', name: 'GIF制作器', description: '制作动态GIF图', category: 'upcoming', type: 'upcoming' },
+  { icon: '📱', name: '设备信息检测', description: '检测设备详细信息', category: 'upcoming', type: 'upcoming' },
   { icon: '✍️', name: 'AI写作助手', description: '智能文案创作生成', category: 'upcoming', type: 'upcoming' },
   { icon: '🖼️', name: 'AI图像生成', description: '文字描述生成图片', category: 'upcoming', type: 'upcoming' },
   { icon: '🗣️', name: 'AI语音合成', description: '文字转语音播报', category: 'upcoming', type: 'upcoming' },
@@ -111,6 +112,9 @@ export default function MyToolsPage() {
     } else {
       // 处理已完成工具的跳转
       switch (tool.name) {
+        case 'MyAIChat':
+          router.push(`/${locale}/myaichat`)
+          break
         case 'URL提取器':
           router.push(`/${locale}/extracturl`)
           break
@@ -297,7 +301,7 @@ export default function MyToolsPage() {
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
-              {upcomingTools.slice(0, 6).map((tool, index) => (
+              {upcomingTools.slice(0, 20).map((tool, index) => (
                 <div
                   key={`upcoming-${tool.name}-${index}`}
                   className="relative bg-white/15 backdrop-blur-md rounded-xl border-2 border-dashed border-white/40 p-3.5 text-center cursor-pointer transition-all duration-300 overflow-hidden hover:-translate-y-1 hover:scale-105 hover:bg-white/25 hover:border-white/60"

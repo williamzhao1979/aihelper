@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Upload, X, Languages, CheckCircle, AlertCircle, ChevronUp, ChevronDown } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { ProcessingTimeTracker } from "@/lib/processing-time-tracker"
 
 interface UploadedImage {
   id: string
@@ -20,6 +21,7 @@ interface UploadedImage {
 interface TextEditModalProps {
   onProcessingStart?: () => void
   onResult?: (result: any) => void
+  onTimeEstimate?: (estimate: { estimatedTime: number; explanation: string }) => void
   children: React.ReactNode
 }
 
@@ -60,7 +62,69 @@ const compressImage = (file: File, maxWidth = 1024, quality = 0.8): Promise<File
   })
 }
 
-export default function TextEditModal({ onProcessingStart, onResult, children }: TextEditModalProps) {
+// Processing time estimation utility
+const estimateProcessingTime = (images: UploadedImage[], mergeImages: boolean): { estimatedTime: number; explanation: string } => {
+  if (images.length === 0) {
+    return { estimatedTime: 0, explanation: "无图片需要处理" }
+  }
+
+  // Calculate total file size in MB
+  const totalSizeMB = images.reduce((sum, img) => sum + img.file.size, 0) / (1024 * 1024)
+  
+  // Try to get historical average first
+  const historicalAverage = ProcessingTimeTracker.getAverageProcessingTime(images.length, totalSizeMB, mergeImages)
+  
+  if (historicalAverage) {
+    // Use historical data with small adjustment buffer
+    const adjustedTime = Math.ceil(historicalAverage * 1.1) // 10% buffer
+    return {
+      estimatedTime: adjustedTime,
+      explanation: `基于历史数据预测：${historicalAverage}秒 + 10%缓冲 = ${adjustedTime}秒`
+    }
+  }
+
+  // Fallback to algorithm-based estimation
+  const baseTimePerImage = 8 // Average OpenAI Vision API response time
+  const uploadTimePerMB = 2 // seconds per MB for upload
+  const mergeProcessingTime = 5 // Additional time for merge processing
+  const retryBuffer = 0.3 // 30% buffer for potential retries
+  
+  let estimatedTime = 0
+  let explanation = ""
+  
+  if (mergeImages) {
+    // Merged processing: all images processed together
+    estimatedTime = baseTimePerImage * 2 + (totalSizeMB * uploadTimePerMB) + mergeProcessingTime
+    explanation = `算法预测 - 合并处理模式：基础处理时间 ${baseTimePerImage * 2}秒 + 上传时间 ${Math.ceil(totalSizeMB * uploadTimePerMB)}秒 + 合并处理 ${mergeProcessingTime}秒`
+  } else {
+    // Individual processing: each image processed separately
+    estimatedTime = (baseTimePerImage * images.length) + (totalSizeMB * uploadTimePerMB)
+    explanation = `算法预测 - 单独处理模式：${images.length}张图片 × ${baseTimePerImage}秒 + 上传时间 ${Math.ceil(totalSizeMB * uploadTimePerMB)}秒`
+  }
+  
+  // Add retry buffer and round up
+  estimatedTime = Math.ceil(estimatedTime * (1 + retryBuffer))
+  
+  // Adjust based on image count complexity
+  if (images.length > 5) {
+    estimatedTime += Math.ceil((images.length - 5) * 2) // Additional 2 seconds per extra image
+    explanation += ` + 多图片复杂度调整 ${Math.ceil((images.length - 5) * 2)}秒`
+  }
+  
+  // Consider image size complexity
+  const averageSizeMB = totalSizeMB / images.length
+  if (averageSizeMB > 2) {
+    const sizeAdjustment = Math.ceil((averageSizeMB - 2) * 3)
+    estimatedTime += sizeAdjustment
+    explanation += ` + 大图片处理调整 ${sizeAdjustment}秒`
+  }
+  
+  explanation += ` = 预计 ${estimatedTime}秒`
+  
+  return { estimatedTime, explanation }
+}
+
+export default function TextEditModal({ onProcessingStart, onResult, onTimeEstimate, children }: TextEditModalProps) {
   const t = useTranslations()
 
   const [open, setOpen] = useState(false)
@@ -80,6 +144,7 @@ export default function TextEditModal({ onProcessingStart, onResult, children }:
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [lastSubmittedImageIds, setLastSubmittedImageIds] = useState<string[]>([])
   const [lastSubmittedMergeOption, setLastSubmittedMergeOption] = useState<boolean>(false)
+  const [timeEstimate, setTimeEstimate] = useState<{ estimatedTime: number; explanation: string } | null>(null)
 
   // 组件卸载时清理摄像头资源
   React.useEffect(() => {
@@ -89,6 +154,21 @@ export default function TextEditModal({ onProcessingStart, onResult, children }:
       }
     }
   }, [stream])
+
+  // 实时更新处理时间预估
+  React.useEffect(() => {
+    if (images.length > 0) {
+      const estimate = estimateProcessingTime(images, mergeImages)
+      setTimeEstimate(estimate)
+      
+      // 通知父组件时间预估
+      if (onTimeEstimate) {
+        onTimeEstimate(estimate)
+      }
+    } else {
+      setTimeEstimate(null)
+    }
+  }, [images, mergeImages, onTimeEstimate])
 
   // 摄像头权限和流初始化
   React.useEffect(() => {
@@ -364,6 +444,8 @@ export default function TextEditModal({ onProcessingStart, onResult, children }:
     if (images.length === 0) return
 
     const requestId = `text-edit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    const startTime = Date.now()
+    
     setProcessingRequests((prev) => new Set([...prev, requestId]))
     setError(null)
 
@@ -375,8 +457,9 @@ export default function TextEditModal({ onProcessingStart, onResult, children }:
       onProcessingStart()
     }
 
-    // 立即发送处理开始的消息
+    // 立即发送处理开始的消息，包含时间预估
     if (onResult) {
+      const currentEstimate = estimateProcessingTime(images, mergeImages)
       const processingMessage = {
         success: true,
         type: 'text-edit-processing',
@@ -384,6 +467,8 @@ export default function TextEditModal({ onProcessingStart, onResult, children }:
         message: `🔄 开始处理 ${images.length} 张图片...`,
         processingType: mergeImages ? '合并处理' : '单独处理',
         imageCount: images.length,
+        estimatedTime: currentEstimate.estimatedTime,
+        estimatedExplanation: currentEstimate.explanation,
         imagePreview: images.map(img => ({
           id: img.id,
           name: img.name,
@@ -402,6 +487,7 @@ export default function TextEditModal({ onProcessingStart, onResult, children }:
 
       // 检查总文件大小
       const totalSize = images.reduce((sum, img) => sum + img.file.size, 0)
+      const totalSizeMB = totalSize / (1024 * 1024)
       const maxSize = 10 * 1024 * 1024 // 10MB
 
       if (totalSize > maxSize) {
@@ -448,11 +534,18 @@ export default function TextEditModal({ onProcessingStart, onResult, children }:
 
       // 处理返回结果
       if (onResult) {
+        const actualProcessingTime = Math.ceil((Date.now() - startTime) / 1000)
+        const estimatedTime = timeEstimate?.estimatedTime || 0
+        const accuracyPercent = estimatedTime > 0 ? Math.round(Math.abs(1 - actualProcessingTime / estimatedTime) * 100) : 0
+        
         const result: any = {
           success: true,
           type: 'text-edit',
           requestId,
           merged: data.merged || false,
+          actualProcessingTime,
+          estimatedTime,
+          timeAccuracy: accuracyPercent,
           timestamp: Date.now(),
           imagePreview: images.map(img => ({
             id: img.id,
@@ -494,6 +587,16 @@ export default function TextEditModal({ onProcessingStart, onResult, children }:
         // 返回最终结果
         console.log('Sending result to onResult:', result);
         onResult(result)
+        
+        // 记录处理时间到历史数据
+        ProcessingTimeTracker.recordProcessingTime({
+          imageCount: images.length,
+          totalSizeMB,
+          mergeMode: data.merged || false,
+          actualTime: actualProcessingTime,
+          estimatedTime: estimatedTime,
+          timestamp: Date.now()
+        })
       }
 
     } catch (error) {
@@ -776,35 +879,68 @@ export default function TextEditModal({ onProcessingStart, onResult, children }:
 
               {/* 处理选项和按钮 */}
               {images.length > 0 && (
-                <div className="flex justify-center items-center gap-4 mt-6">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="merge-images"
-                      checked={mergeImages}
-                      onCheckedChange={(checked) => setMergeImages(checked as boolean)}
-                    />
-                    <label
-                      htmlFor="merge-images"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                <div className="space-y-4">
+                  {/* 时间预估显示 */}
+                  {timeEstimate && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs">⏱</span>
+                        </div>
+                        <span className="font-medium text-blue-800">预计处理时间</span>
+                        {(() => {
+                          const stats = ProcessingTimeTracker.getProcessingStats()
+                          return stats.totalRecords > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              历史准确度: {Math.round(stats.averageAccuracy)}%
+                            </Badge>
+                          )
+                        })()}
+                      </div>
+                      <div className="text-sm text-blue-700">
+                        <div className="font-semibold mb-1">
+                          约 {timeEstimate.estimatedTime} 秒
+                          {timeEstimate.estimatedTime > 60 && (
+                            <span className="text-blue-600 ml-1">
+                              ({Math.floor(timeEstimate.estimatedTime / 60)}分{timeEstimate.estimatedTime % 60}秒)
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-blue-600">{timeEstimate.explanation}</div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-center items-center gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="merge-images"
+                        checked={mergeImages}
+                        onCheckedChange={(checked) => setMergeImages(checked as boolean)}
+                      />
+                      <label
+                        htmlFor="merge-images"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        合并图像
+                      </label>
+                    </div>
+                    <Button
+                      onClick={processWithAI}
+                      disabled={processingRequests.size > 0}
+                      size="lg"
+                      className="bg-purple-600 hover:bg-purple-700 px-8 py-3 text-lg"
                     >
-                      合并图像
-                    </label>
+                      {processingRequests.size > 0 ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
+                          处理中...
+                        </>
+                      ) : (
+                        "开始处理"
+                      )}
+                    </Button>
                   </div>
-                  <Button
-                    onClick={processWithAI}
-                    disabled={processingRequests.size > 0}
-                    size="lg"
-                    className="bg-purple-600 hover:bg-purple-700 px-8 py-3 text-lg"
-                  >
-                    {processingRequests.size > 0 ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
-                        处理中...
-                      </>
-                    ) : (
-                      "开始处理"
-                    )}
-                  </Button>
                 </div>
               )}
             </CardContent>

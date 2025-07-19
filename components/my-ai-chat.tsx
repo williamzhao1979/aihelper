@@ -135,12 +135,36 @@ export default function MyAIChat() {
       resultMessage += `• 图片数量：${result.imageCount} 张\n`;
       resultMessage += `• 处理方式：${result.processingType}\n`;
       resultMessage += `• 状态：正在处理中，请稍候...\n\n`;
-      resultMessage += `⏳ 预计处理时间：2-3秒`;
+      
+      if (result.estimatedTime) {
+        resultMessage += `⏱️ **时间预估：** 约 ${result.estimatedTime} 秒`;
+        if (result.estimatedTime > 60) {
+          resultMessage += ` (${Math.floor(result.estimatedTime / 60)}分${result.estimatedTime % 60}秒)`;
+        }
+        resultMessage += '\n';
+        if (result.estimatedExplanation) {
+          resultMessage += `📋 **预估依据：** ${result.estimatedExplanation}\n`;
+        }
+      } else {
+        resultMessage += `⏳ 预计处理时间：2-3秒`;
+      }
     } else if (!result.success) {
       resultMessage = `❌ 文章修改处理失败：${result.error || '未知错误'}`;
     } else if (result.merged && result.result) {
-      // 合并处理结果
+      // 合并处理结果 - 添加时间统计
       resultMessage = `✅ **文章修改完成** (${result.result.image_count} 张图片)\n\n`;
+      
+      // 添加处理时间信息
+      if (result.actualProcessingTime && result.estimatedTime) {
+        const timeDiff = result.actualProcessingTime - result.estimatedTime;
+        const timeDiffStr = timeDiff > 0 ? `比预期多 ${timeDiff}秒` : `比预期少 ${Math.abs(timeDiff)}秒`;
+        resultMessage += `⏱️ **处理时间：** ${result.actualProcessingTime}秒 (${timeDiffStr})\n`;
+        if (result.timeAccuracy !== undefined) {
+          resultMessage += `🎯 **预估准确度：** ${100 - result.timeAccuracy}%\n`;
+        }
+        resultMessage += '\n';
+      }
+      
       resultMessage += `🌐 **检测语言：** ${result.result.lang === 'zh' ? '中文' : result.result.lang}\n\n`;
       resultMessage += `📄 **原文内容：**\n${result.result.text}\n\n`;
       resultMessage += `✨ **修改建议：**\n`;
@@ -149,8 +173,21 @@ export default function MyAIChat() {
       });
       resultMessage += `\n📝 **优化后内容：**\n${result.result.text_refined}`;
     } else if (result.results && result.results.length > 0) {
-      // 单独处理结果
+      // 单独处理结果 - 添加时间统计
       resultMessage = `✅ **文章修改完成** (${result.results.length} 张图片)\n\n`;
+      
+      // 添加处理时间信息
+      if (result.actualProcessingTime && result.estimatedTime) {
+        const timeDiff = result.actualProcessingTime - result.estimatedTime;
+        const timeDiffStr = timeDiff > 0 ? `比预期多 ${timeDiff}秒` : `比预期少 ${Math.abs(timeDiff)}秒`;
+        resultMessage += `⏱️ **处理时间：** ${result.actualProcessingTime}秒 (${timeDiffStr})\n`;
+        if (result.timeAccuracy !== undefined) {
+          resultMessage += `🎯 **预估准确度：** ${100 - result.timeAccuracy}%\n\n`;
+        } else {
+          resultMessage += '\n';
+        }
+      }
+      
       result.results.forEach((item: any, index: number) => {
         if (item.success && item.result) {
           resultMessage += `**📷 图片 ${index + 1}：${item.imageName}**\n`;
