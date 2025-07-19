@@ -145,6 +145,7 @@ export default function TextEditModal({ onProcessingStart, onResult, onTimeEstim
   const [lastSubmittedImageIds, setLastSubmittedImageIds] = useState<string[]>([])
   const [lastSubmittedMergeOption, setLastSubmittedMergeOption] = useState<boolean>(false)
   const [timeEstimate, setTimeEstimate] = useState<{ estimatedTime: number; explanation: string } | null>(null)
+  const [previewImage, setPreviewImage] = useState<UploadedImage | null>(null)
 
   // 组件卸载时清理摄像头资源
   React.useEffect(() => {
@@ -824,7 +825,11 @@ export default function TextEditModal({ onProcessingStart, onResult, onTimeEstim
                         </div>
 
                         {/* 大图片预览 */}
-                        <div className="aspect-square w-full bg-gray-100 relative">
+                        <div 
+                          className="aspect-square w-full bg-gray-100 relative cursor-pointer"
+                          onClick={() => setPreviewImage(image)}
+                          title="点击查看大图"
+                        >
                           <img
                             src={image.preview || "/placeholder.svg"}
                             alt={image.name}
@@ -948,6 +953,44 @@ export default function TextEditModal({ onProcessingStart, onResult, onTimeEstim
 
         </div>
       </DialogContent>
+
+      {/* 图片预览Modal */}
+      <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
+        <DialogContent className="max-w-5xl max-h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle className="flex items-center gap-2">
+              <div className="flex flex-col">
+                <span className="text-lg font-semibold">{previewImage?.name}</span>
+                <span className="text-sm text-gray-500">{previewImage && formatFileSize(previewImage.size)}</span>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 flex items-center justify-center p-6 bg-gray-50">
+            <div className="relative max-w-full max-h-full">
+              <img
+                src={previewImage?.preview}
+                alt={previewImage?.name || "预览图片"}
+                className="max-w-full max-h-[70vh] w-auto h-auto object-contain rounded-lg shadow-lg"
+              />
+            </div>
+          </div>
+          
+          <div className="px-6 py-4 border-t bg-white flex justify-between items-center">
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <span>文件名: {previewImage?.name}</span>
+              <span>大小: {previewImage && formatFileSize(previewImage.size)}</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPreviewImage(null)}
+            >
+              关闭预览
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }
