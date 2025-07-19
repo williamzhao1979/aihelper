@@ -2,7 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { X } from 'lucide-react';
 import TextEditModal from './text-edit-modal';
+import TextComparison from './text-comparison';
 
 interface Message {
   id: string;
@@ -13,8 +17,17 @@ interface Message {
   data?: any;
 }
 
+// 文件大小格式化函数
+const formatFileSize = (bytes: number) => {
+  if (bytes === 0) return "0 Bytes"
+  const k = 1024
+  const sizes = ["Bytes", "KB", "MB", "GB"]
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+}
+
 // 图片预览组件
-const ImagePreviewGrid = ({ images }: { images: any[] }) => {
+const ImagePreviewGrid = ({ images, onImageClick }: { images: any[], onImageClick?: (image: any) => void }) => {
   if (!images || images.length === 0) return null;
   
   return (
@@ -23,7 +36,11 @@ const ImagePreviewGrid = ({ images }: { images: any[] }) => {
       <div className="grid grid-cols-2 gap-2 max-w-sm">
         {images.map((img: any, index: number) => (
           <div key={img.id || index} className="relative group">
-            <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border">
+            <div 
+              className="aspect-square bg-gray-100 rounded-lg overflow-hidden border cursor-pointer hover:ring-2 hover:ring-purple-300 transition-all"
+              onClick={() => onImageClick?.(img)}
+              title="点击查看大图"
+            >
               <img
                 src={img.preview}
                 alt={img.name}
@@ -44,6 +61,138 @@ const ImagePreviewGrid = ({ images }: { images: any[] }) => {
   );
 };
 
+// 文本编辑结果显示组件
+const TextEditResultDisplay = ({ result, onImageClick }: { result: any, onImageClick?: (image: any) => void }) => {
+  if (result.type === 'text-edit-processing') {
+    // 处理中状态
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+          <span className="font-semibold text-purple-700">文章修改处理中</span>
+        </div>
+        
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 text-sm space-y-2">
+          <div><strong>图片数量：</strong>{result.imageCount} 张</div>
+          <div><strong>处理方式：</strong>{result.processingType}</div>
+          <div><strong>状态：</strong>正在处理中，请稍候...</div>
+          
+          {result.estimatedTime && (
+            <>
+              <div><strong>预计时间：</strong>约 {result.estimatedTime} 秒
+                {result.estimatedTime > 60 && (
+                  <span className="text-purple-600 ml-1">
+                    ({Math.floor(result.estimatedTime / 60)}分{result.estimatedTime % 60}秒)
+                  </span>
+                )}
+              </div>
+              {result.estimatedExplanation && (
+                <div className="text-xs text-purple-600"><strong>预估依据：</strong>{result.estimatedExplanation}</div>
+              )}
+            </>
+          )}
+        </div>
+        
+        {result.imagePreview && <ImagePreviewGrid images={result.imagePreview} onImageClick={onImageClick} />}
+      </div>
+    )
+  }
+
+  if (!result.success) {
+    // 失败状态
+    return (
+      <div className="text-red-600">
+        ❌ 文章修改处理失败：{result.error || '未知错误'}
+      </div>
+    )
+  }
+
+  // 成功状态
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="text-green-600">✅</span>
+        <span className="font-semibold text-green-700">文章修改完成</span>
+        <span className="text-sm text-gray-600">
+          ({result.merged ? result.result?.image_count || 1 : result.results?.length || 0} 张图片)
+        </span>
+      </div>
+
+      {/* 处理时间信息 */}
+      {result.actualProcessingTime && result.estimatedTime && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <strong>实际处理时间：</strong>{result.actualProcessingTime}秒
+            </div>
+            <div>
+              <strong>预估准确度：</strong>{100 - (result.timeAccuracy || 0)}%
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 合并处理结果 */}
+      {result.merged && result.result && (
+        <div className="space-y-4">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+            <div className="text-sm text-gray-600 mb-2">
+              🌐 <strong>检测语言：</strong> {result.result.lang === 'zh' ? '中文' : result.result.lang}
+            </div>
+          </div>
+          
+          <TextComparison
+            originalText={result.result.text || "未能识别到文本内容"}
+            optimizedText={result.result.text_refined || result.result.text || "未能生成优化文本"}
+          />
+          
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <h4 className="font-semibold mb-2 text-amber-800">✨ 建议</h4>
+            <ul className="text-sm text-amber-700 space-y-1">
+              {(result.result.advice || ["建议检查图片质量", "确保文字清晰可见"]).map((advice: string, index: number) => (
+                <li key={index}>{index + 1}. {advice}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* 单独处理结果 */}
+      {result.results && result.results.length > 0 && (
+        <div className="space-y-6">
+          {result.results.map((item: any, index: number) => (
+            <div key={index} className="border border-gray-200 rounded-lg p-4">
+              <h4 className="font-semibold mb-4 text-gray-800">
+                📷 图片 {index + 1}：{item.imageName}
+              </h4>
+              
+              {item.success && item.result ? (
+                <div className="space-y-4">
+                  <TextComparison
+                    originalText={item.result.text || "未能识别到文本内容"}
+                    optimizedText={item.result.text_refined || item.result.text || "未能生成优化文本"}
+                  />
+                  
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <h5 className="font-semibold mb-2 text-amber-800">✨ 建议</h5>
+                    <div className="text-sm text-amber-700">
+                      {(item.result.advice || ["建议检查图片质量"]).join('，')}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-red-600">
+                  ❌ {item.error || '处理失败'}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+};
+
 export default function MyAIChat() {
   const t = useTranslations('myaichat');
   const [messages, setMessages] = useState<Message[]>([
@@ -56,6 +205,7 @@ export default function MyAIChat() {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [previewImage, setPreviewImage] = useState<any>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -123,47 +273,17 @@ export default function MyAIChat() {
     }, 1500);
   };
 
+  // 处理图片点击预览
+  const handleImagePreview = (image: any) => {
+    setPreviewImage(image);
+  };
+
   // 处理文章修改结果
   const handleTextEditResult = (result: any) => {
     console.log('handleTextEditResult received:', result);
-    let resultMessage = '';
     
-    if (result.type === 'text-edit-processing') {
-      // 处理中消息
-      resultMessage = `🔄 **文章修改处理中**\n\n`;
-      resultMessage += `📊 **处理信息：**\n`;
-      resultMessage += `• 图片数量：${result.imageCount} 张\n`;
-      resultMessage += `• 处理方式：${result.processingType}\n`;
-      resultMessage += `• 状态：正在处理中，请稍候...\n\n`;
-      resultMessage += `⏳ 预计处理时间：2-3秒`;
-    } else if (!result.success) {
-      resultMessage = `❌ 文章修改处理失败：${result.error || '未知错误'}`;
-    } else if (result.merged && result.result) {
-      // 合并处理结果
-      resultMessage = `✅ **文章修改完成** (${result.result.image_count} 张图片)\n\n`;
-      resultMessage += `🌐 **检测语言：** ${result.result.lang === 'zh' ? '中文' : result.result.lang}\n\n`;
-      resultMessage += `📄 **原文内容：**\n${result.result.text}\n\n`;
-      resultMessage += `✨ **修改建议：**\n`;
-      result.result.advice.forEach((advice: string, index: number) => {
-        resultMessage += `${index + 1}. ${advice}\n`;
-      });
-      resultMessage += `\n📝 **优化后内容：**\n${result.result.text_refined}`;
-    } else if (result.results && result.results.length > 0) {
-      // 单独处理结果
-      resultMessage = `✅ **文章修改完成** (${result.results.length} 张图片)\n\n`;
-      result.results.forEach((item: any, index: number) => {
-        if (item.success && item.result) {
-          resultMessage += `**📷 图片 ${index + 1}：${item.imageName}**\n`;
-          resultMessage += `📄 原文：${item.result.text}\n`;
-          resultMessage += `✨ 建议：${item.result.advice.join('，')}\n`;
-          resultMessage += `📝 优化：${item.result.text_refined}\n\n`;
-        } else {
-          resultMessage += `**📷 图片 ${index + 1}：${item.imageName}** ❌ ${item.error || '处理失败'}\n\n`;
-        }
-      });
-    }
-    
-    addMessage(resultMessage, 'ai', 'text-edit-result', result);
+    // 直接添加结果数据，让TextEditResultDisplay组件处理显示
+    addMessage('', 'ai', 'text-edit-result', result);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
@@ -247,16 +367,24 @@ export default function MyAIChat() {
                   : 'bg-gray-50 rounded-[18px_18px_18px_0]'
               }`}
             >
-              {/* 图片预览 - 仅对文章修改结果显示 */}
-              {message.type === 'text-edit-result' && message.data?.imagePreview && (
-                <ImagePreviewGrid images={message.data.imagePreview} />
+              {/* 如果是文章修改结果，使用专门的显示组件 */}
+              {message.type === 'text-edit-result' && message.data ? (
+                <TextEditResultDisplay result={message.data} onImageClick={handleImagePreview} />
+              ) : (
+                <>
+                  {/* 图片预览 - 仅对文章修改结果显示 */}
+                  {message.type === 'text-edit-result' && message.data?.imagePreview && (
+                    <ImagePreviewGrid images={message.data.imagePreview} onImageClick={handleImagePreview} />
+                  )}
+                  
+                  <div className={`leading-6 text-base ${
+                    message.type === 'text-edit-result' ? 'whitespace-pre-wrap' : ''
+                  }`}>
+                    {message.text}
+                  </div>
+                </>
               )}
               
-              <div className={`leading-6 text-base ${
-                message.type === 'text-edit-result' ? 'whitespace-pre-wrap' : ''
-              }`}>
-                {message.text}
-              </div>
               <div className="text-xs text-gray-500 mt-1 text-right">
                 {message.timestamp}
               </div>
@@ -387,6 +515,44 @@ export default function MyAIChat() {
           }
         }}
       />
+
+      {/* 图片预览Modal */}
+      <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
+        <DialogContent className="max-w-5xl max-h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle className="flex items-center gap-2">
+              <div className="flex flex-col">
+                <span className="text-lg font-semibold">{previewImage?.name}</span>
+                <span className="text-sm text-gray-500">{previewImage && formatFileSize(previewImage.size)}</span>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 flex items-center justify-center p-6 bg-gray-50">
+            <div className="relative max-w-full max-h-full">
+              <img
+                src={previewImage?.preview}
+                alt={previewImage?.name || "预览图片"}
+                className="max-w-full max-h-[70vh] w-auto h-auto object-contain rounded-lg shadow-lg"
+              />
+            </div>
+          </div>
+          
+          <div className="px-6 py-4 border-t bg-white flex justify-between items-center">
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <span>文件名: {previewImage?.name}</span>
+              <span>大小: {previewImage && formatFileSize(previewImage.size)}</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPreviewImage(null)}
+            >
+              关闭预览
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
