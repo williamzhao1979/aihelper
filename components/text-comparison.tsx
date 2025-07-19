@@ -8,10 +8,11 @@ interface TextComparisonProps {
   title?: string
 }
 
-// 简单的文本对比算法 - 基于词汇级别的差异检测
+// 简单的文本对比算法 - 基于词汇级别的差异检测，保留空白字符
 const getTextDifferences = (original: string, optimized: string) => {
-  const originalWords = original.split(/(\s+|[，。！？；：""''（）【】「」『』、])/).filter(word => word.trim())
-  const optimizedWords = optimized.split(/(\s+|[，。！？；：""''（）【】「」『』、])/).filter(word => word.trim())
+  // 修改：不再过滤空白字符，保留所有分割结果包括空白
+  const originalWords = original.split(/(\s+|[，。！？；：""''（）【】「」『』、])/)
+  const optimizedWords = optimized.split(/(\s+|[，。！？；：""''（）【】「」『』、])/)
   
   const result = {
     original: [] as Array<{ text: string; type: 'same' | 'removed' | 'changed' }>,
@@ -30,55 +31,69 @@ const getTextDifferences = (original: string, optimized: string) => {
       result.original.push({ text: originalWords[i], type: 'removed' })
       i++
     } else if (originalWords[i] === optimizedWords[j]) {
-      // 相同内容
+      // 相同内容（包括空白字符）
       result.original.push({ text: originalWords[i], type: 'same' })
       result.optimized.push({ text: optimizedWords[j], type: 'same' })
       i++
       j++
     } else {
-      // 寻找下一个匹配点
-      let foundMatch = false
+      // 处理空白字符的特殊情况
+      const isOriginalWhitespace = /^\s+$/.test(originalWords[i])
+      const isOptimizedWhitespace = /^\s+$/.test(optimizedWords[j])
       
-      // 在后续的optimized中查找当前original词
-      for (let k = j + 1; k < Math.min(j + 5, optimizedWords.length); k++) {
-        if (originalWords[i] === optimizedWords[k]) {
-          // 找到匹配，中间的是新增内容
-          for (let l = j; l < k; l++) {
-            result.optimized.push({ text: optimizedWords[l], type: 'added' })
-          }
-          result.original.push({ text: originalWords[i], type: 'same' })
-          result.optimized.push({ text: optimizedWords[k], type: 'same' })
-          i++
-          j = k + 1
-          foundMatch = true
-          break
-        }
-      }
-      
-      if (!foundMatch) {
-        // 在后续的original中查找当前optimized词
-        for (let k = i + 1; k < Math.min(i + 5, originalWords.length); k++) {
-          if (optimizedWords[j] === originalWords[k]) {
-            // 找到匹配，中间的是删除内容
-            for (let l = i; l < k; l++) {
-              result.original.push({ text: originalWords[l], type: 'removed' })
-            }
-            result.original.push({ text: originalWords[k], type: 'same' })
-            result.optimized.push({ text: optimizedWords[j], type: 'same' })
-            i = k + 1
-            j++
-            foundMatch = true
-            break
-          }
-        }
-      }
-      
-      if (!foundMatch) {
-        // 没找到匹配，标记为改变
-        result.original.push({ text: originalWords[i], type: 'changed' })
-        result.optimized.push({ text: optimizedWords[j], type: 'changed' })
+      if (isOriginalWhitespace && isOptimizedWhitespace) {
+        // 两者都是空白字符，但不同 - 标记为相同以保持格式
+        result.original.push({ text: originalWords[i], type: 'same' })
+        result.optimized.push({ text: optimizedWords[j], type: 'same' })
         i++
         j++
+      } else {
+        // 寻找下一个匹配点
+        let foundMatch = false
+        
+        // 在后续的optimized中查找当前original词（跳过空字符串）
+        if (originalWords[i].trim()) {
+          for (let k = j + 1; k < Math.min(j + 5, optimizedWords.length); k++) {
+            if (originalWords[i] === optimizedWords[k]) {
+              // 找到匹配，中间的是新增内容
+              for (let l = j; l < k; l++) {
+                result.optimized.push({ text: optimizedWords[l], type: 'added' })
+              }
+              result.original.push({ text: originalWords[i], type: 'same' })
+              result.optimized.push({ text: optimizedWords[k], type: 'same' })
+              i++
+              j = k + 1
+              foundMatch = true
+              break
+            }
+          }
+        }
+        
+        if (!foundMatch && optimizedWords[j].trim()) {
+          // 在后续的original中查找当前optimized词
+          for (let k = i + 1; k < Math.min(i + 5, originalWords.length); k++) {
+            if (optimizedWords[j] === originalWords[k]) {
+              // 找到匹配，中间的是删除内容
+              for (let l = i; l < k; l++) {
+                result.original.push({ text: originalWords[l], type: 'removed' })
+              }
+              result.original.push({ text: originalWords[k], type: 'same' })
+              result.optimized.push({ text: optimizedWords[j], type: 'same' })
+              i = k + 1
+              j++
+              foundMatch = true
+              break
+            }
+          }
+        }
+        
+        if (!foundMatch) {
+          // 没找到匹配，标记为改变
+          result.original.push({ text: originalWords[i], type: 'changed' })
+          result.optimized.push({ text: optimizedWords[j], type: 'changed' })
+          i++
+          j++
+        }
       }
     }
   }
@@ -143,8 +158,8 @@ const TextComparison: React.FC<TextComparisonProps> = ({ originalText, optimized
       </div>
       
       <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
-        <Card>
-          <CardContent className="p-4">
+        <Card className="overflow-hidden">
+          <CardContent className="p-4 overflow-hidden">
             <h4 className="font-semibold mb-3 text-gray-800 flex items-center gap-2">
               📄 原文
               {showDifferences && (
@@ -156,13 +171,13 @@ const TextComparison: React.FC<TextComparisonProps> = ({ originalText, optimized
                 </div>
               )}
             </h4>
-            <div className="text-sm leading-relaxed">
+            <div className="text-sm leading-relaxed overflow-hidden">
               {showDifferences ? (
-                <div className="whitespace-pre-wrap">
+                <div className="whitespace-pre-wrap break-words overflow-hidden word-break">
                   {renderHighlightedText(differences.original, true)}
                 </div>
               ) : (
-                <div className="whitespace-pre-wrap text-gray-700">
+                <div className="whitespace-pre-wrap break-words overflow-hidden text-gray-700 word-break">
                   {originalText}
                 </div>
               )}
@@ -170,8 +185,8 @@ const TextComparison: React.FC<TextComparisonProps> = ({ originalText, optimized
           </CardContent>
         </Card>
         
-        <Card>
-          <CardContent className="p-4">
+        <Card className="overflow-hidden">
+          <CardContent className="p-4 overflow-hidden">
             <h4 className="font-semibold mb-3 text-gray-800 flex items-center gap-2">
               📝 优化
               {showDifferences && (
@@ -183,13 +198,13 @@ const TextComparison: React.FC<TextComparisonProps> = ({ originalText, optimized
                 </div>
               )}
             </h4>
-            <div className="text-sm leading-relaxed">
+            <div className="text-sm leading-relaxed overflow-hidden">
               {showDifferences ? (
-                <div className="whitespace-pre-wrap">
+                <div className="whitespace-pre-wrap break-words overflow-hidden word-break">
                   {renderHighlightedText(differences.optimized, false)}
                 </div>
               ) : (
-                <div className="whitespace-pre-wrap text-gray-700">
+                <div className="whitespace-pre-wrap break-words overflow-hidden text-gray-700 word-break">
                   {optimizedText}
                 </div>
               )}

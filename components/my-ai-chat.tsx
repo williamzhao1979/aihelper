@@ -33,7 +33,7 @@ const ImagePreviewGrid = ({ images, onImageClick }: { images: any[], onImageClic
   return (
     <div className="my-3">
       <div className="text-xs text-gray-600 mb-2 font-medium">📷 处理图片 ({images.length}张)</div>
-      <div className="grid grid-cols-2 gap-2 max-w-sm">
+      <div className="grid grid-cols-2 gap-2 w-full max-w-md">
         {images.map((img: any, index: number) => (
           <div key={img.id || index} className="relative group">
             <div 
@@ -255,6 +255,26 @@ export default function MyAIChat() {
     setMessages(prev => [...prev, newMessage]);
   };
 
+  // 新增更新消息函数
+  const updateMessage = (messageId: string, text: string, type: 'normal' | 'text-edit-result', data?: any): void => {
+    setMessages(prev => prev.map(message => 
+      message.id === messageId 
+        ? { ...message, text, type, data, timestamp: getCurrentTime() }
+        : message
+    ));
+  };
+
+  // 根据requestId查找并更新消息
+  const updateMessageByRequestId = (requestId: string, text: string, type: 'normal' | 'text-edit-result', data?: any): void => {
+    setMessages(prev => prev.map(message => {
+      if (message.type === 'text-edit-result' && 
+          message.data?.requestId === requestId) {
+        return { ...message, text, type, data, timestamp: getCurrentTime() };
+      }
+      return message;
+    }));
+  };
+
   const sendMessage = (): void => {
     const messageText = inputValue.trim();
     if (messageText === '') return;
@@ -282,8 +302,16 @@ export default function MyAIChat() {
   const handleTextEditResult = (result: any) => {
     console.log('handleTextEditResult received:', result);
     
-    // 直接添加结果数据，让TextEditResultDisplay组件处理显示
-    addMessage('', 'ai', 'text-edit-result', result);
+    if (result.type === 'text-edit-processing') {
+      // 处理中状态，添加新消息
+      addMessage('', 'ai', 'text-edit-result', result);
+    } else if (result.requestId) {
+      // 处理完成或失败，更新现有的处理中消息
+      updateMessageByRequestId(result.requestId, '', 'text-edit-result', result);
+    } else {
+      // 兜底：直接添加结果消息
+      addMessage('', 'ai', 'text-edit-result', result);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
@@ -344,24 +372,24 @@ export default function MyAIChat() {
   return (
     <div className="flex flex-col h-screen bg-white text-gray-800 overflow-hidden">
       {/* Header */}
-      <div className="bg-indigo-500 text-white p-3 text-center font-bold text-lg relative shadow-sm z-10">
+      <div className="bg-indigo-500 text-white px-2 py-3 text-center font-bold text-lg relative shadow-sm z-10 md:px-3">
         {t('title')}
       </div>
 
       {/* Chat Container */}
       <div 
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto p-4 pb-32 bg-gray-50"
+        className="flex-1 overflow-y-auto px-2 py-4 pb-32 bg-gray-50 md:px-4"
       >
         {messages.map((message) => (
           <div
             key={message.id}
-            className={`mb-4 flex flex-col max-w-[85%] ${
+            className={`mb-4 flex flex-col max-w-[95%] md:max-w-[85%] ${
               message.sender === 'user' ? 'self-end' : 'self-start'
             }`}
           >
             <div
-              className={`p-3 shadow-sm ${
+              className={`p-2 md:p-3 shadow-sm overflow-hidden ${
                 message.sender === 'user'
                   ? 'bg-white rounded-[18px_18px_0_18px]'
                   : 'bg-gray-50 rounded-[18px_18px_18px_0]'
@@ -377,7 +405,7 @@ export default function MyAIChat() {
                     <ImagePreviewGrid images={message.data.imagePreview} onImageClick={handleImagePreview} />
                   )}
                   
-                  <div className={`leading-6 text-base ${
+                  <div className={`leading-6 text-base break-words overflow-hidden ${
                     message.type === 'text-edit-result' ? 'whitespace-pre-wrap' : ''
                   }`}>
                     {message.text}
@@ -407,7 +435,7 @@ export default function MyAIChat() {
       </div>
 
       {/* Input Container */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white p-2 border-t border-gray-200 flex flex-col z-10">
+      <div className="fixed bottom-0 left-0 right-0 bg-white px-2 py-2 border-t border-gray-200 flex flex-col z-10 md:px-4">
         <div className="flex items-center">
           <textarea
             ref={textareaRef}
