@@ -4,10 +4,13 @@ import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { X } from 'lucide-react';
+import { X, MoreHorizontal } from 'lucide-react';
 import TextEditModal from './text-edit-modal';
 import URLExtractionModal from './url-extraction-modal';
 import TextComparison from './text-comparison';
+import MoreToolsPanel from './more-tools-panel';
+import type { ToolItem } from './more-tools-panel';
+import Link from 'next/link';
 
 interface Message {
   id: string;
@@ -500,6 +503,7 @@ export default function MyAIChat() {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [previewImage, setPreviewImage] = useState<any>(null);
+  const [showMoreTools, setShowMoreTools] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -677,11 +681,46 @@ export default function MyAIChat() {
     }
   };
 
+  const handleToolSelect = (tool: ToolItem): void => {
+    switch (tool.id) {
+      case 'text-edit':
+        // 文章修改功能已存在，这里可以触发相应的modal
+        addMessage(`已选择功能：${tool.name}`, 'ai');
+        break;
+      case 'url-extract':
+        // URL提取功能已存在
+        addMessage(`已选择功能：${tool.name}`, 'ai');
+        break;
+      case 'ocr':
+        addMessage(`已选择功能：${tool.name} - ${tool.description}`, 'ai');
+        break;
+      default:
+        addMessage(`功能"${tool.name}"正在开发中，敬请期待！`, 'ai');
+        break;
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-white text-gray-800 overflow-hidden">
-      {/* Header */}
-      <div className="bg-indigo-500 text-white px-2 py-3 text-center font-bold text-lg relative shadow-sm z-10 md:px-3">
-        {t('title')}
+      {/* 美化后的 Header - 标题居中 */}
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white relative shadow-lg z-10 py-2">
+        <div className="max-w-6xl mx-auto flex items-center justify-between px-4">
+          {/* 左侧留空以平衡布局 */}
+          <div className="w-24"></div>
+          
+          {/* 居中标题 */}
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-center flex-grow mx-4 truncate">
+            {t('title')}
+          </h1>
+          
+          {/* 右侧链接 */}
+            <Link 
+            href="/mytools" 
+            className="px-3 py-1.5 text-sm bg-white/20 hover:bg-white/30 rounded-full transition-all duration-300 flex items-center space-x-1 border border-white/30 hover:border-white/50 shadow-sm backdrop-blur-sm w-24 justify-center"
+            >
+            <span>看看工具箱</span>
+          </Link>
+        </div>
       </div>
 
       {/* Chat Container */}
@@ -770,7 +809,7 @@ export default function MyAIChat() {
               </svg>
             </button>
 
-            <button
+            {/* <button
               className="w-10 h-10 rounded-full bg-indigo-500 text-white border-none flex items-center justify-center ml-2 cursor-pointer active:bg-indigo-600"
               onClick={() => cameraInputRef.current?.click()}
               title={t('takePhoto')}
@@ -779,7 +818,7 @@ export default function MyAIChat() {
                 <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" fill="white"/>
                 <path d="M20 4H16.83L15.59 2.65C15.22 2.24 14.68 2 14.12 2H9.88C9.32 2 8.78 2.24 8.4 2.65L7.17 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17Z" fill="white"/>
               </svg>
-            </button>
+            </button> */}
 
             <button
               className="w-10 h-10 rounded-full bg-indigo-500 text-white border-none flex items-center justify-center ml-2 cursor-pointer active:bg-indigo-600"
@@ -790,6 +829,8 @@ export default function MyAIChat() {
                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="white"/>
               </svg>
             </button>
+
+
           </div>
         </div>
 
@@ -822,6 +863,14 @@ export default function MyAIChat() {
               <path d="M8.5 15.5l4.71-4.71 2.79 2.79 1.41-1.41-2.79-2.79L15.5 8.5z"/>
             </svg>
             {t('artCritique')}
+          </button>
+
+          <button
+            className="bg-transparent border-none text-indigo-500 text-sm flex items-center py-1.5 px-3 rounded-2xl cursor-pointer active:bg-indigo-50"
+            onClick={() => setShowMoreTools(true)}
+          >
+            <MoreHorizontal className="mr-1 w-4 h-4" />
+            {/* 更多 */}
           </button>
         </div>
       </div>
@@ -890,6 +939,13 @@ export default function MyAIChat() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* 更多工具面板 */}
+      <MoreToolsPanel
+        open={showMoreTools}
+        onOpenChange={setShowMoreTools}
+        onToolSelect={handleToolSelect}
+      />
     </div>
   );
 }
