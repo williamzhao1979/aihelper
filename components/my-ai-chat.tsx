@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X } from 'lucide-react';
 import TextEditModal from './text-edit-modal';
+import URLExtractionModal from './url-extraction-modal';
 import TextComparison from './text-comparison';
 
 interface Message {
@@ -13,7 +14,7 @@ interface Message {
   text: string;
   sender: 'user' | 'ai';
   timestamp: string;
-  type?: 'normal' | 'text-edit-result';
+  type?: 'normal' | 'text-edit-result' | 'url-extraction-result';
   data?: any;
 }
 
@@ -59,6 +60,299 @@ const ImagePreviewGrid = ({ images, onImageClick }: { images: any[], onImageClic
       </div>
     </div>
   );
+};
+
+// URL提取结果显示组件
+const URLExtractionResultDisplay = ({ result, onImageClick }: { result: any, onImageClick?: (image: any) => void }) => {
+  if (result.type === 'url-extraction-processing') {
+    // 处理中状态
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+          <span className="font-semibold text-blue-700">URL提取处理中</span>
+        </div>
+        
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm space-y-2">
+          <div><strong>图片数量：</strong>{result.imageCount} 张</div>
+          <div><strong>处理方式：</strong>{result.processingType}</div>
+          <div><strong>状态：</strong>正在处理中，请稍候...</div>
+          
+          {result.estimatedTime && (
+            <>
+              <div><strong>预计时间：</strong>约 {result.estimatedTime} 秒
+                {result.estimatedTime > 60 && (
+                  <span className="text-blue-600 ml-1">
+                    ({Math.floor(result.estimatedTime / 60)}分{result.estimatedTime % 60}秒)
+                  </span>
+                )}
+              </div>
+              {result.estimatedExplanation && (
+                <div className="text-xs text-blue-600"><strong>预估依据：</strong>{result.estimatedExplanation}</div>
+              )}
+            </>
+          )}
+        </div>
+        
+        {result.imagePreview && <ImagePreviewGrid images={result.imagePreview} onImageClick={onImageClick} />}
+      </div>
+    )
+  }
+
+  if (!result.success) {
+    // 失败状态
+    return (
+      <div className="text-red-600">
+        ❌ URL提取处理失败：{result.error || '未知错误'}
+      </div>
+    )
+  }
+
+  // 成功状态
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="text-green-600">✅</span>
+        <span className="font-semibold text-green-700">URL提取完成</span>
+        <span className="text-sm text-gray-600">
+          ({result.results?.length || 0} 张图片)
+        </span>
+      </div>
+
+      {/* 处理时间信息 */}
+      {result.actualProcessingTime && result.estimatedTime && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <strong>实际处理时间：</strong>{result.actualProcessingTime}秒
+            </div>
+            <div>
+              <strong>预估准确度：</strong>{100 - (result.timeAccuracy || 0)}%
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* URL提取结果 */}
+      {result.results && result.results.length > 0 && (
+        <div className="space-y-6">
+          {result.results.map((item: any, index: number) => (
+            <div key={index} className="border border-gray-200 rounded-lg p-4">
+              <h4 className="font-semibold mb-4 text-gray-800">
+                📷 图片 {index + 1}：{item.imageName}
+              </h4>
+              
+{item.success && (item.urls?.length > 0 || item.emails?.length > 0) ? (
+                <div className="space-y-4">
+                  {/* URL 部分 */}
+                  {item.urls && item.urls.length > 0 && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <h5 className="font-semibold mb-2 text-green-800">🔗 提取到的URL ({item.urls.length}个)</h5>
+                      <div className="space-y-2">
+                        {item.urls.map((url: string, urlIndex: number) => (
+                          <div key={urlIndex} className="bg-white rounded p-2 border break-all">
+                            <a 
+                              href={url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 hover:underline text-sm"
+                            >
+                              {url}
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* 邮箱地址部分 */}
+                  {item.emails && item.emails.length > 0 && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                      <h5 className="font-semibold mb-2 text-orange-800">📧 提取到的邮箱地址 ({item.emails.length}个)</h5>
+                      <div className="space-y-2">
+                        {item.emails.map((email: string, emailIndex: number) => (
+                          <div key={emailIndex} className="bg-white rounded p-2 border break-all">
+                            <a 
+                              href={`mailto:${email}`}
+                              className="text-orange-600 hover:text-orange-800 hover:underline text-sm"
+                            >
+                              {email}
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {item.text && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                      <h5 className="font-semibold mb-2 text-gray-800">📝 识别的文本内容</h5>
+                      <div className="text-sm text-gray-700 whitespace-pre-wrap bg-white rounded p-2 border">
+                        {item.text}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-amber-600">
+                  ⚠️ {item.error || '未在此图片中发现URL或邮箱地址'}
+                </div>
+              )}
+            </div>
+          ))}
+          
+          {/* 汇总所有URL和邮箱地址 */}
+          {(() => {
+            const allUrls = result.results.reduce((acc: string[], item: any) => {
+              if (item.success && item.urls) {
+                return acc.concat(item.urls);
+              }
+              return acc;
+            }, []);
+            
+            const allEmails = result.results.reduce((acc: string[], item: any) => {
+              if (item.success && item.emails) {
+                return acc.concat(item.emails);
+              }
+              return acc;
+            }, []);
+            
+            const uniqueUrls: string[] = Array.from(new Set(allUrls));
+            const uniqueEmails: string[] = Array.from(new Set(allEmails));
+            
+            return (uniqueUrls.length > 0 || uniqueEmails.length > 0) ? (
+              <div className="space-y-4">
+                {/* URL汇总 */}
+                {uniqueUrls.length > 0 && (
+                  <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
+                    <h4 className="font-semibold mb-4 text-blue-800 flex items-center gap-2">
+                      🌐 所有URL汇总 ({uniqueUrls.length}个唯一URL)
+                    </h4>
+                    <div className="space-y-2">
+                      {uniqueUrls.map((url: string, index: number) => (
+                        <div key={index} className="bg-white rounded p-3 border flex items-center justify-between">
+                          <a 
+                            href={url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 hover:underline text-sm break-all flex-1"
+                          >
+                            {url}
+                          </a>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="ml-2 flex-shrink-0"
+                            onClick={() => {
+                              navigator.clipboard.writeText(url);
+                              // 这里可以添加复制成功的提示
+                            }}
+                          >
+                            复制
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* 一键复制所有URL */}
+                    <div className="mt-4 pt-3 border-t border-blue-200">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          const urlText = uniqueUrls.join('\n');
+                          navigator.clipboard.writeText(urlText);
+                          // 这里可以添加复制成功的提示
+                        }}
+                      >
+                        📋 复制所有URL
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* 邮箱地址汇总 */}
+                {uniqueEmails.length > 0 && (
+                  <div className="border-2 border-orange-200 rounded-lg p-4 bg-orange-50">
+                    <h4 className="font-semibold mb-4 text-orange-800 flex items-center gap-2">
+                      📧 所有邮箱地址汇总 ({uniqueEmails.length}个唯一邮箱)
+                    </h4>
+                    <div className="space-y-2">
+                      {uniqueEmails.map((email: string, index: number) => (
+                        <div key={index} className="bg-white rounded p-3 border flex items-center justify-between">
+                          <a 
+                            href={`mailto:${email}`}
+                            className="text-orange-600 hover:text-orange-800 hover:underline text-sm break-all flex-1"
+                          >
+                            {email}
+                          </a>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="ml-2 flex-shrink-0"
+                            onClick={() => {
+                              navigator.clipboard.writeText(email);
+                              // 这里可以添加复制成功的提示
+                            }}
+                          >
+                            复制
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* 一键复制所有邮箱地址 */}
+                    <div className="mt-4 pt-3 border-t border-orange-200">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          const emailText = uniqueEmails.join('\n');
+                          navigator.clipboard.writeText(emailText);
+                          // 这里可以添加复制成功的提示
+                        }}
+                      >
+                        📋 复制所有邮箱地址
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
+                {/* 综合汇总 - 一键复制所有URL和邮箱 */}
+                {(uniqueUrls.length > 0 && uniqueEmails.length > 0) && (
+                  <div className="border-2 border-purple-200 rounded-lg p-4 bg-purple-50">
+                    <h4 className="font-semibold mb-4 text-purple-800 flex items-center gap-2">
+                      🎯 综合汇总 ({uniqueUrls.length}个URL + {uniqueEmails.length}个邮箱)
+                    </h4>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        const combinedText = [
+                          '=== URL地址 ===',
+                          ...uniqueUrls,
+                          '',
+                          '=== 邮箱地址 ===',
+                          ...uniqueEmails
+                        ].join('\n');
+                        navigator.clipboard.writeText(combinedText);
+                        // 这里可以添加复制成功的提示
+                      }}
+                    >
+                      📋 复制所有URL和邮箱地址
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : null;
+          })()}
+        </div>
+      )}
+    </div>
+  )
 };
 
 // 文本编辑结果显示组件
@@ -243,7 +537,7 @@ export default function MyAIChat() {
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
-  const addMessage = (text: string, sender: 'user' | 'ai', type: 'normal' | 'text-edit-result' = 'normal', data?: any): void => {
+  const addMessage = (text: string, sender: 'user' | 'ai', type: 'normal' | 'text-edit-result' | 'url-extraction-result' = 'normal', data?: any): void => {
     const newMessage: Message = {
       id: Date.now().toString(),
       text,
@@ -256,7 +550,7 @@ export default function MyAIChat() {
   };
 
   // 新增更新消息函数
-  const updateMessage = (messageId: string, text: string, type: 'normal' | 'text-edit-result', data?: any): void => {
+  const updateMessage = (messageId: string, text: string, type: 'normal' | 'text-edit-result' | 'url-extraction-result', data?: any): void => {
     setMessages(prev => prev.map(message => 
       message.id === messageId 
         ? { ...message, text, type, data, timestamp: getCurrentTime() }
@@ -265,9 +559,20 @@ export default function MyAIChat() {
   };
 
   // 根据requestId查找并更新消息
-  const updateMessageByRequestId = (requestId: string, text: string, type: 'normal' | 'text-edit-result', data?: any): void => {
+  const updateMessageByRequestId = (requestId: string, text: string, type: 'normal' | 'text-edit-result' | 'url-extraction-result', data?: any): void => {
     setMessages(prev => prev.map(message => {
       if (message.type === 'text-edit-result' && 
+          message.data?.requestId === requestId) {
+        return { ...message, text, type, data, timestamp: getCurrentTime() };
+      }
+      return message;
+    }));
+  };
+
+  // 根据requestId查找并更新URL提取消息
+  const updateMessageByRequestIdForURLExtraction = (requestId: string, text: string, type: 'normal' | 'text-edit-result' | 'url-extraction-result', data?: any): void => {
+    setMessages(prev => prev.map(message => {
+      if (message.type === 'url-extraction-result' && 
           message.data?.requestId === requestId) {
         return { ...message, text, type, data, timestamp: getCurrentTime() };
       }
@@ -314,6 +619,22 @@ export default function MyAIChat() {
     }
   };
 
+  // 处理URL提取结果
+  const handleURLExtractionResult = (result: any) => {
+    console.log('handleURLExtractionResult received:', result);
+    
+    if (result.type === 'url-extraction-processing') {
+      // 处理中状态，添加新消息
+      addMessage('', 'ai', 'url-extraction-result', result);
+    } else if (result.requestId) {
+      // 处理完成或失败，更新现有的处理中消息
+      updateMessageByRequestIdForURLExtraction(result.requestId, '', 'url-extraction-result', result);
+    } else {
+      // 兜底：直接添加结果消息
+      addMessage('', 'ai', 'url-extraction-result', result);
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -330,12 +651,6 @@ export default function MyAIChat() {
     }
   };
 
-  const extractURLs = (text: string): string => {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const urls = text.match(urlRegex);
-    return urls ? urls.join('\n') : t('noUrlDetected');
-  };
-
   const getEditingSuggestions = (text: string): string => {
     const suggestions = [
       "建议缩短长句，增加可读性",
@@ -349,13 +664,6 @@ export default function MyAIChat() {
 
   const handleToolbarAction = (action: string): void => {
     switch (action) {
-      case 'url':
-        if (inputValue.trim()) {
-          addMessage(`[${t('urlExtractionResult')}]: ${extractURLs(inputValue)}`, 'ai');
-        } else {
-          addMessage(t('pleaseEnterText'), 'ai');
-        }
-        break;
       case 'edit':
         if (inputValue.trim()) {
           addMessage(`[${t('articleEditSuggestion')}]: ${getEditingSuggestions(inputValue)}`, 'ai');
@@ -398,15 +706,17 @@ export default function MyAIChat() {
               {/* 如果是文章修改结果，使用专门的显示组件 */}
               {message.type === 'text-edit-result' && message.data ? (
                 <TextEditResultDisplay result={message.data} onImageClick={handleImagePreview} />
+              ) : message.type === 'url-extraction-result' && message.data ? (
+                <URLExtractionResultDisplay result={message.data} onImageClick={handleImagePreview} />
               ) : (
                 <>
-                  {/* 图片预览 - 仅对文章修改结果显示 */}
-                  {message.type === 'text-edit-result' && message.data?.imagePreview && (
+                  {/* 图片预览 - 仅对结果显示 */}
+                  {(message.type === 'text-edit-result' || message.type === 'url-extraction-result') && message.data?.imagePreview && (
                     <ImagePreviewGrid images={message.data.imagePreview} onImageClick={handleImagePreview} />
                   )}
                   
                   <div className={`leading-6 text-base break-words overflow-hidden ${
-                    message.type === 'text-edit-result' ? 'whitespace-pre-wrap' : ''
+                    (message.type === 'text-edit-result' || message.type === 'url-extraction-result') ? 'whitespace-pre-wrap' : ''
                   }`}>
                     {message.text}
                   </div>
@@ -485,15 +795,14 @@ export default function MyAIChat() {
 
         {/* Toolbar */}
         <div className="flex justify-around py-2">
-          <button
-            className="bg-transparent border-none text-indigo-500 text-sm flex items-center py-1.5 px-3 rounded-2xl cursor-pointer active:bg-indigo-50"
-            onClick={() => handleToolbarAction('url')}
-          >
-            <svg className="mr-1 w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M10.59 13.41c.41.39.41 1.03 0 1.42-.39.39-1.03.39-1.42 0a5.003 5.003 0 0 1 0-7.07l3.54-3.54a5.003 5.003 0 0 1 7.07 0 5.003 5.003 0 0 1 0 7.07l-1.49 1.49c.01-.82-.12-1.64-.4-2.42l.47-.48a2.982 2.982 0 0 0 0-4.24 2.982 2.982 0 0 0-4.24 0l-3.53 3.53a2.982 2.982 0 0 0 0 4.24zm2.82-4.24c.39-.39 1.03-.39 1.42 0a5.003 5.003 0 0 1 0 7.07l-3.54 3.54a5.003 5.003 0 0 1-7.07 0 5.003 5.003 0 0 1 0-7.07l1.49-1.49c-.01.82.12 1.64.4 2.43l-.47.47a2.982 2.982 0 0 0 0 4.24 2.982 2.982 0 0 0 4.24 0l3.53-3.53a2.982 2.982 0 0 0 0-4.24.973.973 0 0 1 0-1.42z"/>
-            </svg>
-            {t('urlExtraction')}
-          </button>
+          <URLExtractionModal onResult={handleURLExtractionResult}>
+            <button className="bg-transparent border-none text-indigo-500 text-sm flex items-center py-1.5 px-3 rounded-2xl cursor-pointer active:bg-indigo-50">
+              <svg className="mr-1 w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M10.59 13.41c.41.39.41 1.03 0 1.42-.39.39-1.03.39-1.42 0a5.003 5.003 0 0 1 0-7.07l3.54-3.54a5.003 5.003 0 0 1 7.07 0 5.003 5.003 0 0 1 0 7.07l-1.49 1.49c.01-.82-.12-1.64-.4-2.42l.47-.48a2.982 2.982 0 0 0 0-4.24 2.982 2.982 0 0 0-4.24 0l-3.53 3.53a2.982 2.982 0 0 0 0 4.24zm2.82-4.24c.39-.39 1.03-.39 1.42 0a5.003 5.003 0 0 1 0 7.07l-3.54 3.54a5.003 5.003 0 0 1-7.07 0 5.003 5.003 0 0 1 0-7.07l1.49-1.49c-.01.82.12 1.64.4 2.43l-.47.47a2.982 2.982 0 0 0 0 4.24 2.982 2.982 0 0 0 4.24 0l3.53-3.53a2.982 2.982 0 0 0 0-4.24.973.973 0 0 1 0-1.42z"/>
+              </svg>
+              {t('urlExtraction')}
+            </button>
+          </URLExtractionModal>
 
           <TextEditModal onResult={handleTextEditResult}>
             <button className="bg-transparent border-none text-indigo-500 text-sm flex items-center py-1.5 px-3 rounded-2xl cursor-pointer active:bg-indigo-50">
