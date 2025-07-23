@@ -6,10 +6,40 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
+// Custom email validation function - more lenient than z.string().email()
+const isValidEmail = (email: string): boolean => {
+  // Basic email pattern that's more forgiving than Zod's default
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
+// Custom URL validation function - more lenient than z.string().url()
+const isValidUrl = (url: string): boolean => {
+  try {
+    new URL(url)
+    return true
+  } catch {
+    // Try with http:// prefix if it doesn't start with a protocol
+    if (!url.match(/^https?:\/\//i)) {
+      try {
+        new URL(`http://${url}`)
+        return true
+      } catch {
+        return false
+      }
+    }
+    return false
+  }
+}
+
 // Zod schema for URL extraction results
 const ExtractUrlResultSchema = z.object({
-  urls: z.array(z.string().url()).describe("List of URLs found in the image"),
-  emails: z.array(z.string().email()).describe("List of email addresses found in the image"),
+  urls: z.array(z.string().refine(isValidUrl, {
+    message: "Invalid URL format"
+  })).describe("List of URLs found in the image"),
+  emails: z.array(z.string().refine(isValidEmail, {
+    message: "Invalid email format"
+  })).describe("List of email addresses found in the image"),
   text: z.string().describe("All text content extracted from the image")
 })
 
@@ -96,9 +126,44 @@ Requirements:
       }
 
       const parsedResult = JSON.parse(content)
-      const validatedResult = ExtractUrlResultSchema.parse(parsedResult)
       
-      return validatedResult
+      // Clean and validate URLs before schema validation
+      if (parsedResult.urls && Array.isArray(parsedResult.urls)) {
+        parsedResult.urls = parsedResult.urls.filter((url: any) => {
+          if (typeof url !== 'string') return false
+          return isValidUrl(url.trim())
+        })
+      } else {
+        parsedResult.urls = []
+      }
+      
+      // Clean and validate emails before schema validation
+      if (parsedResult.emails && Array.isArray(parsedResult.emails)) {
+        parsedResult.emails = parsedResult.emails.filter((email: any) => {
+          if (typeof email !== 'string') return false
+          return isValidEmail(email.trim())
+        })
+      } else {
+        parsedResult.emails = []
+      }
+      
+      // Ensure text field exists
+      if (typeof parsedResult.text !== 'string') {
+        parsedResult.text = ''
+      }
+      
+      try {
+        const validatedResult = ExtractUrlResultSchema.parse(parsedResult)
+        return validatedResult
+      } catch (validationError) {
+        console.warn('Schema validation failed, using cleaned result:', validationError)
+        // Return cleaned result even if schema validation fails
+        return {
+          urls: parsedResult.urls || [],
+          emails: parsedResult.emails || [],
+          text: parsedResult.text || ''
+        } as ExtractUrlResult
+      }
     } catch (error) {
       lastError = error as Error
       console.error(`Attempt ${attempt} failed for ${file.name}:`, error)
