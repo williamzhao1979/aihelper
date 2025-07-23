@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harmony Health - 登录</title>
+    <style>
+        :root {
+            /* 森林主题 (默认) */
+            --bg-gradient-start: #f8fffe;
+            --bg-gradient-mid: #f0f9f5;
+            --bg-gradient-end: #e8f5f0;
+            --primary-color: #7dd87a;
+            --primary-light: #a8e6a1;
+            --primary-dark: #2d5a3d;
+            --secondary-color: #6b8e7a;
+            --accent-color: #87ceeb;
+            --accent-dark: #6bb6e8;
+            --text-primary: #2d5a3d;
+            --text-secondary: #6b8e7a;
+            --text-muted: #a8c4b5;
+            --border-color: #e8f5f0;
+            --border-hover: #d0e8d5;
+            --card-bg: #ffffff;
+            --input-bg: #fafffe;
+            --tab-bg: #f8fffe;
+            --leaf-1-color: #a8e6a1;
+            --leaf-1-dark: #7dd87a;
+            --leaf-2-color: #87ceeb;
+            --leaf-2-dark: #6bb6e8;
+            --leaf-3-color: #ffd89b;
+            --leaf-3-dark: #ffb347;
+            --particle-color: #a8e6a1;
+        }
+
+        [data-theme="ocean"] {
+            --bg-gradient-start: #f0f8ff;
+            --bg-gradient-mid: #e6f3ff;
+            --bg-gradient-end: #ddeeff;
+            --primary-color: #4a9eff;
+            --primary-light: #87ceeb;
+            --primary-dark: #1e3a5f;
+            --secondary-color: #5a8eb3;
+            --accent-color: #20b2aa;
+            --accent-dark: #17a2b8;
+            --text-primary: #1e3a5f;
+            --text-secondary: #5a8eb3;
+            --text-muted: #a8c8e0;
+            --border-color: #ddeeff;
+            --border-hover: #c9e2ff;
+            --card-bg: #ffffff;
+            --input-bg: #f8fcff;
+            --tab-bg: #f0f8ff;
+            --leaf-1-color: #87ceeb;
+            --leaf-1-dark: #4a9eff;
+            --leaf-2-color: #20b2aa;
+            --leaf-2-dark: #17a2b8;
+            --leaf-3-color: #b0e0e6;
+            --leaf-3-dark: #87ceeb;
+            --particle-color: #4a9eff;
+        }
+
+        [data-theme="sunset"] {
+            --bg-gradient-start: #fff8f0;
+            --bg-gradient-mid: #ffe8d6;
+            --bg-gradient-end: #ffd4b8;
+            --primary-color: #ff8a65;
+            --primary-light: #ffab91;
+            --primary-dark: #5d4037;
+            --secondary-color: #8d6e63;
+            --accent-color: #ff7043;
+            --accent-dark: #f4511e;
+            --text-primary: #5d4037;
+            --text-secondary: #8d6e63;
+            --text-muted: #bcaaa4;
+            --border-color: #ffd4b8;
+            --border-hover: #ffcc9a;
+            --card-bg: #ffffff;
+            --input-bg: #fffbf8;
+            --tab-bg: #fff8f0;
+            --leaf-1-color: #ffab91;
+            --leaf-1-dark: #ff8a65;
+            --leaf-2-color: #ff7043;
+            --leaf-2-dark: #f4511e;
+            --leaf-3-color: #ffd54f;
+            --leaf-3-dark: #ffb300;
+            --particle-color: #ff8a65;
+        }
+
+        [data-theme="fantasy"] {
+            --bg-gradient-start: #1a1a3a;
+            --bg-gradient-mid: #2d2d5a;
+            --bg-gradient-end: #404080;
+            --primary-color: #ffd700;
+            --primary-light: #ffeb3b;
+            --primary-dark: #ffffff;
+            --secondary-color: #c8b2db;
+            --accent-color: #00bcd4;
+            --accent-dark: #0097a7;
+            --text-primary: #ffffff;
+            --text-secondary: #c8b2db;
+            --text-muted: #9575cd;
+            --border-color: #5c6bc0;
+            --border-hover: #7986cb;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --input-bg: rgba(255, 255, 255, 0.1);
+            --tab-bg: rgba(255, 255, 255, 0.08);
+            --leaf-1-color: #ffd700;
+            --leaf-1-dark: #ffb300;
+            --leaf-2-color: #00bcd4;
+            --leaf-2-dark: #0097a7;
+            --leaf-3-color: #e91e63;
+            --leaf-3-dark: #c2185b;
+            --particle-color: #ffd700;
+        }
+
+        [data-theme="night"] {
+            --bg-gradient-start: #1a1a2e;
+            --bg-gradient-mid: #16213e;
+            --bg-gradient-end: #0f3460;
+            --primary-color: #64b5f6;
+            --primary-light: #90caf9;
+            --primary-dark: #e8eaf6;
+            --secondary-color: #b0bec5;
+            --accent-color: #81c784;
+            --accent-dark: #66bb6a;
+            --text-primary: #e8eaf6;
+            --text-secondary: #b0bec5;
+            --text-muted: #78909c;
+            --border-color: #37474f;
+            --border-hover: #455a64;
+            --card-bg: #263238;
+            --input-bg: #2c3e50;
+            --tab-bg: #34495e;
+            --leaf-1-color: #64b5f6;
+            --leaf-1-dark: #42a5f5;
+            --leaf-2-color: #81c784;
+            --leaf-2-dark: #66bb6a;
+            --leaf-3-color: #ffb74d;
+            --leaf-3-dark: #ffa726;
+            --particle-color: #64b5f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-mid) 50%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: all 0.5s ease;
+        }
+
+        .phone-container {
+            width: 375px;
+            height: 812px;
+            background: var(--card-bg);
+            border-radius: 25px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        /* 移除悬浮风格 */
+        .theme-selector {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            background: var(--card-bg);
+            padding: 6px;
+            border-radius: 18px;
+            margin: 15px auto 0;
+            width: fit-content;
+            transition: all 0.3s ease;
+        }
+
+        .theme-btn {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            background: var(--input-bg);
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.1);
+        }
+
+        [data-theme="fantasy"] .phone-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 
+                       0 0 40px rgba(255, 215, 0, 0.1);
+        }
+
+        [data-theme="fantasy"] .logo {
+            background: linear-gradient(135deg, #ffd700 0%, #ffeb3b 50%, #00bcd4 100%);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        [data-theme="fantasy"] .login-button {
+            background: linear-gradient(135deg, #ffd700 0%, #ffeb3b 100%);
+            color: #1a1a3a;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+            border: 1px solid rgba(255, 215, 0, 0.6);
+        }
+
+        [data-theme="fantasy"] .login-button:hover {
+            box-shadow: 0 6px 25px rgba(255, 215, 0, 0.6);
+            transform: translateY(-3px);
+        }
+
+        [data-theme="fantasy"] .input-field {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        [data-theme="fantasy"] .input-field:focus {
+            border-color: #ffd700;
+            box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        [data-theme="fantasy"] .social-button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        [data-theme="fantasy"] .social-button:hover {
+            border-color: #ffd700;
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+        }
+
+        /* 魔法星光效果 */
+        [data-theme="fantasy"] .magic-stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        [data-theme="fantasy"] .magic-star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #ffd700;
+            border-radius: 50%;
+            animation: twinkle 3s ease-in-out infinite;
+        }
+
+        [data-theme="fantasy"] .magic-star:nth-child(1) { top: 10%; left: 20%; animation-delay: 0s; }
+        [data-theme="fantasy"] .magic-star:nth-child(2) { top: 20%; right: 25%; animation-delay: 1s; }
+        [data-theme="fantasy"] .magic-star:nth-child(3) { top: 40%; left: 10%; animation-delay: 2s; }
+        [data-theme="fantasy"] .magic-star:nth-child(4) { top: 60%; right: 15%; animation-delay: 0.5s; }
+        [data-theme="fantasy"] .magic-star:nth-child(5) { top: 80%; left: 30%; animation-delay: 1.5s; }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+            to { box-shadow: 0 0 30px rgba(255, 215, 0, 0.7); }
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+
+        .theme-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+            transform: scale(1.15);
+        }
+
+        /* 默认隐藏魔法星星 */
+        .magic-stars {
+            display: none;
+        }
+
+        /* 只在幻想主题下显示魔法星星 */
+        [data-theme="fantasy"] .magic-stars {
+            display: block;
+        }
+
+        .login-container {
+            padding: 40px 40px 25px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .background-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .leaf-1, .leaf-2, .leaf-3 {
+            position: absolute;
+            opacity: 0.15;
+            transition: all 0.5s ease;
+        }
+
+        .leaf-1 {
+            top: 160px;
+            right: -20px;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(ellipse at center, var(--leaf-1-color) 0%, var(--leaf-1-dark) 70%);
+            border-radius: 0 100% 0 100%;
+            transform: rotate(45deg);
+        }
+
+        .leaf-2 {
+            top: 300px;
+            left: -30px;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(ellipse at center, var(--leaf-2-color) 0%, var(--leaf-2-dark) 70%);
+            border-radius: 100% 0 100% 0;
+            transform: rotate(-30deg);
+        }
+
+        .leaf-3 {
+            bottom: 200px;
+            right: -25px;
+            width: 70px;
+            height: 70px;
+            background: radial-gradient(ellipse at center, var(--leaf-3-color) 0%, var(--leaf-3-dark) 70%);
+            border-radius: 50% 0 50% 50%;
+            transform: rotate(20deg);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 15px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        .logo::before {
+            content: '🌿';
+            font-size: 35px;
+        }
+
+        .app-name {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+            letter-spacing: -0.5px;
+            transition: color 0.5s ease;
+        }
+
+        .app-tagline {
+            font-size: 16px;
+            color: var(--text-secondary);
+            font-weight: 400;
+            transition: color 0.5s ease;
+        }
+
+        .form-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .welcome-text {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .login-tabs {
+            display: flex;
+            background: #f8fffe;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 25px;
+            border: 1px solid #e8f5f0;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b8e7a;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background: #ffffff;
+            color: #2d5a3d;
+            box-shadow: 0 2px 8px rgba(45, 90, 61, 0.1);
+        }
+
+        .form-content {
+            display: none;
+        }
+
+        .form-content.active {
+            display: block;
+        }
+
+        .verification-input {
+            position: relative;
+            display: flex;
+            gap: 8px;
+        }
+
+        .verification-field {
+            flex: 1;
+        }
+
+        .send-code-btn {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #87ceeb 0%, #6bb6e8 100%);
+            border: none;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            min-width: 100px;
+        }
+
+        .send-code-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(107, 182, 232, 0.3);
+        }
+
+        .send-code-btn:disabled {
+            background: #a8c4b5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .send-code-btn.countdown {
+            background: #a8c4b5;
+            cursor: not-allowed;
+        }
+
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2d5a3d;
+            margin-bottom: 8px;
+        }
+
+        .welcome-subtitle {
+            font-size: 16px;
+            color: #6b8e7a;
+            line-height: 1.4;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-label {
+            font-size: 14px;
+            color: #5a7a68;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid #e8f5f0;
+            border-radius: 16px;
+            font-size: 16px;
+            background: #fafffe;
+            transition: all 0.3s ease;
+            color: #2d5a3d;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #7dd87a;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(125, 216, 122, 0.1);
+        }
+
+        .input-field::placeholder {
+            color: #a8c4b5;
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+
+        .forgot-password a {
+            color: #7dd87a;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #7dd87a 0%, #a8e6a1 100%);
+            border: none;
+            border-radius: 16px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(125, 216, 122, 0.3);
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(125, 216, 122, 0.4);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e8f5f0;
+        }
+
+        .divider-text {
+            background: #ffffff;
+            padding: 0 20px;
+            color: #a8c4b5;
+            font-size: 14px;
+        }
+
+        .social-login {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .social-button {
+            flex: 1;
+            padding: 16px;
+            border: 2px solid #e8f5f0;
+            border-radius: 12px;
+            background: #ffffff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .social-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .wechat-btn:hover {
+            border-color: #07C160;
+            box-shadow: 0 4px 12px rgba(7, 193, 96, 0.2);
+        }
+
+        .microsoft-btn:hover {
+            border-color: #00A1F1;
+            box-shadow: 0 4px 12px rgba(0, 161, 241, 0.2);
+        }
+
+        .apple-btn:hover {
+            border-color: #333333;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 10px;
+            padding-bottom: 15px;
+        }
+
+        .signup-text {
+            color: #6b8e7a;
+            font-size: 14px;
+        }
+
+        .signup-text a {
+            color: #7dd87a;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .floating-particles {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #a8e6a1;
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .particle-1 {
+            top: 20%;
+            left: 15%;
+            animation-delay: 0s;
+        }
+
+        .particle-2 {
+            top: 40%;
+            right: 20%;
+            animation-delay: 2s;
+        }
+
+        .particle-3 {
+            bottom: 30%;
+            left: 25%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        @media (max-width: 414px) {
+            .phone-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .login-container {
+                padding: 25px 25px 15px;
+            }
+            
+            .header {
+                margin-bottom: 12px;
+            }
+            
+            .welcome-text {
+                margin-bottom: 12px;
+            }
+            
+            .theme-selector {
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div class="background-elements">
+            <div class="leaf-1"></div>
+            <div class="leaf-2"></div>
+            <div class="leaf-3"></div>
+            <div class="floating-particles particle-1"></div>
+            <div class="floating-particles particle-2"></div>
+            <div class="floating-particles particle-3"></div>
+            <!-- 魔法星光效果（仅在幻想主题下显示） -->
+            <div class="magic-stars">
+                <div class="magic-star"></div>
+                <div class="magic-star"></div>
+                <div class="magic-star"></div>
+                <div class="magic-star"></div>
+                <div class="magic-star"></div>
+            </div>
+        </div>
+        
+        <div class="login-container">
+            <div class="header">
+                <div class="logo"></div>
+                <h1 class="app-name">Harmony</h1>
+                <p class="app-tagline">身心自然，和谐健康</p>
+                
+                <!-- 主题切换器整合到标题区域 -->
+                <div class="theme-selector">
+                    <button class="theme-btn" data-theme="forest" title="森林主题">🌿</button>
+                    <button class="theme-btn" data-theme="ocean" title="海洋主题">🌊</button>
+                    <button class="theme-btn" data-theme="sunset" title="日落主题">🌅</button>
+                    <button class="theme-btn" data-theme="night" title="夜间主题">🌙</button>
+                    <button class="theme-btn active" data-theme="fantasy" title="幻想主题">⭐</button>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="welcome-text">
+                    <h2 class="welcome-title">欢迎回来</h2>
+                    <p class="welcome-subtitle">开启您的健康之旅</p>
+                </div>
+
+                <div class="login-tabs">
+                    <button class="tab-button active" data-tab="email">邮箱登录</button>
+                    <button class="tab-button" data-tab="phone">手机登录</button>
+                </div>
+
+                <form>
+                    <!-- 邮箱登录表单 -->
+                    <div id="email-form" class="form-content active">
+                        <div class="input-group">
+                            <label class="input-label" for="email">邮箱地址</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                class="input-field" 
+                                placeholder="请输入您的邮箱"
+                                required
+                            >
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label" for="password">密码</label>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                class="input-field" 
+                                placeholder="请输入您的密码"
+                                required
+                            >
+                        </div>
+
+                        <div class="forgot-password">
+                            <a href="#">忘记密码？</a>
+                        </div>
+                    </div>
+
+                    <!-- 手机验证码登录表单 -->
+                    <div id="phone-form" class="form-content">
+                        <div class="input-group">
+                            <label class="input-label" for="phone">手机号码</label>
+                            <input 
+                                type="tel" 
+                                id="phone" 
+                                class="input-field" 
+                                placeholder="请输入您的手机号码"
+                                required
+                            >
+                        </div>
+
+                        <div class="input-group">
+                            <label class="input-label" for="verification-code">验证码</label>
+                            <div class="verification-input">
+                                <input 
+                                    type="text" 
+                                    id="verification-code" 
+                                    class="input-field verification-field" 
+                                    placeholder="请输入验证码"
+                                    maxlength="6"
+                                    required
+                                >
+                                <button type="button" class="send-code-btn" id="send-code">发送验证码</button>
+                            </div>
+                        </div>
+
+                        <div class="forgot-password">
+                            <a href="#">收不到验证码？</a>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="login-button">登录</button>
+                </form>
+
+                <div class="social-login">
+                    <button class="social-button wechat-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 4.882-1.642 7.312-.956-1.797-3.021-5.129-5.230-8.988-5.230z" fill="#07C160"/>
+                            <path d="M23.5 14.841c0-3.24-2.932-5.862-6.561-5.862-3.629 0-6.561 2.622-6.561 5.862s2.932 5.862 6.561 5.862c.887 0 1.741-.149 2.532-.419a.671.671 0 0 1 .563.077l1.481.867a.265.265 0 0 0 .133.043c.126 0 .23-.103.23-.230 0-.057-.023-.112-.038-.170l-.304-1.188a.463.463 0 0 1 .168-.524C22.328 18.757 23.5 16.898 23.5 14.841z" fill="#07C160"/>
+                        </svg>
+                    </button>
+                    <button class="social-button microsoft-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z" fill="#00A1F1"/>
+                        </svg>
+                    </button>
+                    <button class="social-button apple-btn">
+                        <svg width="18" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" fill="#000"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p class="signup-text">
+                    还没有账户？<a href="#">立即注册</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 主题切换功能
+        const themeButtons = document.querySelectorAll('.theme-btn');
+        const body = document.body;
+
+        // 初始化主题 - 默认为幻想主题
+        let currentTheme = 'fantasy';
+        
+        // 设置主题图标
+        const themeIcons = {
+            forest: '🌿',
+            ocean: '🌊', 
+            sunset: '🌅',
+            night: '🌙',
+            fantasy: '⭐'
+        };
+
+        // 更新主题图标显示
+        function updateThemeIcons() {
+            themeButtons.forEach(btn => {
+                const theme = btn.getAttribute('data-theme');
+                btn.textContent = themeIcons[theme];
+                
+                if (theme === currentTheme) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        // 切换主题
+        function switchTheme(theme) {
+            body.setAttribute('data-theme', theme);
+            currentTheme = theme;
+            updateThemeIcons();
+        }
+
+        // 初始化图标显示
+        updateThemeIcons();
+        
+        // 设置默认主题
+        switchTheme(currentTheme);
+
+        // 添加主题切换事件监听器
+        themeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const selectedTheme = this.getAttribute('data-theme');
+                switchTheme(selectedTheme);
+            });
+        });
+
+        // 标签页切换功能
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const formContents = document.querySelectorAll('.form-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const targetTab = this.getAttribute('data-tab');
+                
+                // 移除所有活动状态
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                formContents.forEach(content => content.classList.remove('active'));
+                
+                // 添加活动状态
+                this.classList.add('active');
+                document.getElementById(targetTab + '-form').classList.add('active');
+            });
+        });
+
+        // 发送验证码功能
+        let countdownTimer;
+        const sendCodeBtn = document.getElementById('send-code');
+        
+        sendCodeBtn.addEventListener('click', function() {
+            const phoneInput = document.getElementById('phone');
+            const phoneNumber = phoneInput.value.trim();
+            
+            // 简单的手机号验证
+            if (!phoneNumber || !/^1[3-9]\d{9}$/.test(phoneNumber)) {
+                alert('请输入正确的手机号码');
+                return;
+            }
+            
+            // 开始倒计时
+            startCountdown();
+        });
+
+        function startCountdown() {
+            let count = 60;
+            sendCodeBtn.disabled = true;
+            sendCodeBtn.classList.add('countdown');
+            
+            countdownTimer = setInterval(() => {
+                sendCodeBtn.textContent = `${count}秒后重发`;
+                count--;
+                
+                if (count < 0) {
+                    clearInterval(countdownTimer);
+                    sendCodeBtn.disabled = false;
+                    sendCodeBtn.classList.remove('countdown');
+                    sendCodeBtn.textContent = '发送验证码';
+                }
+            }, 1000);
+        }
+
+        // 登录按钮点击效果
+        document.querySelector('.login-button').addEventListener('click', function(e) {
+            e.preventDefault();
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+
+        // 社交登录按钮点击效果
+        document.querySelectorAll('.social-button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+            });
+        });
+
+        // 输入框焦点效果
+        const inputs = document.querySelectorAll('.input-field');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.style.transform = 'translateY(-2px)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.style.transform = '';
+            });
+        });
+
+        // 验证码输入框自动聚焦
+        document.getElementById('phone').addEventListener('input', function() {
+            if (this.value.length === 11) {
+                // 手机号输入完成后可以考虑自动聚焦到验证码输入框
+            }
+        });
+    </script>
+</body>
+</html>

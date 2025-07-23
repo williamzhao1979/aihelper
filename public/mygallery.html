@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绘艺展示 - 专业绘画作品平台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', Tahoma, Geneva, Verdana, sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        :root {
+            --primary: #4e54c8;
+            --secondary: #8f94fb;
+            --accent: #ff7e5f;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --success: #28a745;
+            --warning: #ffc107;
+            --gallery-bg: #f9f7ff;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7f1 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            padding-bottom: 40px;
+        }
+        
+        .gallery-app {
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+        
+        header {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo i {
+            font-size: 2rem;
+        }
+        
+        .logo h1 {
+            font-weight: 700;
+            font-size: 1.8rem;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 25px;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        
+        .nav-links a:hover, .nav-links a.active {
+            color: white;
+            background: rgba(255, 255, 255, 0.15);
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+        }
+        
+        .lang-switch {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .lang-switch:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        .hero {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            text-align: center;
+        }
+        
+        .hero h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--dark);
+            max-width: 700px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+        }
+        
+        .filter-section {
+            max-width: 1200px;
+            margin: 0 auto 30px;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            background: white;
+            border: 1px solid var(--secondary);
+            color: var(--dark);
+            padding: 8px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn:hover, .filter-btn.active {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .gallery-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+        }
+        
+        .art-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s ease;
+        }
+        
+        .art-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .art-image {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .art-details {
+            padding: 20px;
+        }
+        
+        .art-title {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .artist-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .artist-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .artist-name {
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .art-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+        
+        .art-meta {
+            display: flex;
+            justify-content: space-between;
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        .art-tags {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .art-tag {
+            background: rgba(143, 148, 251, 0.15);
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        
+        .featured-section {
+            max-width: 1400px;
+            margin: 50px auto;
+            padding: 0 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .featured-artist {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .artist-portrait {
+            flex: 0 0 250px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .artist-portrait img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .artist-bio {
+            flex: 1;
+        }
+        
+        .artist-name-large {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .artist-title {
+            color: var(--accent);
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .artist-description {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+        
+        .artist-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .stat-card {
+            background: rgba(143, 148, 251, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 40px 0;
+        }
+        
+        .page-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 1px solid var(--secondary);
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .page-btn:hover, .page-btn.active {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            color: #666;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            max-width: 1200px;
+            margin: 50px auto 0;
+        }
+        
+        @media (max-width: 900px) {
+            .featured-artist {
+                flex-direction: column;
+            }
+            
+            .artist-portrait {
+                flex: 0 0 300px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .hero h2 {
+                font-size: 1.8rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .artist-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="gallery-app">
+        <!-- 头部导航 -->
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-palette"></i>
+                    <h1>绘艺展示</h1>
+                </div>
+                <div class="nav-links">
+                    <a href="#" id="nav-home">
+                        <i class="fas fa-home"></i> 
+                        <span class="nav-text">首页</span>
+                    </a>
+                    <a href="#" class="active">
+                        <i class="fas fa-images"></i> 
+                        <span class="nav-text">作品展示</span>
+                    </a>
+                    <a href="#">
+                        <i class="fas fa-info-circle"></i> 
+                        <span class="nav-text">关于我们</span>
+                    </a>
+                    <a href="#">
+                        <i class="fas fa-book"></i> 
+                        <span class="nav-text">艺术教程</span>
+                    </a>
+                    <a href="#">
+                        <i class="fas fa-envelope"></i> 
+                        <span class="nav-text">联系我们</span>
+                    </a>
+                    <button class="lang-switch" id="lang-switch">
+                        <i class="fas fa-globe"></i>
+                        <span id="lang-text">English</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+        
+        <!-- 主标题区域 -->
+        <section class="hero">
+            <h2>探索我的图库</h2>
+        </section>
+        
+        <!-- 筛选区域 -->
+        <div class="filter-section">
+            <button class="filter-btn active">全部</button>
+            <button class="filter-btn">油画</button>
+            <button class="filter-btn">水彩</button>
+            <button class="filter-btn">素描</button>
+            <button class="filter-btn">数字艺术</button>
+            <button class="filter-btn">风景</button>
+            <button class="filter-btn">人物</button>
+            <button class="filter-btn">抽象</button>
+        </div>
+        
+        <!-- 作品展示区域 -->
+        <div class="gallery-container">
+            <!-- 作品1 -->
+            <div class="art-card">
+                <img src="https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&w=600&h=400&q=80" alt="山水风景" class="art-image">
+                <div class="art-details">
+                    <h3 class="art-title">晨曦山色</h3>
+                    <div class="artist-info">
+                        <div class="artist-avatar">张</div>
+                        <span class="artist-name">张美琳</span>
+                    </div>
+                    <p class="art-description">这幅作品捕捉了日出时分山间的微妙光影变化，使用了丰富的色彩层次展现自然的壮丽。</p>
+                    <div class="art-meta">
+                        <span><i class="fas fa-heart"></i> 248</span>
+                        <span><i class="fas fa-eye"></i> 1.2K</span>
+                        <span>2023-06-15</span>
+                    </div>
+                    <div class="art-tags">
+                        <span class="art-tag">油画</span>
+                        <span class="art-tag">风景</span>
+                        <span class="art-tag">印象派</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 作品2 -->
+            <div class="art-card">
+                <img src="https://images.unsplash.com/photo-1543857778-c4a1a569e7bd?auto=format&fit=crop&w=600&h=400&q=80" alt="人物肖像" class="art-image">
+                <div class="art-details">
+                    <h3 class="art-title">沉思者</h3>
+                    <div class="artist-info">
+                        <div class="artist-avatar">王</div>
+                        <span class="artist-name">王思远</span>
+                    </div>
+                    <p class="art-description">这幅肖像画通过细腻的笔触捕捉了人物内心的深度思考，背景的抽象处理增强了主题的表达。</p>
+                    <div class="art-meta">
+                        <span><i class="fas fa-heart"></i> 187</span>
+                        <span><i class="fas fa-eye"></i> 980</span>
+                        <span>2023-07-22</span>
+                    </div>
+                    <div class="art-tags">
+                        <span class="art-tag">丙烯</span>
+                        <span class="art-tag">人物</span>
+                        <span class="art-tag">写实</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 作品3 -->
+            <div class="art-card">
+                <img src="https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?auto=format&fit=crop&w=600&h=400&q=80" alt="抽象艺术" class="art-image">
+                <div class="art-details">
+                    <h3 class="art-title">色彩交响</h3>
+                    <div class="artist-info">
+                        <div class="artist-avatar">李</div>
+                        <span class="artist-name">李雨辰</span>
+                    </div>
+                    <p class="art-description">大胆的色彩碰撞与流畅的线条交织，创造出一场视觉的交响乐，激发观者的想象力。</p>
+                    <div class="art-meta">
+                        <span><i class="fas fa-heart"></i> 324</span>
+                        <span><i class="fas fa-eye"></i> 1.5K</span>
+                        <span>2023-05-10</span>
+                    </div>
+                    <div class="art-tags">
+                        <span class="art-tag">抽象</span>
+                        <span class="art-tag">混合媒介</span>
+                        <span class="art-tag">现代艺术</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 作品4 -->
+            <div class="art-card">
+                <img src="https://images.unsplash.com/photo-1501084817091-a4f3d1d19e07?auto=format&fit=crop&w=600&h=400&q=80" alt="水彩风景" class="art-image">
+                <div class="art-details">
+                    <h3 class="art-title">水乡记忆</h3>
+                    <div class="artist-info">
+                        <div class="artist-avatar">陈</div>
+                        <span class="artist-name">陈晓静</span>
+                    </div>
+                    <p class="art-description">运用水彩的透明特性描绘江南水乡的柔美，画面中水的流动感与建筑的静态形成对比。</p>
+                    <div class="art-meta">
+                        <span><i class="fas fa-heart"></i> 210</span>
+                        <span><i class="fas fa-eye"></i> 1.1K</span>
+                        <span>2023-08-05</span>
+                    </div>
+                    <div class="art-tags">
+                        <span class="art-tag">水彩</span>
+                        <span class="art-tag">风景</span>
+                        <span class="art-tag">传统</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 作品5 -->
+            <div class="art-card">
+                <img src="https://images.unsplash.com/photo-1531913764164-f85c52e6e654?auto=format&fit=crop&w=600&h=400&q=80" alt="数字艺术" class="art-image">
+                <div class="art-details">
+                    <h3 class="art-title">未来都市</h3>
+                    <div class="artist-info">
+                        <div class="artist-avatar">赵</div>
+                        <span class="artist-name">赵天宇</span>
+                    </div>
+                    <p class="art-description">数字艺术创作的未来都市景观，融合了科幻元素与现实主义细节，展现科技与人文的融合。</p>
+                    <div class="art-meta">
+                        <span><i class="fas fa-heart"></i> 452</span>
+                        <span><i class="fas fa-eye"></i> 2.3K</span>
+                        <span>2023-09-18</span>
+                    </div>
+                    <div class="art-tags">
+                        <span class="art-tag">数字艺术</span>
+                        <span class="art-tag">科幻</span>
+                        <span class="art-tag">概念设计</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 作品6 -->
+            <div class="art-card">
+                <img src="https://images.unsplash.com/photo-1515405295579-ba7b45403062?auto=format&fit=crop&w=600&h=400&q=80" alt="静物画" class="art-image">
+                <div class="art-details">
+                    <h3 class="art-title">静物时光</h3>
+                    <div class="artist-info">
+                        <div class="artist-avatar">刘</div>
+                        <span class="artist-name">刘艺轩</span>
+                    </div>
+                    <p class="art-description">精心布置的静物组合，通过光影的细腻处理展现物体的质感与空间关系，体现了古典绘画的技法。</p>
+                    <div class="art-meta">
+                        <span><i class="fas fa-heart"></i> 175</span>
+                        <span><i class="fas fa-eye"></i> 850</span>
+                        <span>2023-07-03</span>
+                    </div>
+                    <div class="art-tags">
+                        <span class="art-tag">油画</span>
+                        <span class="art-tag">静物</span>
+                        <span class="art-tag">古典</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 分页 -->
+        <div class="pagination">
+            <div class="page-btn active">1</div>
+            <div class="page-btn">2</div>
+            <div class="page-btn">3</div>
+            <div class="page-btn">4</div>
+            <div class="page-btn"><i class="fas fa-chevron-right"></i></div>
+        </div>
+
+
+        <!-- 精选艺术家 -->
+        <div class="featured-section">
+         
+                    <div class="artist-stats">
+                        <div class="stat-card">
+                            <div class="stat-value">28</div>
+                            <div class="stat-label">自己创作</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">12</div>
+                            <div class="stat-label">素材</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">150+</div>
+                            <div class="stat-label">总收藏</div>
+                        </div>
+                    </div>
+
+
+        </div>
+        
+        <!-- 页脚 -->
+        <footer>
+            <p>© 2025 艺术走进我的生活</p>
+        </footer>
+    </div>
+
+    <script>
+        // 简单的交互效果
+        document.addEventListener('DOMContentLoaded', function() {
+            // 筛选按钮交互
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // 分页按钮交互
+            const pageBtns = document.querySelectorAll('.page-btn');
+            pageBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    pageBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // 语言切换
+            const langSwitch = document.getElementById('lang-switch');
+            langSwitch.addEventListener('click', function() {
+                const langText = document.getElementById('lang-text');
+                if (langText.textContent === 'English') {
+                    langText.textContent = '中文';
+                } else {
+                    langText.textContent = 'English';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

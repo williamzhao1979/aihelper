@@ -117,6 +117,16 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const processingMode = formData.get('processingMode') as string || 'individual'
+    const sessionId = formData.get('sessionId') as string
+    const instanceId = formData.get('instanceId') as string
+    
+    // 记录请求信息用于调试和监控
+    console.log('URL提取请求:', {
+      sessionId: sessionId?.slice(-12),
+      instanceId: instanceId?.slice(-8),
+      processingMode,
+      timestamp: new Date().toISOString()
+    })
     
     // Get all uploaded image files
     const imageFiles: File[] = []
@@ -129,9 +139,15 @@ export async function POST(request: NextRequest) {
     if (imageFiles.length === 0) {
       return NextResponse.json({
         success: false,
-        error: '没有找到图片文件'
+        error: '没有找到图片文件',
+        sessionId,
+        instanceId
       }, { status: 400 })
     }
+
+    // 添加并发限制检查（可选）
+    const maxConcurrentRequests = 10
+    // 这里可以实现更复杂的队列管理逻辑
 
     if (processingMode === 'merged' && imageFiles.length > 1) {
       // Process all images together and merge results
@@ -153,6 +169,8 @@ export async function POST(request: NextRequest) {
         
         return NextResponse.json({
           success: true,
+          sessionId,
+          instanceId,
           results: [{
             success: true,
             imageName: `合并结果 (${imageFiles.length} 张图片)`,
@@ -165,7 +183,9 @@ export async function POST(request: NextRequest) {
         console.error('Merged processing failed:', error)
         return NextResponse.json({
           success: false,
-          error: `合并处理失败: ${error instanceof Error ? error.message : '未知错误'}`
+          error: `合并处理失败: ${error instanceof Error ? error.message : '未知错误'}`,
+          sessionId,
+          instanceId
         }, { status: 500 })
       }
     } else {
@@ -197,6 +217,8 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
+        sessionId,
+        instanceId,
         results: results
       })
     }
@@ -205,7 +227,9 @@ export async function POST(request: NextRequest) {
     console.error('URL extraction API error:', error)
     return NextResponse.json({
       success: false,
-      error: '服务器处理错误: ' + error.message
+      error: '服务器处理错误: ' + error.message,
+      sessionId: (await request.formData()).get('sessionId'),
+      instanceId: (await request.formData()).get('instanceId')
     }, { status: 500 })
   }
 }
