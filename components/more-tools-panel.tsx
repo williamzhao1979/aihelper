@@ -71,6 +71,14 @@ const toolCategories = [
         category: 'document'
       },
       {
+        id: 'url-extract-multi',
+        name: '新URL提取器',
+        description: '打开新的URL提取器实例',
+        icon: <Link className="w-4 h-4" />,
+        category: 'document',
+        isNew: true
+      },
+      {
         id: 'pdf-process',
         name: 'PDF处理',
         description: 'PDF文档转换和处理',

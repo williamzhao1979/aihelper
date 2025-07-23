@@ -22,6 +22,8 @@ interface URLExtractionModalProps {
   onResult?: (result: any) => void
   onTimeEstimate?: (estimate: { estimatedTime: number; explanation: string }) => void
   children: React.ReactNode
+  sessionId?: string // 可选的会话ID，用于多实例支持
+  instanceId?: string // 实例ID，用于区分不同的提取器实例
 }
 
 // Add image compression utility
@@ -92,7 +94,14 @@ const estimateProcessingTime = (images: UploadedImage[]): { estimatedTime: numbe
   return { estimatedTime, explanation }
 }
 
-export default function URLExtractionModal({ onProcessingStart, onResult, onTimeEstimate, children }: URLExtractionModalProps) {
+export default function URLExtractionModal({ 
+  onProcessingStart, 
+  onResult, 
+  onTimeEstimate, 
+  children,
+  sessionId: propSessionId,
+  instanceId: propInstanceId
+}: URLExtractionModalProps) {
   const t = useTranslations()
 
   const [open, setOpen] = useState(false)
@@ -110,6 +119,10 @@ export default function URLExtractionModal({ onProcessingStart, onResult, onTime
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [timeEstimate, setTimeEstimate] = useState<{ estimatedTime: number; explanation: string } | null>(null)
   const [previewImage, setPreviewImage] = useState<UploadedImage | null>(null)
+  
+  // 生成唯一的会话ID和实例ID
+  const sessionId = propSessionId || `url-session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  const instanceId = propInstanceId || `url-instance-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
   // 组件卸载时清理摄像头资源
   React.useEffect(() => {
@@ -274,7 +287,7 @@ export default function URLExtractionModal({ onProcessingStart, onResult, onTime
     setIsProcessing(true)
 
     // 生成请求ID
-    const requestId = Math.random().toString(36).substr(2, 9)
+    const requestId = `${sessionId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     
     try {
       // 通知开始处理
@@ -287,8 +300,10 @@ export default function URLExtractionModal({ onProcessingStart, onResult, onTime
         onResult({
           type: 'url-extraction-processing',
           requestId,
+          sessionId,
+          instanceId,
           imageCount: images.length,
-          processingType: '单独处理',
+          processingType: images.length > 1 ? '批量处理' : '单图处理',
           estimatedTime: timeEstimate?.estimatedTime,
           estimatedExplanation: timeEstimate?.explanation,
           imagePreview: images.map(img => ({
@@ -300,9 +315,17 @@ export default function URLExtractionModal({ onProcessingStart, onResult, onTime
         })
       }
 
+      // 立即关闭弹窗并清空图片，让用户回到聊天页面
+      setImages([])
+      setOpen(false)
+
       // 开始实际处理
       const startTime = Date.now()
       const formData = new FormData()
+      
+      // 添加会话和实例信息
+      formData.append('sessionId', sessionId)
+      formData.append('instanceId', instanceId)
       
       images.forEach((image, index) => {
         formData.append(`image_${index}`, image.file)
@@ -326,14 +349,14 @@ export default function URLExtractionModal({ onProcessingStart, onResult, onTime
           onResult({
             ...result,
             requestId,
+            sessionId,
+            instanceId,
             actualProcessingTime,
             estimatedTime: timeEstimate?.estimatedTime,
             timeAccuracy
           })
         }
-
-        // 清空图片并关闭弹窗
-        setOpen(false)
+        // 注意：弹窗已经在处理开始时关闭了
       } else {
         // 处理失败
         if (onResult) {
@@ -341,6 +364,8 @@ export default function URLExtractionModal({ onProcessingStart, onResult, onTime
             success: false,
             error: result.error || 'URL提取失败',
             requestId,
+            sessionId,
+            instanceId,
             actualProcessingTime,
             estimatedTime: timeEstimate?.estimatedTime,
             timeAccuracy
@@ -357,6 +382,8 @@ export default function URLExtractionModal({ onProcessingStart, onResult, onTime
           success: false,
           error: '网络错误或服务器异常',
           requestId,
+          sessionId,
+          instanceId,
           actualProcessingTime,
           estimatedTime: timeEstimate?.estimatedTime
         })
@@ -408,7 +435,7 @@ export default function URLExtractionModal({ onProcessingStart, onResult, onTime
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Link className="w-5 h-5" />
-            URL提取
+            URL提取 {instanceId ? `(实例: ${instanceId.slice(-8)})` : ''}
           </DialogTitle>
         </DialogHeader>
         

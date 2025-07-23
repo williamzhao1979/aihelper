@@ -3,10 +3,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X, MoreHorizontal } from 'lucide-react';
 import TextEditModal from './text-edit-modal';
 import URLExtractionModal from './url-extraction-modal';
+import MultiURLExtractor from './multi-url-extractor';
 import TextComparison from './text-comparison';
 import MoreToolsPanel from './more-tools-panel';
 import type { ToolItem } from './more-tools-panel';
@@ -74,12 +76,22 @@ const URLExtractionResultDisplay = ({ result, onImageClick }: { result: any, onI
         <div className="flex items-center gap-2">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
           <span className="font-semibold text-blue-700">URL提取处理中</span>
+          {result.instanceId && (
+            <Badge variant="outline" className="text-xs">
+              实例: {result.instanceId.slice(-8)}
+            </Badge>
+          )}
         </div>
         
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm space-y-2">
           <div><strong>图片数量：</strong>{result.imageCount} 张</div>
           <div><strong>处理方式：</strong>{result.processingType}</div>
           <div><strong>状态：</strong>正在处理中，请稍候...</div>
+          {result.sessionId && (
+            <div className="text-xs text-blue-600">
+              <strong>会话ID：</strong>{result.sessionId.slice(-12)}
+            </div>
+          )}
           
           {result.estimatedTime && (
             <>
@@ -107,6 +119,11 @@ const URLExtractionResultDisplay = ({ result, onImageClick }: { result: any, onI
     return (
       <div className="text-red-600">
         ❌ URL提取处理失败：{result.error || '未知错误'}
+        {result.instanceId && (
+          <div className="text-xs mt-1">
+            实例: {result.instanceId.slice(-8)}
+          </div>
+        )}
       </div>
     )
   }
@@ -120,6 +137,11 @@ const URLExtractionResultDisplay = ({ result, onImageClick }: { result: any, onI
         <span className="text-sm text-gray-600">
           ({result.results?.length || 0} 张图片)
         </span>
+        {result.instanceId && (
+          <Badge variant="outline" className="text-xs">
+            实例: {result.instanceId.slice(-8)}
+          </Badge>
+        )}
       </div>
 
       {/* 处理时间信息 */}
@@ -133,6 +155,11 @@ const URLExtractionResultDisplay = ({ result, onImageClick }: { result: any, onI
               <strong>预估准确度：</strong>{100 - (result.timeAccuracy || 0)}%
             </div>
           </div>
+          {result.sessionId && (
+            <div className="text-xs text-gray-500 mt-2">
+              会话ID: {result.sessionId.slice(-12)}
+            </div>
+          )}
         </div>
       )}
 
@@ -584,6 +611,22 @@ export default function MyAIChat() {
     }));
   };
 
+  // 新增：处理多实例URL提取结果
+  const handleMultiInstanceURLExtractionResult = (result: any) => {
+    console.log('handleMultiInstanceURLExtractionResult received:', result);
+    
+    if (result.type === 'url-extraction-processing') {
+      // 处理中状态，添加新消息
+      addMessage('', 'ai', 'url-extraction-result', result);
+    } else if (result.requestId) {
+      // 处理完成或失败，更新现有的处理中消息
+      updateMessageByRequestIdForURLExtraction(result.requestId, '', 'url-extraction-result', result);
+    } else {
+      // 兜底：直接添加结果消息
+      addMessage('', 'ai', 'url-extraction-result', result);
+    }
+  };
+
   const sendMessage = (): void => {
     const messageText = inputValue.trim();
     if (messageText === '') return;
@@ -690,6 +733,12 @@ export default function MyAIChat() {
       case 'url-extract':
         // URL提取功能已存在
         addMessage(`已选择功能：${tool.name}`, 'ai');
+        break;
+      case 'url-extract-multi':
+        // 创建新的URL提取器实例
+        addMessage(`已打开新的URL提取器实例`, 'ai');
+        // 这里可以通过一个全局状态管理器来创建新实例
+        // 暂时先显示消息
         break;
       case 'ocr':
         addMessage(`已选择功能：${tool.name} - ${tool.description}`, 'ai');
@@ -836,14 +885,7 @@ export default function MyAIChat() {
 
         {/* Toolbar */}
         <div className="flex justify-around py-2">
-          <URLExtractionModal onResult={handleURLExtractionResult}>
-            <button className="bg-transparent border-none text-indigo-500 text-sm flex items-center py-1.5 px-3 rounded-2xl cursor-pointer active:bg-indigo-50">
-              <svg className="mr-1 w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M10.59 13.41c.41.39.41 1.03 0 1.42-.39.39-1.03.39-1.42 0a5.003 5.003 0 0 1 0-7.07l3.54-3.54a5.003 5.003 0 0 1 7.07 0 5.003 5.003 0 0 1 0 7.07l-1.49 1.49c.01-.82-.12-1.64-.4-2.42l.47-.48a2.982 2.982 0 0 0 0-4.24 2.982 2.982 0 0 0-4.24 0l-3.53 3.53a2.982 2.982 0 0 0 0 4.24zm2.82-4.24c.39-.39 1.03-.39 1.42 0a5.003 5.003 0 0 1 0 7.07l-3.54 3.54a5.003 5.003 0 0 1-7.07 0 5.003 5.003 0 0 1 0-7.07l1.49-1.49c-.01.82.12 1.64.4 2.43l-.47.47a2.982 2.982 0 0 0 0 4.24 2.982 2.982 0 0 0 4.24 0l3.53-3.53a2.982 2.982 0 0 0 0-4.24.973.973 0 0 1 0-1.42z"/>
-              </svg>
-              {t('urlExtraction')}
-            </button>
-          </URLExtractionModal>
+          <MultiURLExtractor onResult={handleMultiInstanceURLExtractionResult} />
 
           <TextEditModal onResult={handleTextEditResult}>
             <button className="bg-transparent border-none text-indigo-500 text-sm flex items-center py-1.5 px-3 rounded-2xl cursor-pointer active:bg-indigo-50">

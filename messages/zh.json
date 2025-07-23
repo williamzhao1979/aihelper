@@ -227,8 +227,8 @@
   },
   "myaichat": {
     "title": "My AI Chat",
-    "welcomeMessage": "你好！我是你的AI助手。今天我能为你做些什么？",
-    "placeholder": "输入您的消息...",
+    "welcomeMessage": "AI助手为你服务",
+    "placeholder": "请输入...",
     "attachFiles": "附加文件",
     "takePhoto": "拍照",
     "sendMessage": "发送消息",
