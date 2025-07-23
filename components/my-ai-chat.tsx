@@ -163,6 +163,9 @@ const URLExtractionResultDisplay = ({ result, onImageClick }: { result: any, onI
         </div>
       )}
 
+      {/* 图片预览 - 在结果完成后也显示 */}
+      {result.imagePreview && <ImagePreviewGrid images={result.imagePreview} onImageClick={onImageClick} />}
+
       {/* URL提取结果 */}
       {result.results && result.results.length > 0 && (
         <div className="space-y-6">
@@ -224,8 +227,21 @@ const URLExtractionResultDisplay = ({ result, onImageClick }: { result: any, onI
                   )}
                 </div>
               ) : (
-                <div className="text-amber-600">
-                  ⚠️ {item.error || '未在此图片中发现URL或邮箱地址'}
+                <div className="space-y-4">
+                  {/* 先显示识别的文本内容（如果有的话） */}
+                  {item.text && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                      <h5 className="font-semibold mb-2 text-gray-800">📝 识别的文本内容</h5>
+                      <div className="text-sm text-gray-700 whitespace-pre-wrap bg-white rounded p-2 border">
+                        {item.text}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* 然后显示未发现URL或邮箱的提示 */}
+                  <div className="text-amber-600">
+                    ⚠️ {item.error || '未在此图片中发现URL或邮箱地址'}
+                  </div>
                 </div>
               )}
             </div>

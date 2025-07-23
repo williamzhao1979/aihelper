@@ -289,6 +289,14 @@ export default function URLExtractionModal({
     // 生成请求ID
     const requestId = `${sessionId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     
+    // 保存图片预览数据，用于在结果中显示
+    const imagePreview = images.map(img => ({
+      id: img.id,
+      name: img.name,
+      preview: img.preview,
+      size: img.size
+    }))
+    
     try {
       // 通知开始处理
       if (onProcessingStart) {
@@ -306,12 +314,7 @@ export default function URLExtractionModal({
           processingType: images.length > 1 ? '批量处理' : '单图处理',
           estimatedTime: timeEstimate?.estimatedTime,
           estimatedExplanation: timeEstimate?.explanation,
-          imagePreview: images.map(img => ({
-            id: img.id,
-            name: img.name,
-            preview: img.preview,
-            size: img.size
-          }))
+          imagePreview: imagePreview
         })
       }
 
@@ -353,7 +356,8 @@ export default function URLExtractionModal({
             instanceId,
             actualProcessingTime,
             estimatedTime: timeEstimate?.estimatedTime,
-            timeAccuracy
+            timeAccuracy,
+            imagePreview: imagePreview // 保留图片预览数据
           })
         }
         // 注意：弹窗已经在处理开始时关闭了
@@ -368,7 +372,8 @@ export default function URLExtractionModal({
             instanceId,
             actualProcessingTime,
             estimatedTime: timeEstimate?.estimatedTime,
-            timeAccuracy
+            timeAccuracy,
+            imagePreview: imagePreview // 保留图片预览数据
           })
         }
       }
@@ -385,7 +390,8 @@ export default function URLExtractionModal({
           sessionId,
           instanceId,
           actualProcessingTime,
-          estimatedTime: timeEstimate?.estimatedTime
+          estimatedTime: timeEstimate?.estimatedTime,
+          imagePreview: imagePreview // 保留图片预览数据
         })
       }
     } finally {
