@@ -64,6 +64,14 @@ const toolCategories = [
         category: 'document'
       },
       {
+        id: 'text-edit-multi',
+        name: '新文章修改器',
+        description: '打开新的文章修改器实例',
+        icon: <FileText className="w-4 h-4" />,
+        category: 'document',
+        isNew: true
+      },
+      {
         id: 'url-extract',
         name: 'URL提取',
         description: '从图片中提取网址和邮箱',

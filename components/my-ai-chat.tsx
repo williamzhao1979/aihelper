@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X, MoreHorizontal } from 'lucide-react';
-import TextEditModal from './text-edit-modal';
+import MultiTextEdit from './multi-text-edit';
 import URLExtractionModal from './url-extraction-modal';
 import MultiURLExtractor from './multi-url-extractor';
 import ArtCritiqueModal from './art-critique-modal';
@@ -979,6 +979,12 @@ export default function MyAIChat() {
         // 文章修改功能已存在，这里可以触发相应的modal
         addMessage(`已选择功能：${tool.name}`, 'ai');
         break;
+      case 'text-edit-multi':
+        // 创建新的文章修改器实例
+        addMessage(`已打开新的文章修改器实例`, 'ai');
+        // 这里触发MultiTextEdit创建新实例
+        // 由于MultiTextEdit已经集成到工具栏，用户可以直接点击使用
+        break;
       case 'url-extract':
         // URL提取功能已存在
         addMessage(`已选择功能：${tool.name}`, 'ai');
@@ -1142,14 +1148,7 @@ export default function MyAIChat() {
         <div className="flex justify-around py-2">
           <MultiURLExtractor onResult={handleMultiInstanceURLExtractionResult} />
 
-          <TextEditModal onResult={handleTextEditResult}>
-            <button className="bg-transparent border-none text-indigo-500 text-sm flex items-center py-1.5 px-3 rounded-2xl cursor-pointer active:bg-indigo-50">
-              <svg className="mr-1 w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-              </svg>
-              {t('articleEdit')}
-            </button>
-          </TextEditModal>
+          <MultiTextEdit onResult={handleTextEditResult} />
 
           <MultiArtCritique onResult={handleArtCritiqueResult} />
 
