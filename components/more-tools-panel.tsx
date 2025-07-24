@@ -64,6 +64,14 @@ const toolCategories = [
         category: 'document'
       },
       {
+        id: 'text-edit-multi',
+        name: '新文章修改器',
+        description: '打开新的文章修改器实例',
+        icon: <FileText className="w-4 h-4" />,
+        category: 'document',
+        isNew: true
+      },
+      {
         id: 'url-extract',
         name: 'URL提取',
         description: '从图片中提取网址和邮箱',
@@ -117,6 +125,14 @@ const toolCategories = [
         description: '图片文字识别和提取',
         icon: <ScanLine className="w-4 h-4" />,
         category: 'image'
+      },
+      {
+        id: 'art-critique',
+        name: '绘画点评',
+        description: '专业艺术作品评价和建议',
+        icon: <Palette className="w-4 h-4" />,
+        category: 'image',
+        isNew: true
       },
       {
         id: 'image-edit',
