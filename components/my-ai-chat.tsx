@@ -9,6 +9,8 @@ import { X, MoreHorizontal } from 'lucide-react';
 import TextEditModal from './text-edit-modal';
 import URLExtractionModal from './url-extraction-modal';
 import MultiURLExtractor from './multi-url-extractor';
+import ArtCritiqueModal from './art-critique-modal';
+import MultiArtCritique from './multi-art-critique';
 import TextComparison from './text-comparison';
 import MoreToolsPanel from './more-tools-panel';
 import type { ToolItem } from './more-tools-panel';
@@ -19,7 +21,7 @@ interface Message {
   text: string;
   sender: 'user' | 'ai';
   timestamp: string;
-  type?: 'normal' | 'text-edit-result' | 'url-extraction-result';
+  type?: 'normal' | 'text-edit-result' | 'url-extraction-result' | 'art-critique-result';
   data?: any;
 }
 
@@ -533,6 +535,210 @@ const TextEditResultDisplay = ({ result, onImageClick }: { result: any, onImageC
   )
 };
 
+// 绘画点评结果显示组件
+const ArtCritiqueResultDisplay = ({ result, onImageClick }: { result: any, onImageClick?: (image: any) => void }) => {
+  if (result.type === 'art-critique-processing') {
+    // 处理中状态
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600"></div>
+          <span className="font-semibold text-orange-700">绘画点评分析中</span>
+        </div>
+        
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-sm space-y-2">
+          <div><strong>图片数量：</strong>{result.imageCount} 张</div>
+          <div><strong>处理方式：</strong>{result.processingType}</div>
+          <div><strong>状态：</strong>正在分析中，请稍候...</div>
+          
+          {result.estimatedTime && (
+            <>
+              <div><strong>预计时间：</strong>约 {result.estimatedTime} 秒
+                {result.estimatedTime > 60 && (
+                  <span className="text-orange-600 ml-1">
+                    ({Math.floor(result.estimatedTime / 60)}分{result.estimatedTime % 60}秒)
+                  </span>
+                )}
+              </div>
+              {result.estimatedExplanation && (
+                <div className="text-xs text-orange-600"><strong>预估依据：</strong>{result.estimatedExplanation}</div>
+              )}
+            </>
+          )}
+        </div>
+        
+        {result.imagePreview && <ImagePreviewGrid images={result.imagePreview} onImageClick={onImageClick} />}
+      </div>
+    )
+  }
+
+  if (!result.success) {
+    // 失败状态
+    return (
+      <div className="text-red-600">
+        ❌ 绘画点评分析失败：{result.error || '未知错误'}
+      </div>
+    )
+  }
+
+  // 成功状态
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="text-green-600">✅</span>
+        <span className="font-semibold text-green-700">绘画点评分析完成</span>
+        <span className="text-sm text-gray-600">
+          ({result.merged ? result.result?.image_count || 1 : result.results?.length || 0} 张图片)
+        </span>
+      </div>
+
+      {/* 处理时间信息 */}
+      {result.actualProcessingTime && result.estimatedTime && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <strong>实际处理时间：</strong>{result.actualProcessingTime}秒
+            </div>
+            <div>
+              <strong>预估准确度：</strong>{100 - (result.timeAccuracy || 0)}%
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 图片预览 */}
+      {result.imagePreview && <ImagePreviewGrid images={result.imagePreview} onImageClick={onImageClick} />}
+
+      {/* 合并处理结果 */}
+      {result.merged && result.result && (
+        <div className="space-y-4">
+          {/* 艺术风格 */}
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <h4 className="font-semibold mb-2 text-purple-800 flex items-center gap-2">
+              🎨 艺术风格
+            </h4>
+            <div className="text-sm text-purple-700">
+              {result.result.style || "未识别风格"}
+            </div>
+          </div>
+
+          {/* 作品描述 */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-semibold mb-2 text-blue-800 flex items-center gap-2">
+              📝 作品描述
+            </h4>
+            <div className="text-sm text-blue-700 whitespace-pre-wrap">
+              {result.result.description || "未能生成作品描述"}
+            </div>
+          </div>
+
+          {/* 专业评价 */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h4 className="font-semibold mb-2 text-green-800 flex items-center gap-2">
+              ⭐ 专业评价
+            </h4>
+            <div className="text-sm text-green-700 whitespace-pre-wrap">
+              {result.result.evaluation || "未能生成专业评价"}
+            </div>
+          </div>
+
+          {/* 改进建议 */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <h4 className="font-semibold mb-2 text-amber-800 flex items-center gap-2">
+              💡 改进建议
+            </h4>
+            <div className="space-y-2">
+              {(result.result.suggestions || ["建议检查绘画技法", "可以改进构图和色彩运用"]).map((suggestion: string, index: number) => (
+                <div key={index} className="text-sm text-amber-700 flex items-start gap-2">
+                  <span className="text-amber-600 font-bold">{index + 1}.</span>
+                  <span>{suggestion}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 总结评价 */}
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+            <h4 className="font-semibold mb-2 text-indigo-800 flex items-center gap-2">
+              📊 总结评价
+            </h4>
+            <div className="text-sm text-indigo-700 whitespace-pre-wrap">
+              {result.result.return || "艺术点评完成"}
+            </div>
+          </div>
+
+          {/* 鼓励结语 */}
+          <div className="bg-rose-50 border border-rose-200 rounded-lg p-4">
+            <h4 className="font-semibold mb-2 text-rose-800 flex items-center gap-2">
+              🌟 鼓励结语
+            </h4>
+            <div className="text-sm text-rose-700 whitespace-pre-wrap">
+              {result.result.end || "继续创作，加油！"}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 单独处理结果 */}
+      {result.results && result.results.length > 0 && (
+        <div className="space-y-6">
+          {result.results.map((item: any, index: number) => (
+            <div key={index} className="border border-gray-200 rounded-lg p-4">
+              <h4 className="font-semibold mb-4 text-gray-800">
+                🎨 作品 {index + 1}：{item.imageName}
+              </h4>
+              
+              {item.success && item.result ? (
+                <div className="space-y-4">
+                  {/* 艺术风格 */}
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                    <h5 className="font-semibold mb-1 text-purple-800">🎨 艺术风格</h5>
+                    <div className="text-sm text-purple-700">
+                      {item.result.style || "未识别风格"}
+                    </div>
+                  </div>
+
+                  {/* 作品描述 */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <h5 className="font-semibold mb-1 text-blue-800">📝 作品描述</h5>
+                    <div className="text-sm text-blue-700 whitespace-pre-wrap">
+                      {item.result.description || "未能生成作品描述"}
+                    </div>
+                  </div>
+
+                  {/* 专业评价 */}
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <h5 className="font-semibold mb-1 text-green-800">⭐ 专业评价</h5>
+                    <div className="text-sm text-green-700 whitespace-pre-wrap">
+                      {item.result.evaluation || "未能生成专业评价"}
+                    </div>
+                  </div>
+
+                  {/* 改进建议 */}
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <h5 className="font-semibold mb-1 text-amber-800">💡 改进建议</h5>
+                    <div className="space-y-1">
+                      {(item.result.suggestions || ["建议检查绘画技法"]).map((suggestion: string, sugIndex: number) => (
+                        <div key={sugIndex} className="text-sm text-amber-700">
+                          {sugIndex + 1}. {suggestion}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-red-600">
+                  ❌ {item.error || '分析失败'}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+};
+
 export default function MyAIChat() {
   const t = useTranslations('myaichat');
   const [messages, setMessages] = useState<Message[]>([
@@ -584,7 +790,7 @@ export default function MyAIChat() {
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
-  const addMessage = (text: string, sender: 'user' | 'ai', type: 'normal' | 'text-edit-result' | 'url-extraction-result' = 'normal', data?: any): void => {
+  const addMessage = (text: string, sender: 'user' | 'ai', type: 'normal' | 'text-edit-result' | 'url-extraction-result' | 'art-critique-result' = 'normal', data?: any): void => {
     const newMessage: Message = {
       id: Date.now().toString(),
       text,
@@ -617,9 +823,20 @@ export default function MyAIChat() {
   };
 
   // 根据requestId查找并更新URL提取消息
-  const updateMessageByRequestIdForURLExtraction = (requestId: string, text: string, type: 'normal' | 'text-edit-result' | 'url-extraction-result', data?: any): void => {
+  const updateMessageByRequestIdForURLExtraction = (requestId: string, text: string, type: 'normal' | 'text-edit-result' | 'url-extraction-result' | 'art-critique-result', data?: any): void => {
     setMessages(prev => prev.map(message => {
       if (message.type === 'url-extraction-result' && 
+          message.data?.requestId === requestId) {
+        return { ...message, text, type, data, timestamp: getCurrentTime() };
+      }
+      return message;
+    }));
+  };
+
+  // 根据requestId查找并更新绘画点评消息
+  const updateMessageByRequestIdForArtCritique = (requestId: string, text: string, type: 'normal' | 'text-edit-result' | 'url-extraction-result' | 'art-critique-result', data?: any): void => {
+    setMessages(prev => prev.map(message => {
+      if (message.type === 'art-critique-result' && 
           message.data?.requestId === requestId) {
         return { ...message, text, type, data, timestamp: getCurrentTime() };
       }
@@ -698,6 +915,22 @@ export default function MyAIChat() {
     }
   };
 
+  // 处理绘画点评结果
+  const handleArtCritiqueResult = (result: any) => {
+    console.log('handleArtCritiqueResult received:', result);
+    
+    if (result.type === 'art-critique-processing') {
+      // 处理中状态，添加新消息
+      addMessage('', 'ai', 'art-critique-result', result);
+    } else if (result.requestId) {
+      // 处理完成或失败，更新现有的处理中消息
+      updateMessageByRequestIdForArtCritique(result.requestId, '', 'art-critique-result', result);
+    } else {
+      // 兜底：直接添加结果消息
+      addMessage('', 'ai', 'art-critique-result', result);
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -756,6 +989,10 @@ export default function MyAIChat() {
         // 这里可以通过一个全局状态管理器来创建新实例
         // 暂时先显示消息
         break;
+      case 'art-critique':
+        // 绘画点评功能
+        addMessage(`已选择功能：${tool.name}`, 'ai');
+        break;
       case 'ocr':
         addMessage(`已选择功能：${tool.name} - ${tool.description}`, 'ai');
         break;
@@ -812,15 +1049,17 @@ export default function MyAIChat() {
                 <TextEditResultDisplay result={message.data} onImageClick={handleImagePreview} />
               ) : message.type === 'url-extraction-result' && message.data ? (
                 <URLExtractionResultDisplay result={message.data} onImageClick={handleImagePreview} />
+              ) : message.type === 'art-critique-result' && message.data ? (
+                <ArtCritiqueResultDisplay result={message.data} onImageClick={handleImagePreview} />
               ) : (
                 <>
                   {/* 图片预览 - 仅对结果显示 */}
-                  {(message.type === 'text-edit-result' || message.type === 'url-extraction-result') && message.data?.imagePreview && (
+                  {(message.type === 'text-edit-result' || message.type === 'url-extraction-result' || message.type === 'art-critique-result') && message.data?.imagePreview && (
                     <ImagePreviewGrid images={message.data.imagePreview} onImageClick={handleImagePreview} />
                   )}
                   
                   <div className={`leading-6 text-base break-words overflow-hidden ${
-                    (message.type === 'text-edit-result' || message.type === 'url-extraction-result') ? 'whitespace-pre-wrap' : ''
+                    (message.type === 'text-edit-result' || message.type === 'url-extraction-result' || message.type === 'art-critique-result') ? 'whitespace-pre-wrap' : ''
                   }`}>
                     {message.text}
                   </div>
@@ -912,16 +1151,7 @@ export default function MyAIChat() {
             </button>
           </TextEditModal>
 
-          <button
-            className="bg-transparent border-none text-indigo-500 text-sm flex items-center py-1.5 px-3 rounded-2xl cursor-pointer active:bg-indigo-50"
-            onClick={() => handleToolbarAction('art')}
-          >
-            <svg className="mr-1 w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-              <path d="M8.5 15.5l4.71-4.71 2.79 2.79 1.41-1.41-2.79-2.79L15.5 8.5z"/>
-            </svg>
-            {t('artCritique')}
-          </button>
+          <MultiArtCritique onResult={handleArtCritiqueResult} />
 
           <button
             className="bg-transparent border-none text-indigo-500 text-sm flex items-center py-1.5 px-3 rounded-2xl cursor-pointer active:bg-indigo-50"

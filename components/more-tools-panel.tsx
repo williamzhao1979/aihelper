@@ -119,6 +119,14 @@ const toolCategories = [
         category: 'image'
       },
       {
+        id: 'art-critique',
+        name: '绘画点评',
+        description: '专业艺术作品评价和建议',
+        icon: <Palette className="w-4 h-4" />,
+        category: 'image',
+        isNew: true
+      },
+      {
         id: 'image-edit',
         name: '图片编辑',
         description: '在线图片编辑和处理',
