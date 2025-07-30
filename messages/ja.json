@@ -245,5 +245,185 @@
     "pleaseEnterArticle": "まず編集したい記事を入力してください",
     "noUrlDetected": "URLが検出されませんでした",
     "justNow": "たった今"
+  },
+  "jsonTools": {
+    "title": "JSONツール",
+    "description": "フォーマット、検証、変換、操作のための完全なJSONツールコレクション",
+    "categories": {
+      "format": "フォーマット・検証",
+      "convert": "変換",
+      "manipulate": "操作"
+    },
+    "tools": {
+      "prettify": {
+        "title": "JSON整形",
+        "description": "適切なインデントでJSONをフォーマット"
+      },
+      "minify": {
+        "title": "JSON圧縮",
+        "description": "空白を削除してJSONを圧縮"
+      },
+      "validate": {
+        "title": "JSON検証",
+        "description": "JSONが有効かどうかをチェック"
+      },
+      "csv": {
+        "title": "JSON to CSV",
+        "description": "JSON配列をCSV形式に変換"
+      },
+      "xml": {
+        "title": "JSON to XML",
+        "description": "JSONをXML形式に変換"
+      },
+      "keys": {
+        "title": "キー抽出",
+        "description": "JSONオブジェクトからすべてのキーを抽出"
+      },
+      "escape": {
+        "title": "JSONエスケープ",
+        "description": "特殊文字をエスケープ"
+      },
+      "unescape": {
+        "title": "JSONアンエスケープ",
+        "description": "特殊文字をアンエスケープ"
+      }
+    },
+    "interface": {
+      "loadFile": "ファイル読み込み",
+      "process": "処理",
+      "inputJson": "入力JSON",
+      "inputPlaceholder": "ここにJSONを貼り付けてください...",
+      "output": "出力",
+      "outputPlaceholder": "結果がここに表示されます...",
+      "copy": "コピー",
+      "download": "ダウンロード",
+      "copied": "コピー済み",
+      "downloaded": "ダウンロード済み"
+    },
+    "messages": {
+      "success": "成功",
+      "error": "エラー",
+      "invalidJson": "無効なJSON形式",
+      "validJson": "有効なJSON",
+      "prettifySuccess": "JSON整形が完了しました",
+      "minifySuccess": "JSON圧縮が完了しました",
+      "csvSuccess": "JSON to CSV変換が完了しました",
+      "xmlSuccess": "JSON to XML変換が完了しました",
+      "keysSuccess": "JSONキー抽出が完了しました",
+      "escapeSuccess": "JSONエスケープが完了しました",
+      "unescapeSuccess": "JSONアンエスケープが完了しました",
+      "copySuccess": "テキストがクリップボードにコピーされました",
+      "downloadSuccess": "ファイルのダウンロードが完了しました",
+      "fileLoaded": "ファイルの読み込みが完了しました"
+    },
+    "info": {
+      "howToUse": "使用方法",
+      "features": "機能",
+      "privacy": "プライバシー",
+      "steps": [
+        "左パネルからツールを選択",
+        "入力エリアにJSONを貼り付け",
+        "「処理」をクリックしてツールを実行",
+        "結果をコピーまたはダウンロード"
+      ],
+      "featureList": [
+        "リアルタイム処理",
+        "ファイルアップロード対応",
+        "結果ダウンロード",
+        "ワンクリックコピー"
+      ],
+      "privacyInfo": [
+        "すべての処理はブラウザ内で実行",
+        "データがサーバーに送信されることはありません",
+        "あなたのJSONは安全でプライベートです"
+      ]
+    }
+  },
+  "idPhoto": {
+    "title": "証明写真マスター",
+    "subtitle": "プロフェッショナル証明写真作成",
+    "camera": {
+      "title": "写真撮影",
+      "idCard": "身分証明書写真",
+      "passport": "パスポート写真",
+      "resume": "履歴書写真",
+      "size": "サイズ",
+      "startCamera": "カメラを起動中...",
+      "cameraError": "カメラの起動に失敗しました",
+      "cameraErrorDesc": "カメラの権限設定を確認するか、他のデバイスをお試しください",
+      "captureSuccess": "撮影成功",
+      "captureSuccessDesc": "写真が撮影されました。編集を続けるか再撮影できます",
+      "uploadSuccess": "画像アップロード成功",
+      "uploadSuccessDesc": "選択した写真が読み込まれました",
+      "formatError": "ファイル形式がサポートされていません",
+      "formatErrorDesc": "JPG、PNGなどの画像形式を選択してください",
+      "tips": {
+        "shooting": "顔を中央に保ち、十分な照明を確保してください",
+        "captured": "写真が撮影完了、編集に進めます"
+      },
+      "buttons": {
+        "retake": "再撮影",
+        "nextEdit": "次へ：編集",
+        "upload": "写真アップロード",
+        "capture": "撮影",
+        "switchCamera": "カメラ切替"
+      },
+      "background": {
+        "white": "白",
+        "blue": "青",
+        "red": "赤"
+      },
+      "editNext": "編集モードに入る",
+      "editNextDesc": "写真編集ページに進みます"
+    },
+    "edit": {
+      "title": "写真編集",
+      "save": "保存",
+      "retake": "再撮影",
+      "nextStep": "次のステップ",
+      "editTools": "編集ツール",
+      "photoInfo": {
+        "idCard": "身分証明書写真",
+        "size": "33×48mm",
+        "background": "白背景"
+      },
+      "tools": {
+        "beauty": {
+          "title": "美顔",
+          "settings": "美顔設定",
+          "skinSmoothing": "肌補正",
+          "skinWhitening": "美白",
+          "brightness": "明度"
+        },
+        "background": {
+          "title": "背景",
+          "settings": "背景色",
+          "colors": {
+            "white": "白",
+            "blue": "青",
+            "red": "赤",
+            "gray": "グレー"
+          }
+        },
+        "crop": {
+          "title": "トリミング",
+          "settings": "トリミング調整",
+          "instruction": "ドラッグして写真の位置とサイズを調整",
+          "reset": "トリミングをリセット"
+        },
+        "adjust": {
+          "title": "調整",
+          "settings": "色彩調整",
+          "contrast": "コントラスト",
+          "saturation": "彩度"
+        }
+      },
+      "messages": {
+        "retakeTitle": "再撮影",
+        "retakeDesc": "撮影ページに戻ります",
+        "saveTitle": "保存成功",
+        "saveDesc": "写真が保存されました。ダウンロードページに進みます"
+      }
+    }
   }
 }

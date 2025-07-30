@@ -245,5 +245,185 @@
     "pleaseEnterArticle": "Please enter the article to be edited first",
     "noUrlDetected": "No URLs detected",
     "justNow": "Just now"
+  },
+  "jsonTools": {
+    "title": "JSON Tools",
+    "description": "Complete collection of JSON tools for formatting, validation, conversion, and manipulation",
+    "categories": {
+      "format": "Format & Validate",
+      "convert": "Convert",
+      "manipulate": "Manipulate"
+    },
+    "tools": {
+      "prettify": {
+        "title": "Prettify JSON",
+        "description": "Format JSON with proper indentation"
+      },
+      "minify": {
+        "title": "Minify JSON",
+        "description": "Remove whitespace and compress JSON"
+      },
+      "validate": {
+        "title": "Validate JSON",
+        "description": "Check if JSON is valid"
+      },
+      "csv": {
+        "title": "JSON to CSV",
+        "description": "Convert JSON array to CSV format"
+      },
+      "xml": {
+        "title": "JSON to XML",
+        "description": "Convert JSON to XML format"
+      },
+      "keys": {
+        "title": "Extract Keys",
+        "description": "Extract all keys from JSON object"
+      },
+      "escape": {
+        "title": "Escape JSON",
+        "description": "Escape special characters"
+      },
+      "unescape": {
+        "title": "Unescape JSON",
+        "description": "Unescape special characters"
+      }
+    },
+    "interface": {
+      "loadFile": "Load File",
+      "process": "Process",
+      "inputJson": "Input JSON",
+      "inputPlaceholder": "Paste your JSON here...",
+      "output": "Output",
+      "outputPlaceholder": "Result will appear here...",
+      "copy": "Copy",
+      "download": "Download",
+      "copied": "Copied",
+      "downloaded": "Downloaded"
+    },
+    "messages": {
+      "success": "Success",
+      "error": "Error",
+      "invalidJson": "Invalid JSON format",
+      "validJson": "Valid JSON",
+      "prettifySuccess": "JSON prettified successfully",
+      "minifySuccess": "JSON minified successfully",
+      "csvSuccess": "JSON converted to CSV successfully",
+      "xmlSuccess": "JSON converted to XML successfully",
+      "keysSuccess": "JSON keys extracted successfully",
+      "escapeSuccess": "JSON escaped successfully",
+      "unescapeSuccess": "JSON unescaped successfully",
+      "copySuccess": "Text copied to clipboard",
+      "downloadSuccess": "File downloaded successfully",
+      "fileLoaded": "File loaded successfully"
+    },
+    "info": {
+      "howToUse": "How to Use",
+      "features": "Features",
+      "privacy": "Privacy",
+      "steps": [
+        "Select a tool from the left panel",
+        "Paste your JSON in the input area",
+        "Click \"Process\" to run the tool",
+        "Copy or download the result"
+      ],
+      "featureList": [
+        "Real-time processing",
+        "File upload support",
+        "Download results",
+        "One-click copy"
+      ],
+      "privacyInfo": [
+        "All processing happens in your browser",
+        "No data is sent to servers",
+        "Your JSON stays private and secure"
+      ]
+    }
+  },
+  "idPhoto": {
+    "title": "ID Photo Master",
+    "subtitle": "Professional ID Photo Creation",
+    "camera": {
+      "title": "Take Photo",
+      "idCard": "ID Card Photo",
+      "passport": "Passport Photo",
+      "resume": "Resume Photo",
+      "size": "Size",
+      "startCamera": "Starting camera...",
+      "cameraError": "Camera startup failed",
+      "cameraErrorDesc": "Please check camera permissions or try another device",
+      "captureSuccess": "Photo captured successfully",
+      "captureSuccessDesc": "Photo captured, you can continue editing or retake",
+      "uploadSuccess": "Image uploaded successfully",
+      "uploadSuccessDesc": "Your selected photo has been loaded",
+      "formatError": "File format not supported",
+      "formatErrorDesc": "Please select JPG, PNG or other image formats",
+      "tips": {
+        "shooting": "Keep your face centered and ensure good lighting",
+        "captured": "Photo captured, ready for editing"
+      },
+      "buttons": {
+        "retake": "Retake",
+        "nextEdit": "Next: Edit",
+        "upload": "Upload Photo",
+        "capture": "Capture",
+        "switchCamera": "Switch Camera"
+      },
+      "background": {
+        "white": "White",
+        "blue": "Blue",
+        "red": "Red"
+      },
+      "editNext": "Enter Edit Mode",
+      "editNextDesc": "Proceeding to photo editing page"
+    },
+    "edit": {
+      "title": "Edit Photo",
+      "save": "Save",
+      "retake": "Retake",
+      "nextStep": "Next Step",
+      "editTools": "Edit Tools",
+      "photoInfo": {
+        "idCard": "ID Card Photo",
+        "size": "33×48mm",
+        "background": "White Background"
+      },
+      "tools": {
+        "beauty": {
+          "title": "Beauty",
+          "settings": "Beauty Settings",
+          "skinSmoothing": "Skin Smoothing",
+          "skinWhitening": "Skin Whitening",
+          "brightness": "Brightness"
+        },
+        "background": {
+          "title": "Background",
+          "settings": "Background Color",
+          "colors": {
+            "white": "White",
+            "blue": "Blue",
+            "red": "Red",
+            "gray": "Gray"
+          }
+        },
+        "crop": {
+          "title": "Crop",
+          "settings": "Crop Adjustment",
+          "instruction": "Drag to adjust photo position and size",
+          "reset": "Reset Crop"
+        },
+        "adjust": {
+          "title": "Adjust",
+          "settings": "Color Adjustment",
+          "contrast": "Contrast",
+          "saturation": "Saturation"
+        }
+      },
+      "messages": {
+        "retakeTitle": "Retake Photo",
+        "retakeDesc": "Returning to camera page",
+        "saveTitle": "Save Successful",
+        "saveDesc": "Photo saved, proceeding to download page"
+      }
+    }
   }
 }
