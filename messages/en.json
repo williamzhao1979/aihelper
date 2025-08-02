@@ -245,5 +245,510 @@
     "pleaseEnterArticle": "Please enter the article to be edited first",
     "noUrlDetected": "No URLs detected",
     "justNow": "Just now"
+  },
+  "jsonTools": {
+    "title": "JSON Tools",
+    "description": "Complete collection of JSON tools for formatting, validation, conversion, and manipulation",
+    "categories": {
+      "format": "Format & Validate",
+      "convert": "Convert",
+      "manipulate": "Manipulate"
+    },
+    "tools": {
+      "prettify": {
+        "title": "Prettify JSON",
+        "description": "Format JSON with proper indentation"
+      },
+      "minify": {
+        "title": "Minify JSON",
+        "description": "Remove whitespace and compress JSON"
+      },
+      "validate": {
+        "title": "Validate JSON",
+        "description": "Check if JSON is valid"
+      },
+      "csv": {
+        "title": "JSON to CSV",
+        "description": "Convert JSON array to CSV format"
+      },
+      "xml": {
+        "title": "JSON to XML",
+        "description": "Convert JSON to XML format"
+      },
+      "keys": {
+        "title": "Extract Keys",
+        "description": "Extract all keys from JSON object"
+      },
+      "escape": {
+        "title": "Escape JSON",
+        "description": "Escape special characters"
+      },
+      "unescape": {
+        "title": "Unescape JSON",
+        "description": "Unescape special characters"
+      }
+    },
+    "interface": {
+      "loadFile": "Load File",
+      "process": "Process",
+      "inputJson": "Input JSON",
+      "inputPlaceholder": "Paste your JSON here...",
+      "output": "Output",
+      "outputPlaceholder": "Result will appear here...",
+      "copy": "Copy",
+      "download": "Download",
+      "copied": "Copied",
+      "downloaded": "Downloaded"
+    },
+    "messages": {
+      "success": "Success",
+      "error": "Error",
+      "invalidJson": "Invalid JSON format",
+      "validJson": "Valid JSON",
+      "prettifySuccess": "JSON prettified successfully",
+      "minifySuccess": "JSON minified successfully",
+      "csvSuccess": "JSON converted to CSV successfully",
+      "xmlSuccess": "JSON converted to XML successfully",
+      "keysSuccess": "JSON keys extracted successfully",
+      "escapeSuccess": "JSON escaped successfully",
+      "unescapeSuccess": "JSON unescaped successfully",
+      "copySuccess": "Text copied to clipboard",
+      "downloadSuccess": "File downloaded successfully",
+      "fileLoaded": "File loaded successfully"
+    },
+    "info": {
+      "howToUse": "How to Use",
+      "features": "Features",
+      "privacy": "Privacy",
+      "steps": [
+        "Select a tool from the left panel",
+        "Paste your JSON in the input area",
+        "Click \"Process\" to run the tool",
+        "Copy or download the result"
+      ],
+      "featureList": [
+        "Real-time processing",
+        "File upload support",
+        "Download results",
+        "One-click copy"
+      ],
+      "privacyInfo": [
+        "All processing happens in your browser",
+        "No data is sent to servers",
+        "Your JSON stays private and secure"
+      ]
+    }
+  },
+  "idPhoto": {
+    "title": "ID Photo Master",
+    "subtitle": "Professional ID Photo Creation",
+    "camera": {
+      "title": "Take Photo",
+      "idCard": "ID Card Photo",
+      "passport": "Passport Photo",
+      "resume": "Resume Photo",
+      "size": "Size",
+      "startCamera": "Starting camera...",
+      "cameraError": "Camera startup failed",
+      "cameraErrorDesc": "Please check camera permissions or try another device",
+      "captureSuccess": "Photo captured successfully",
+      "captureSuccessDesc": "Photo captured, you can continue editing or retake",
+      "uploadSuccess": "Image uploaded successfully",
+      "uploadSuccessDesc": "Your selected photo has been loaded",
+      "formatError": "File format not supported",
+      "formatErrorDesc": "Please select JPG, PNG or other image formats",
+      "tips": {
+        "shooting": "Keep your face centered and ensure good lighting",
+        "captured": "Photo captured, ready for editing"
+      },
+      "buttons": {
+        "retake": "Retake",
+        "nextEdit": "Next: Edit",
+        "upload": "Upload Photo",
+        "capture": "Capture",
+        "switchCamera": "Switch Camera"
+      },
+      "background": {
+        "white": "White",
+        "blue": "Blue",
+        "red": "Red"
+      },
+      "editNext": "Enter Edit Mode",
+      "editNextDesc": "Proceeding to photo editing page"
+    },
+    "edit": {
+      "title": "Edit Photo",
+      "save": "Save",
+      "retake": "Retake",
+      "nextStep": "Next Step",
+      "editTools": "Edit Tools",
+      "photoInfo": {
+        "idCard": "ID Card Photo",
+        "size": "33×48mm",
+        "background": "White Background"
+      },
+      "tools": {
+        "beauty": {
+          "title": "Beauty",
+          "settings": "Beauty Settings",
+          "skinSmoothing": "Skin Smoothing",
+          "skinWhitening": "Skin Whitening",
+          "brightness": "Brightness"
+        },
+        "background": {
+          "title": "Background",
+          "settings": "Background Color",
+          "colors": {
+            "white": "White",
+            "blue": "Blue",
+            "red": "Red",
+            "gray": "Gray"
+          }
+        },
+        "crop": {
+          "title": "Crop",
+          "settings": "Crop Adjustment",
+          "instruction": "Drag to adjust photo position and size",
+          "reset": "Reset Crop"
+        },
+        "adjust": {
+          "title": "Adjust",
+          "settings": "Color Adjustment",
+          "contrast": "Contrast",
+          "saturation": "Saturation"
+        }
+      },
+      "messages": {
+        "retakeTitle": "Retake Photo",
+        "retakeDesc": "Returning to camera page",
+        "saveTitle": "Save Successful",
+        "saveDesc": "Photo saved, proceeding to download page"
+      }
+    }
+  },
+  "bubbleSort": {
+    "title": "Bubble Sort Visualization",
+    "subtitle": "Learn how bubble sort algorithm works step by step",
+    "visualization": "Algorithm Visualization",
+    "step": "Step",
+    "comparing": "Comparing elements at positions",
+    "swapped": "- Swapped!",
+    "complete": "Sorting Complete! 🎉",
+    "controls": {
+      "play": "Play",
+      "pause": "Pause",
+      "stop": "Stop",
+      "step": "Step",
+      "reset": "Reset",
+      "speed": "Speed"
+    },
+    "generator": {
+      "title": "Array Generator",
+      "difficulty": "Difficulty Level",
+      "generate": "Generate New Array",
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard",
+      "easyDesc": "5 numbers (1-20)",
+      "mediumDesc": "8 numbers (1-50)",
+      "hardDesc": "12 numbers (1-100)"
+    },
+    "code": "Bubble Sort Code",
+    "explanation": {
+      "title": "How Bubble Sort Works",
+      "steps": "Algorithm Steps:",
+      "step1": "Compare adjacent elements in the array",
+      "step2": "If the left element is greater than the right element, swap them",
+      "step3": "Continue this process for the entire array",
+      "step4": "Repeat until no more swaps are needed",
+      "legend": "Color Legend:",
+      "normal": "Normal element",
+      "comparing": "Being compared",
+      "swapping": "Being swapped",
+      "sorted": "Sorted",
+      "complexity": "Time Complexity:",
+      "bestCase": "Best case: O(n) - when array is already sorted",
+      "averageCase": "Average case: O(n²)",
+      "worstCase": "Worst case: O(n²) - when array is reverse sorted"
+    }
+  },
+  "compareSort": {
+    "title": "Sorting Algorithms Comparison",
+    "subtitle": "Compare the performance of different sorting algorithms side by side",
+    "algorithms": {
+      "bubble": "Bubble Sort",
+      "quick": "Quick Sort",
+      "insertion": "Insertion Sort"
+    },
+    "controls": {
+      "start": "Start Comparison",
+      "pause": "Pause",
+      "reset": "Reset",
+      "speed": "Animation Speed"
+    },
+    "generator": {
+      "title": "Array Generator",
+      "difficulty": "Data Size",
+      "generate": "Generate New Array",
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large",
+      "smallDesc": "10 numbers",
+      "mediumDesc": "20 numbers",
+      "largeDesc": "50 numbers"
+    },
+    "stats": {
+      "title": "Performance Statistics",
+      "comparisons": "Comparisons",
+      "swaps": "Swaps",
+      "time": "Time Elapsed",
+      "timeComplexity": "Time Complexity",
+      "winner": "Winner",
+      "finished": "Finished"
+    },
+    "explanation": {
+      "title": "Algorithm Explanations",
+      "bubbleTitle": "Bubble Sort",
+      "bubbleDesc": "Repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order.",
+      "quickTitle": "Quick Sort",
+      "quickDesc": "Picks a 'pivot' element and partitions the array around the pivot, then recursively sorts the sub-arrays.",
+      "insertionTitle": "Insertion Sort",
+      "insertionDesc": "Builds the final sorted array one item at a time by inserting each element into its proper position.",
+      "complexity": {
+        "bubble": {
+          "best": "Best: O(n)",
+          "average": "Average: O(n²)",
+          "worst": "Worst: O(n²)"
+        },
+        "quick": {
+          "best": "Best: O(n log n)",
+          "average": "Average: O(n log n)",
+          "worst": "Worst: O(n²)"
+        },
+        "insertion": {
+          "best": "Best: O(n)",
+          "average": "Average: O(n²)",
+          "worst": "Worst: O(n²)"
+        }
+      }
+    }
+  },
+  "fibonacci": {
+    "title": "Fibonacci Sequence Recursion",
+    "subtitle": "Visualize how recursive calls work in calculating Fibonacci numbers",
+    "controls": {
+      "start": "Start Animation",
+      "pause": "Pause",
+      "reset": "Reset",
+      "step": "Step by Step",
+      "speed": "Animation Speed",
+      "calculate": "Calculate F(n)"
+    },
+    "input": {
+      "title": "Input Parameters",
+      "number": "Calculate F(n)",
+      "numberDesc": "Enter a number (1-10)"
+    },
+    "tree": {
+      "title": "Recursion Call Tree",
+      "calculating": "Calculating...",
+      "computed": "Computed",
+      "pending": "Pending",
+      "baseCase": "Base Case"
+    },
+    "stats": {
+      "title": "Performance Statistics",
+      "totalCalls": "Total Function Calls",
+      "redundantCalls": "Redundant Calls",
+      "maxDepth": "Maximum Depth",
+      "result": "Result",
+      "timeComplexity": "Time Complexity: O(2^n)",
+      "spaceComplexity": "Space Complexity: O(n)"
+    },
+    "sequence": {
+      "title": "Fibonacci Sequence",
+      "description": "The sequence where each number is the sum of the two preceding ones"
+    },
+    "explanation": {
+      "title": "How Fibonacci Recursion Works",
+      "recursiveFormula": "Recursive Formula",
+      "formulaText": "F(n) = F(n-1) + F(n-2)",
+      "baseCases": "Base Cases",
+      "baseCase1": "F(0) = 0",
+      "baseCase2": "F(1) = 1",
+      "process": "Recursive Process",
+      "step1": "1. Check if n is 0 or 1 (base cases)",
+      "step2": "2. If not, recursively call F(n-1) and F(n-2)",
+      "step3": "3. Add the results of both recursive calls",
+      "step4": "4. Return the sum",
+      "complexity": "Complexity Analysis",
+      "timeDesc": "Time: Exponential growth due to repeated calculations",
+      "spaceDesc": "Space: Linear due to call stack depth",
+      "optimization": "Optimization Note",
+      "optimizationDesc": "This naive approach has exponential time complexity. Dynamic programming or memoization can reduce it to O(n)."
+    },
+    "code": {
+      "title": "Fibonacci Recursive Code",
+      "naive": "Naive Recursive Implementation",
+      "optimized": "Optimized with Memoization"
+    }
+  },
+  "puzzle": {
+    "title": "Jigsaw Puzzle",
+    "subtitle": "Upload your image and create a personalized puzzle challenge",
+    "settings": {
+      "title": "Game Settings",
+      "presetImages": "Preset Images",
+      "uploadImage": "Custom Image",
+      "selectImage": "Select Image",
+      "columns": "Columns",
+      "rows": "Rows"
+    },
+    "presets": {
+      "peruere": "Peruere",
+      "aetherLumine": "Aether & Lumine",
+      "family": "Sweet Family",
+      "cute": "Cute Expression"
+    },
+    "controls": {
+      "start": "Start Game",
+      "reset": "Reset Game", 
+      "showPreview": "Show Preview",
+      "hidePreview": "Hide Preview"
+    },
+    "stats": {
+      "title": "Game Statistics",
+      "time": "Time",
+      "moves": "Moves",
+      "progress": "Progress",
+      "difficulty": "Difficulty",
+      "movesCount": "moves"
+    },
+    "difficulty": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "hard": "Hard",
+      "expert": "Expert"
+    },
+    "preview": {
+      "title": "Original Image"
+    },
+    "game": {
+      "puzzleBoard": "Puzzle Board",
+      "completed": "Congratulations!",
+      "instructions": "Click puzzle pieces to select, then click another piece to swap. You can also drag and drop pieces."
+    },
+    "emptyState": {
+      "title": "Start Your Puzzle Journey",
+      "description": "Choose from preset images or upload your own to create a personalized puzzle challenge",
+      "quickStart": "Quick Start",
+      "or": "or",
+      "uploadButton": "Upload Custom Image"
+    }
+  },
+  "huarongdao": {
+    "title": "Huarongdao",
+    "subtitle": "Classic Chinese sliding puzzle - Horizontal Blade Standing Horse layout, help Cao Cao escape",
+    "controls": {
+      "title": "Game Controls",
+      "backgroundImage": "Background Image",
+      "selectImage": "Select Background Image",
+      "imageUploaded": "Image uploaded",
+      "start": "Start Game",
+      "pause": "Pause Game",
+      "reset": "Reset Game",
+      "showHelp": "Show Help",
+      "hideHelp": "Hide Help",
+      "moveSelected": "Move Selected Piece"
+    },
+    "stats": {
+      "title": "Game Statistics",
+      "time": "Time",
+      "moves": "Moves",
+      "status": "Status",
+      "completed": "Completed",
+      "playing": "Playing",
+      "movesCount": "moves"
+    },
+    "game": {
+      "boardTitle": "Game Board",
+      "victory": "Congratulations! You won!",
+      "exitArea": "Exit",
+      "clickStart": "Click 'Start Game' to begin the challenge",
+      "selectPiece": "Click to select, drag to move, or right-click to upload background image",
+      "pieceSelected": "Selected {piece}, drag or use arrow keys to move"
+    },
+    "layout": {
+      "hengdaolima": "Horizontal Blade Standing Horse"
+    },
+    "instructions": {
+      "title": "Game Instructions",
+      "objective": "Objective",
+      "objectiveDesc": "Move the pieces to help Cao Cao (red large square) reach the exit at the bottom center of the board.",
+      "howToPlay": "How to Play",
+      "step1": "Click to select a piece, or drag pieces directly to target positions",
+      "step2": "Right-click any piece to upload a custom background image",
+      "step3": "Only one piece can be moved at a time to adjacent empty spaces",
+      "step4": "Arrange other pieces strategically to clear a path for Cao Cao",
+      "step5": "The goal is to get Cao Cao to the bottom center exit",
+      "pieces": "Piece Description"
+    },
+    "pieces": {
+      "caocao": "Cao Cao (2×2) - Target piece",
+      "guanyu": "Guan Yu (2×1) - Horizontal Blade",
+      "generals": "Four Generals (1×2) - Standing Horse",
+      "soldiers": "Four Soldiers (1×1)"
+    }
+  },
+  "hanoi": {
+    "title": "Tower of Hanoi Algorithm",
+    "subtitle": "Learn the classic recursive algorithm through animated visualization",
+    "visualization": "Algorithm Visualization",
+    "complete": "Algorithm Complete",
+    "step": "Step",
+    "moving": "Moving",
+    "disk": "disk",
+    "from": "from",
+    "to": "to",
+    "tower": "Tower",
+    "controls": {
+      "title": "Playback Controls",
+      "play": "Play",
+      "pause": "Pause",
+      "stop": "Stop",
+      "step": "Step",
+      "reset": "Reset",
+      "speed": "Animation Speed"
+    },
+    "generator": {
+      "title": "Difficulty Settings",
+      "difficulty": "Number of Disks",
+      "disks": "disks",
+      "moves": "moves"
+    },
+    "stats": {
+      "title": "Algorithm Statistics",
+      "currentStep": "Current Step",
+      "totalMoves": "Total Moves",
+      "timeElapsed": "Time Elapsed",
+      "complexity": "Time Complexity",
+      "minMoves": "Minimum Moves"
+    },
+    "explanation": {
+      "title": "Algorithm Explanation",
+      "rules": "Game Rules",
+      "rule1": "Only move one disk at a time",
+      "rule2": "Only move the top disk from a stack",
+      "rule3": "Never place a larger disk on a smaller one",
+      "algorithm": "Recursive Algorithm",
+      "step1": "Move n-1 disks from source to auxiliary tower",
+      "step2": "Move the largest disk from source to destination",
+      "step3": "Move n-1 disks from auxiliary to destination tower",
+      "complexity": "Complexity Analysis",
+      "complexityDesc": "Moving n disks requires 2^n-1 moves, time complexity is O(2^n)"
+    },
+    "code": {
+      "title": "Recursive Code"
+    }
   }
 }
