@@ -563,6 +563,9 @@ export default function ArtCritiqueModal({ onProcessingStart, onResult, onTimeEs
             description: data.result?.description || "未能生成描述",
             evaluation: data.result?.evaluation || "未能生成评价",
             suggestions: data.result?.suggestions || ["建议检查图片质量", "确保绘画内容清晰可见"],
+            sell_evaluation: data.result?.sell_evaluation || "未能生成售价评估",
+            point: typeof data.result?.point === 'number' ? data.result.point : 
+                   (typeof data.result?.point === 'string' ? parseInt(data.result.point, 10) || 5 : 5),
             return: data.result?.return || "艺术点评完成",
             end: data.result?.end || "继续创作",
             image_count: images.length
@@ -578,6 +581,9 @@ export default function ArtCritiqueModal({ onProcessingStart, onResult, onTimeEs
               description: apiResult.result?.description || "未能生成描述",
               evaluation: apiResult.result?.evaluation || "未能生成评价",
               suggestions: apiResult.result?.suggestions || ["建议检查图片质量", "确保绘画内容清晰可见"],
+              sell_evaluation: apiResult.result?.sell_evaluation || "未能生成售价评估",
+              point: typeof apiResult.result?.point === 'number' ? apiResult.result.point : 
+                     (typeof apiResult.result?.point === 'string' ? parseInt(apiResult.result.point, 10) || 5 : 5),
               return: apiResult.result?.return || "艺术点评完成",
               end: apiResult.result?.end || "继续创作"
             } : undefined,

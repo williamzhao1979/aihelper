@@ -12,6 +12,8 @@ const ArtReviewResponseSchema = z.object({
   description: z.string(),
   suggestions: z.array(z.string()),
   evaluation: z.string(),
+  sell_evaluation: z.string(),
+  point: z.number(),
   return: z.string(),
   end: z.string(),
 })
@@ -22,6 +24,8 @@ const RelaxedArtReviewResponseSchema = z.object({
   description: z.string().optional().default(""),
   suggestions: z.array(z.string()).optional().default([]),
   evaluation: z.string().optional().default(""),
+  sell_evaluation: z.string().optional().default("未能生成售价评估"),
+  point: z.number().optional().default(5),
   return: z.string().optional().default("评价完成"),
   end: z.string().optional().default("继续创作"),
 })
@@ -32,6 +36,8 @@ const MergedArtReviewResponseSchema = z.object({
   description: z.string(),
   suggestions: z.array(z.string()),
   evaluation: z.string(),
+  sell_evaluation: z.string(),
+  point: z.number(),
   return: z.string(),
   end: z.string(),
   image_count: z.number(),
@@ -42,6 +48,8 @@ const RelaxedMergedArtReviewResponseSchema = z.object({
   description: z.string().optional().default(""),
   suggestions: z.array(z.string()).optional().default([]),
   evaluation: z.string().optional().default(""),
+  sell_evaluation: z.string().optional().default("未能生成售价评估"),
+  point: z.number().optional().default(0),
   return: z.string().optional().default("评价完成"),
   end: z.string().optional().default("继续创作"),
   image_count: z.number().optional().default(0),
@@ -76,6 +84,8 @@ async function processImageWithRetry(base64Image: string, imageName: string, max
   "description": "详细描述作品的构图、色彩运用、绘画技法、主题内容、视觉效果等艺术元素",
   "evaluation": "专业的艺术评价，包括作品的优点、特色、艺术价值、情感表达、创意性等",
   "suggestions": ["具体的技法改进建议1", "构图或色彩建议2", "创作方向建议3"],
+  "sell_evaluation": "如果这幅作品要出售，价格在什么范围内？这个回复是用来鼓励孩子的，不要太严肃。",
+  "point": "按照10个等级进行评价，1分为最低，10分为最高。只返回数字，不要返回文字。",
   "return": "总结性评价",
   "end": "鼓励性结语"
 }
@@ -118,6 +128,28 @@ async function processImageWithRetry(base64Image: string, imageName: string, max
         console.error(`JSON parse error for ${imageName}:`, parseError)
         throw new Error(`Invalid JSON format: ${parseError}`)
       }
+
+      // 数据类型转换和清理
+      if (parsedResponse.point !== undefined) {
+        // 确保point是数字
+        const pointValue = typeof parsedResponse.point === 'string' 
+          ? parseInt(parsedResponse.point.replace(/[^0-9]/g, ''), 10) 
+          : parsedResponse.point;
+        parsedResponse.point = isNaN(pointValue) ? 5 : Math.max(1, Math.min(10, pointValue));
+      } else {
+        parsedResponse.point = 5; // 默认值
+      }
+
+      // 确保sell_evaluation不为空
+      if (!parsedResponse.sell_evaluation || parsedResponse.sell_evaluation.trim() === '') {
+        parsedResponse.sell_evaluation = "这是一幅很有创意的作品！";
+      }
+
+      console.log(`Processed response for ${imageName}:`, {
+        point: parsedResponse.point,
+        sell_evaluation: parsedResponse.sell_evaluation,
+        style: parsedResponse.style
+      });
 
       // Try strict validation first
       try {
@@ -185,6 +217,8 @@ async function processMergedImagesWithRetry(
   "description": "按顺序分析所有作品的整体特征、风格统一性、主题关联性、技法发展等",
   "evaluation": "对整个作品系列的专业评价，包括系列的完整性、艺术价值、创作理念等",
   "suggestions": ["针对整个系列的改进建议1", "风格发展建议2", "创作方向建议3"],
+  "sell_evaluation": "如果这个系列作品要出售，价格在什么范围内？这个回复是用来鼓励孩子的，不要太严肃。",
+  "point": "按照10个等级对整个系列进行评价，1分为最低，10分为最高。只返回数字，不要返回文字。",
   "return": "系列作品总结性评价",
   "end": "鼓励性结语",
   "image_count": ${base64Images.length}
@@ -227,6 +261,29 @@ async function processMergedImagesWithRetry(
       if (!parsedResponse.image_count) {
         parsedResponse.image_count = base64Images.length
       }
+
+      // 数据类型转换和清理（合并模式）
+      if (parsedResponse.point !== undefined) {
+        // 确保point是数字
+        const pointValue = typeof parsedResponse.point === 'string' 
+          ? parseInt(parsedResponse.point.replace(/[^0-9]/g, ''), 10) 
+          : parsedResponse.point;
+        parsedResponse.point = isNaN(pointValue) ? 5 : Math.max(1, Math.min(10, pointValue));
+      } else {
+        parsedResponse.point = 5; // 默认值
+      }
+
+      // 确保sell_evaluation不为空
+      if (!parsedResponse.sell_evaluation || parsedResponse.sell_evaluation.trim() === '') {
+        parsedResponse.sell_evaluation = "这是一个很有创意的作品系列！";
+      }
+
+      console.log(`Processed merged response:`, {
+        point: parsedResponse.point,
+        sell_evaluation: parsedResponse.sell_evaluation,
+        style: parsedResponse.style,
+        image_count: parsedResponse.image_count
+      });
 
       // Try strict validation first
       try {

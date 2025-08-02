@@ -612,6 +612,15 @@ const ArtCritiqueResultDisplay = ({ result, onImageClick }: { result: any, onIma
       {/* 合并处理结果 */}
       {result.merged && result.result && (
         <div className="space-y-4">
+          {/* 调试信息 - 可在生产环境中移除 */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="bg-gray-100 border border-gray-300 rounded-lg p-2 text-xs">
+              <strong>调试信息:</strong> 
+              <div>sell_evaluation: "{result.result.sell_evaluation}" (类型: {typeof result.result.sell_evaluation})</div>
+              <div>point: {result.result.point} (类型: {typeof result.result.point})</div>
+            </div>
+          )}
+          
           {/* 艺术风格 */}
           <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
             <h4 className="font-semibold mb-2 text-purple-800 flex items-center gap-2">
@@ -666,6 +675,68 @@ const ArtCritiqueResultDisplay = ({ result, onImageClick }: { result: any, onIma
               {result.result.return || "艺术点评完成"}
             </div>
           </div>
+
+          {/* 售价评估 */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <h4 className="font-semibold mb-2 text-amber-800 flex items-center gap-2">
+              💰 售价评估
+            </h4>
+            <div className="text-sm text-amber-700 whitespace-pre-wrap">
+              {result.result.sell_evaluation || "未能生成售价评估"}
+            </div>
+          </div>
+
+          {/* 评分显示 - 鼓励孩子的设计 */}
+          {(result.result.point !== undefined && result.result.point !== null) && (
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-4">
+              <h4 className="font-semibold mb-3 text-yellow-800 flex items-center gap-2">
+                🌟 作品评分
+              </h4>
+              <div className="flex flex-col items-center space-y-3">
+                {/* 星星评分显示 */}
+                <div className="flex items-center gap-1">
+                  {[...Array(10)].map((_, starIndex) => (
+                    <div
+                      key={starIndex}
+                      className={`w-6 h-6 flex items-center justify-center rounded-full transition-all duration-300 ${
+                        starIndex < result.result.point
+                          ? 'bg-yellow-400 text-yellow-800 scale-110 shadow-md'
+                          : 'bg-gray-200 text-gray-400'
+                      }`}
+                    >
+                      ⭐
+                    </div>
+                  ))}
+                </div>
+                
+                {/* 数字评分 */}
+                <div className="text-2xl font-bold text-yellow-700">
+                  {result.result.point}/10
+                </div>
+                
+                {/* 鼓励性文字 */}
+                <div className="text-center">
+                  {result.result.point >= 9 && (
+                    <div className="text-lg font-semibold text-yellow-800">🎉 太棒了！你是小艺术家！</div>
+                  )}
+                  {result.result.point >= 7 && result.result.point < 9 && (
+                    <div className="text-lg font-semibold text-yellow-800">👏 画得很好！继续加油！</div>
+                  )}
+                  {result.result.point >= 5 && result.result.point < 7 && (
+                    <div className="text-lg font-semibold text-yellow-800">💪 不错哦！再练习会更棒！</div>
+                  )}
+                  {result.result.point < 5 && (
+                    <div className="text-lg font-semibold text-yellow-800">🌱 每一次创作都是进步！</div>
+                  )}
+                </div>
+                
+                {/* 装饰性元素 */}
+                <div className="flex gap-2 text-2xl animate-pulse">
+                  🎨 ✨ 🌈
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* 鼓励结语 */}
           <div className="bg-rose-50 border border-rose-200 rounded-lg p-4">
@@ -725,6 +796,68 @@ const ArtCritiqueResultDisplay = ({ result, onImageClick }: { result: any, onIma
                       ))}
                     </div>
                   </div>
+
+                  {/* 售价评估 */}
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <h5 className="font-semibold mb-1 text-amber-800">💰 售价评估</h5>
+                    <div className="text-sm text-amber-700">
+                      {item.result.sell_evaluation || "未能生成售价评估"}
+                    </div>
+                  </div>
+
+                  {/* 评分显示 - 鼓励孩子的设计 */}
+                  {(item.result.point !== undefined && item.result.point !== null) && (
+                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-xl p-4">
+                      <h5 className="font-semibold mb-3 text-yellow-800 flex items-center gap-2">
+                        🌟 作品评分
+                      </h5>
+                      <div className="flex flex-col items-center space-y-3">
+                        {/* 星星评分显示 */}
+                        <div className="flex items-center gap-1">
+                          {[...Array(10)].map((_, starIndex) => (
+                            <div
+                              key={starIndex}
+                              className={`w-6 h-6 flex items-center justify-center rounded-full transition-all duration-300 ${
+                                starIndex < item.result.point
+                                  ? 'bg-yellow-400 text-yellow-800 scale-110 shadow-md'
+                                  : 'bg-gray-200 text-gray-400'
+                              }`}
+                            >
+                              ⭐
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* 数字评分 */}
+                        <div className="text-2xl font-bold text-yellow-700">
+                          {item.result.point}/10
+                        </div>
+                        
+                        {/* 鼓励性文字 */}
+                        <div className="text-center">
+                          {item.result.point >= 9 && (
+                            <div className="text-lg font-semibold text-yellow-800">🎉 太棒了！你是小艺术家！</div>
+                          )}
+                          {item.result.point >= 7 && item.result.point < 9 && (
+                            <div className="text-lg font-semibold text-yellow-800">👏 画得很好！继续加油！</div>
+                          )}
+                          {item.result.point >= 5 && item.result.point < 7 && (
+                            <div className="text-lg font-semibold text-yellow-800">💪 不错哦！再练习会更棒！</div>
+                          )}
+                          {item.result.point < 5 && (
+                            <div className="text-lg font-semibold text-yellow-800">🌱 每一次创作都是进步！</div>
+                          )}
+                        </div>
+                        
+                        {/* 装饰性元素 */}
+                        <div className="flex gap-2 text-2xl animate-pulse">
+                          🎨 ✨ 🌈
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                      
                 </div>
               ) : (
                 <div className="text-red-600">
@@ -918,6 +1051,23 @@ export default function MyAIChat() {
   // 处理绘画点评结果
   const handleArtCritiqueResult = (result: any) => {
     console.log('handleArtCritiqueResult received:', result);
+    
+    // 添加调试信息
+    if (result.success && result.result) {
+      console.log('Art critique result data:', {
+        sell_evaluation: result.result.sell_evaluation,
+        point: result.result.point,
+        style: result.result.style,
+        description: result.result.description
+      });
+    }
+    if (result.success && result.results) {
+      console.log('Art critique results data:', result.results.map((item: any) => ({
+        imageName: item.imageName,
+        sell_evaluation: item.result?.sell_evaluation,
+        point: item.result?.point
+      })));
+    }
     
     if (result.type === 'art-critique-processing') {
       // 处理中状态，添加新消息
