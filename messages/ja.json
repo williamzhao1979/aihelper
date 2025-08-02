@@ -425,5 +425,330 @@
         "saveDesc": "写真が保存されました。ダウンロードページに進みます"
       }
     }
+  },
+  "bubbleSort": {
+    "title": "バブルソート可視化",
+    "subtitle": "バブルソートアルゴリズムの動作を段階的に学習",
+    "visualization": "アルゴリズム可視化",
+    "step": "ステップ",
+    "comparing": "位置",
+    "swapped": "の要素を比較中 - 交換しました！",
+    "complete": "ソート完了！🎉",
+    "controls": {
+      "play": "再生",
+      "pause": "一時停止",
+      "stop": "停止",
+      "step": "ステップ",
+      "reset": "リセット",
+      "speed": "速度"
+    },
+    "generator": {
+      "title": "配列ジェネレーター",
+      "difficulty": "難易度レベル",
+      "generate": "新しい配列を生成",
+      "easy": "簡単",
+      "medium": "普通",
+      "hard": "難しい",
+      "easyDesc": "5つの数字 (1-20)",
+      "mediumDesc": "8つの数字 (1-50)",
+      "hardDesc": "12の数字 (1-100)"
+    },
+    "code": "バブルソートコード",
+    "explanation": {
+      "title": "バブルソートの仕組み",
+      "steps": "アルゴリズムのステップ：",
+      "step1": "配列内の隣接する要素を比較",
+      "step2": "左の要素が右の要素より大きい場合、それらを交換",
+      "step3": "配列全体でこのプロセスを続行",
+      "step4": "交換が不要になるまで繰り返し",
+      "legend": "色の凡例：",
+      "normal": "通常の要素",
+      "comparing": "比較中",
+      "swapping": "交換中",
+      "sorted": "ソート済み",
+      "complexity": "時間計算量：",
+      "bestCase": "最良の場合：O(n) - 配列が既にソートされている時",
+      "averageCase": "平均的な場合：O(n²)",
+      "worstCase": "最悪の場合：O(n²) - 配列が逆順の時"
+    }
+  },
+  "compareSort": {
+    "title": "ソートアルゴリズム比較",
+    "subtitle": "異なるソートアルゴリズムの性能を並べて比較",
+    "algorithms": {
+      "bubble": "バブルソート",
+      "quick": "クイックソート",
+      "insertion": "挿入ソート"
+    },
+    "controls": {
+      "start": "比較開始",
+      "pause": "一時停止",
+      "reset": "リセット",
+      "speed": "アニメーション速度"
+    },
+    "generator": {
+      "title": "配列ジェネレーター",
+      "difficulty": "データサイズ",
+      "generate": "新しい配列を生成",
+      "small": "小",
+      "medium": "中",
+      "large": "大",
+      "smallDesc": "10個の数字",
+      "mediumDesc": "20個の数字",
+      "largeDesc": "50個の数字"
+    },
+    "stats": {
+      "title": "パフォーマンス統計",
+      "comparisons": "比較回数",
+      "swaps": "交換回数",
+      "time": "経過時間",
+      "timeComplexity": "時間計算量",
+      "winner": "勝者",
+      "finished": "完了"
+    },
+    "explanation": {
+      "title": "アルゴリズムの説明",
+      "bubbleTitle": "バブルソート",
+      "bubbleDesc": "リストを繰り返し通過し、隣接する要素を比較して順序が間違っている場合に交換する。",
+      "quickTitle": "クイックソート",
+      "quickDesc": "'ピボット'要素を選び、ピボットの周りで配列を分割し、サブ配列を再帰的にソートする。",
+      "insertionTitle": "挿入ソート",
+      "insertionDesc": "各要素を適切な位置に挿入することで、最終的なソート済み配列を一つずつ構築する。",
+      "complexity": {
+        "bubble": {
+          "best": "最良：O(n)",
+          "average": "平均：O(n²)",
+          "worst": "最悪：O(n²)"
+        },
+        "quick": {
+          "best": "最良：O(n log n)",
+          "average": "平均：O(n log n)",
+          "worst": "最悪：O(n²)"
+        },
+        "insertion": {
+          "best": "最良：O(n)",
+          "average": "平均：O(n²)",
+          "worst": "最悪：O(n²)"
+        }
+      }
+    }
+  },
+  "fibonacci": {
+    "title": "フィボナッチ数列再帰演示",
+    "subtitle": "フィボナッチ数列計算における再帰呼び出しの過程を可視化",
+    "controls": {
+      "start": "アニメーション開始",
+      "pause": "一時停止",
+      "reset": "リセット",
+      "step": "ステップ実行",
+      "speed": "アニメーション速度",
+      "calculate": "F(n)を計算"
+    },
+    "input": {
+      "title": "入力パラメータ",
+      "number": "F(n)を計算",
+      "numberDesc": "数字を入力 (1-10)"
+    },
+    "tree": {
+      "title": "再帰呼び出しツリー",
+      "calculating": "計算中...",
+      "computed": "計算済み",
+      "pending": "待機中",
+      "baseCase": "基本ケース"
+    },
+    "stats": {
+      "title": "パフォーマンス統計",
+      "totalCalls": "総関数呼び出し回数",
+      "redundantCalls": "重複呼び出し回数",
+      "maxDepth": "最大再帰深度",
+      "result": "結果",
+      "timeComplexity": "時間計算量：O(2^n)",
+      "spaceComplexity": "空間計算量：O(n)"
+    },
+    "sequence": {
+      "title": "フィボナッチ数列",
+      "description": "各数字が前の2つの数字の和である数列"
+    },
+    "explanation": {
+      "title": "フィボナッチ再帰の仕組み",
+      "recursiveFormula": "再帰式",
+      "formulaText": "F(n) = F(n-1) + F(n-2)",
+      "baseCases": "基本ケース",
+      "baseCase1": "F(0) = 0",
+      "baseCase2": "F(1) = 1",
+      "process": "再帰プロセス",
+      "step1": "1. nが0または1かチェック（基本ケース）",
+      "step2": "2. そうでなければ、F(n-1)とF(n-2)を再帰呼び出し",
+      "step3": "3. 両方の再帰呼び出しの結果を加算",
+      "step4": "4. 和を返す",
+      "complexity": "計算量分析",
+      "timeDesc": "時間：重複計算により指数的増加",
+      "spaceDesc": "空間：呼び出しスタックの深度により線形",
+      "optimization": "最適化注意",
+      "optimizationDesc": "この素朴なアプローチは指数時間計算量を持つ。動的プログラミングやメモ化によりO(n)に削減可能。"
+    },
+    "code": {
+      "title": "フィボナッチ再帰コード",
+      "naive": "素朴な再帰実装",
+      "optimized": "メモ化最適化版"
+    }
+  },
+  "puzzle": {
+    "title": "ジグソーパズル",
+    "subtitle": "画像をアップロードして、オリジナルのパズルチャレンジを作成",
+    "settings": {
+      "title": "ゲーム設定",
+      "presetImages": "プリセット画像",
+      "uploadImage": "カスタム画像",
+      "selectImage": "画像を選択",
+      "columns": "列数",
+      "rows": "行数"
+    },
+    "presets": {
+      "peruere": "ペルエラ",
+      "aetherLumine": "空とホタル",
+      "family": "温かい家族",
+      "cute": "可愛い表情"
+    },
+    "controls": {
+      "start": "ゲーム開始",
+      "reset": "リセット", 
+      "showPreview": "プレビュー表示",
+      "hidePreview": "プレビュー非表示"
+    },
+    "stats": {
+      "title": "ゲーム統計",
+      "time": "時間",
+      "moves": "移動回数",
+      "progress": "進捗",
+      "difficulty": "難易度",
+      "movesCount": "手"
+    },
+    "difficulty": {
+      "easy": "簡単",
+      "medium": "普通",
+      "hard": "難しい",
+      "expert": "エキスパート"
+    },
+    "preview": {
+      "title": "元画像"
+    },
+    "game": {
+      "puzzleBoard": "パズルボード",
+      "completed": "おめでとうございます！",
+      "instructions": "パズルピースをクリックして選択し、別のピースをクリックして交換します。ドラッグ&ドロップも可能です。"
+    },
+    "emptyState": {
+      "title": "パズルの旅を始めよう",
+      "description": "プリセット画像を選択するか、独自の画像をアップロードして、オリジナルのパズルチャレンジを作成",
+      "quickStart": "クイックスタート",
+      "or": "または",
+      "uploadButton": "カスタム画像をアップロード"
+    }
+  },
+  "huarongdao": {
+    "title": "華容道",
+    "subtitle": "古典的な中国のスライディングパズル - 横刀立馬レイアウト、曹操の脱出を助けよう",
+    "controls": {
+      "title": "ゲームコントロール",
+      "backgroundImage": "背景画像",
+      "selectImage": "背景画像を選択",
+      "imageUploaded": "画像がアップロードされました",
+      "start": "ゲーム開始",
+      "pause": "ゲーム一時停止",
+      "reset": "ゲームリセット",
+      "showHelp": "ヘルプを表示",
+      "hideHelp": "ヘルプを非表示",
+      "moveSelected": "選択した駒を移動"
+    },
+    "stats": {
+      "title": "ゲーム統計",
+      "time": "時間",
+      "moves": "移動回数",
+      "status": "状態",
+      "completed": "完了",
+      "playing": "プレイ中",
+      "movesCount": "手"
+    },
+    "game": {
+      "boardTitle": "ゲームボード",
+      "victory": "おめでとうございます！クリアしました！",
+      "exitArea": "出口",
+      "clickStart": "「ゲーム開始」をクリックしてチャレンジを始めましょう",
+      "selectPiece": "クリックで選択、ドラッグで移動、右クリックで背景画像をアップロード",
+      "pieceSelected": "{piece}を選択しました。ドラッグまたは矢印キーで移動してください"
+    },
+    "layout": {
+      "hengdaolima": "横刀立馬"
+    },
+    "instructions": {
+      "title": "ゲーム説明",
+      "objective": "目標",
+      "objectiveDesc": "駒を動かして曹操（赤い大きな四角）をボードの下部中央の出口まで導きます。",
+      "howToPlay": "遊び方",
+      "step1": "駒をクリックして選択するか、直接ドラッグして目標位置に移動します",
+      "step2": "任意の駒を右クリックしてカスタム背景画像をアップロードできます",
+      "step3": "一度に一つの駒だけを隣接する空いているスペースに移動できます",
+      "step4": "他の駒を戦略的に配置して曹操の道を開きます",
+      "step5": "目標は曹操を下部中央の出口に到達させることです",
+      "pieces": "駒の説明"
+    },
+    "pieces": {
+      "caocao": "曹操 (2×2) - 目標駒",
+      "guanyu": "関羽 (2×1) - 横刀",
+      "generals": "四大将軍 (1×2) - 立馬",
+      "soldiers": "四兵士 (1×1)"
+    }
+  },
+  "hanoi": {
+    "title": "ハノイの塔アルゴリズム",
+    "subtitle": "アニメーション可視化で古典的な再帰アルゴリズムの動作原理を学ぶ",
+    "visualization": "アルゴリズム可視化",
+    "complete": "アルゴリズム完了",
+    "step": "ステップ",
+    "moving": "移動",
+    "disk": "ディスク",
+    "from": "から",
+    "to": "へ",
+    "tower": "タワー",
+    "controls": {
+      "title": "再生コントロール",
+      "play": "再生",
+      "pause": "一時停止",
+      "stop": "停止",
+      "step": "ステップ",
+      "reset": "リセット",
+      "speed": "アニメーション速度"
+    },
+    "generator": {
+      "title": "難易度設定",
+      "difficulty": "ディスク数",
+      "disks": "枚",
+      "moves": "手"
+    },
+    "stats": {
+      "title": "アルゴリズム統計",
+      "currentStep": "現在のステップ",
+      "totalMoves": "総移動回数",
+      "timeElapsed": "経過時間",
+      "complexity": "時間計算量",
+      "minMoves": "最小移動回数"
+    },
+    "explanation": {
+      "title": "アルゴリズム説明",
+      "rules": "ゲームルール",
+      "rule1": "一度に一つのディスクのみ移動可能",
+      "rule2": "スタックの一番上のディスクのみ移動可能",
+      "rule3": "大きなディスクを小さなディスクの上に置くことはできない",
+      "algorithm": "再帰アルゴリズム",
+      "step1": "n-1個のディスクをソースから補助タワーに移動",
+      "step2": "最大のディスクをソースから目的地に移動",
+      "step3": "n-1個のディスクを補助タワーから目的地タワーに移動",
+      "complexity": "計算量分析",
+      "complexityDesc": "n個のディスクを移動するには2^n-1回の移動が必要で、時間計算量はO(2^n)"
+    },
+    "code": {
+      "title": "再帰コード"
+    }
   }
 }

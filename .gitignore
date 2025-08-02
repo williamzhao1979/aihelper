@@ -58,3 +58,4 @@ components/SupabaseStorageTest.tsx
 
 /temp
 
+*.claude

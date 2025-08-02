@@ -469,5 +469,330 @@
         "downloadSuccessDesc": "L版照片布局已保存到本地"
       }
     }
+  },
+  "bubbleSort": {
+    "title": "冒泡排序可视化",
+    "subtitle": "逐步学习冒泡排序算法的工作原理",
+    "visualization": "算法可视化",
+    "step": "步骤",
+    "comparing": "正在比较位置",
+    "swapped": "的元素 - 已交换！",
+    "complete": "排序完成！🎉",
+    "controls": {
+      "play": "播放",
+      "pause": "暂停",
+      "stop": "停止",
+      "step": "单步",
+      "reset": "重置",
+      "speed": "速度"
+    },
+    "generator": {
+      "title": "数组生成器",
+      "difficulty": "难度等级",
+      "generate": "生成新数组",
+      "easy": "简单",
+      "medium": "中等",
+      "hard": "困难",
+      "easyDesc": "5个数字 (1-20)",
+      "mediumDesc": "8个数字 (1-50)",
+      "hardDesc": "12个数字 (1-100)"
+    },
+    "code": "冒泡排序代码",
+    "explanation": {
+      "title": "冒泡排序原理",
+      "steps": "算法步骤：",
+      "step1": "比较数组中相邻的元素",
+      "step2": "如果左边的元素大于右边的元素，则交换它们",
+      "step3": "对整个数组继续这个过程",
+      "step4": "重复直到不再需要交换",
+      "legend": "颜色图例：",
+      "normal": "普通元素",
+      "comparing": "正在比较",
+      "swapping": "正在交换",
+      "sorted": "已排序",
+      "complexity": "时间复杂度：",
+      "bestCase": "最佳情况：O(n) - 数组已经有序时",
+      "averageCase": "平均情况：O(n²)",
+      "worstCase": "最坏情况：O(n²) - 数组逆序时"
+    }
+  },
+  "compareSort": {
+    "title": "排序算法比较演示",
+    "subtitle": "并排比较不同排序算法的性能表现",
+    "algorithms": {
+      "bubble": "冒泡排序",
+      "quick": "快速排序",
+      "insertion": "插入排序"
+    },
+    "controls": {
+      "start": "开始比较",
+      "pause": "暂停",
+      "reset": "重置",
+      "speed": "动画速度"
+    },
+    "generator": {
+      "title": "数组生成器",
+      "difficulty": "数据规模",
+      "generate": "生成新数组",
+      "small": "小规模",
+      "medium": "中等规模",
+      "large": "大规模",
+      "smallDesc": "10个数字",
+      "mediumDesc": "20个数字",
+      "largeDesc": "50个数字"
+    },
+    "stats": {
+      "title": "性能统计",
+      "comparisons": "比较次数",
+      "swaps": "交换次数",
+      "time": "耗时",
+      "timeComplexity": "时间复杂度",
+      "winner": "胜出者",
+      "finished": "已完成"
+    },
+    "explanation": {
+      "title": "算法说明",
+      "bubbleTitle": "冒泡排序",
+      "bubbleDesc": "重复地遍历列表，比较相邻元素并在顺序错误时交换它们。",
+      "quickTitle": "快速排序",
+      "quickDesc": "选择一个'基准'元素，围绕基准对数组进行分区，然后递归排序子数组。",
+      "insertionTitle": "插入排序",
+      "insertionDesc": "通过将每个元素插入到其正确位置来逐一构建最终的排序数组。",
+      "complexity": {
+        "bubble": {
+          "best": "最佳：O(n)",
+          "average": "平均：O(n²)",
+          "worst": "最坏：O(n²)"
+        },
+        "quick": {
+          "best": "最佳：O(n log n)",
+          "average": "平均：O(n log n)",
+          "worst": "最坏：O(n²)"
+        },
+        "insertion": {
+          "best": "最佳：O(n)",
+          "average": "平均：O(n²)",
+          "worst": "最坏：O(n²)"
+        }
+      }
+    }
+  },
+  "fibonacci": {
+    "title": "斐波那契数列递归演示",
+    "subtitle": "可视化斐波那契数列计算中的递归调用过程",
+    "controls": {
+      "start": "开始动画",
+      "pause": "暂停",
+      "reset": "重置",
+      "step": "单步执行",
+      "speed": "动画速度",
+      "calculate": "计算 F(n)"
+    },
+    "input": {
+      "title": "输入参数",
+      "number": "计算 F(n)",
+      "numberDesc": "输入数字 (1-10)"
+    },
+    "tree": {
+      "title": "递归调用树",
+      "calculating": "计算中...",
+      "computed": "已计算",
+      "pending": "等待中",
+      "baseCase": "基础情况"
+    },
+    "stats": {
+      "title": "性能统计",
+      "totalCalls": "总函数调用次数",
+      "redundantCalls": "重复调用次数",
+      "maxDepth": "最大递归深度",
+      "result": "结果",
+      "timeComplexity": "时间复杂度：O(2^n)",
+      "spaceComplexity": "空间复杂度：O(n)"
+    },
+    "sequence": {
+      "title": "斐波那契数列",
+      "description": "每个数字都是前两个数字之和的数列"
+    },
+    "explanation": {
+      "title": "斐波那契递归原理",
+      "recursiveFormula": "递归公式",
+      "formulaText": "F(n) = F(n-1) + F(n-2)",
+      "baseCases": "基础情况",
+      "baseCase1": "F(0) = 0",
+      "baseCase2": "F(1) = 1",
+      "process": "递归过程",
+      "step1": "1. 检查 n 是否为 0 或 1（基础情况）",
+      "step2": "2. 如果不是，递归调用 F(n-1) 和 F(n-2)",
+      "step3": "3. 将两个递归调用的结果相加",
+      "step4": "4. 返回和",
+      "complexity": "复杂度分析",
+      "timeDesc": "时间：由于重复计算导致指数增长",
+      "spaceDesc": "空间：由于调用栈深度为线性",
+      "optimization": "优化说明",
+      "optimizationDesc": "这种朴素方法具有指数时间复杂度。动态规划或记忆化可以将其降低到 O(n)。"
+    },
+    "code": {
+      "title": "斐波那契递归代码",
+      "naive": "朴素递归实现",
+      "optimized": "记忆化优化版本"
+    }
+  },
+  "puzzle": {
+    "title": "拼图游戏",
+    "subtitle": "上传您的图片，创建个性化拼图挑战",
+    "settings": {
+      "title": "游戏设置",
+      "presetImages": "预设图片",
+      "uploadImage": "自定义图片",
+      "selectImage": "选择图片",
+      "columns": "列数",
+      "rows": "行数"
+    },
+    "presets": {
+      "peruere": "佩露薇拉",
+      "aetherLumine": "空与荧",
+      "family": "温馨家庭",
+      "cute": "可爱表情"
+    },
+    "controls": {
+      "start": "开始游戏",
+      "reset": "重置游戏", 
+      "showPreview": "显示预览",
+      "hidePreview": "隐藏预览"
+    },
+    "stats": {
+      "title": "游戏统计",
+      "time": "时间",
+      "moves": "移动次数",
+      "progress": "进度",
+      "difficulty": "难度",
+      "movesCount": "步"
+    },
+    "difficulty": {
+      "easy": "简单",
+      "medium": "中等",
+      "hard": "困难",
+      "expert": "专家"
+    },
+    "preview": {
+      "title": "原图预览"
+    },
+    "game": {
+      "puzzleBoard": "拼图游戏区",
+      "completed": "恭喜完成！",
+      "instructions": "点击拼图块进行选择，再点击另一块进行交换。您也可以直接拖拽拼图块。"
+    },
+    "emptyState": {
+      "title": "开始您的拼图之旅",
+      "description": "选择预设图片或上传自定义图片，创建个性化拼图挑战",
+      "quickStart": "快速开始",
+      "or": "或者",
+      "uploadButton": "上传自定义图片"
+    }
+  },
+  "huarongdao": {
+    "title": "华容道",
+    "subtitle": "经典中国智力游戏 - 横刀立马布局，帮助曹操突出重围",
+    "controls": {
+      "title": "游戏控制",
+      "backgroundImage": "背景图片",
+      "selectImage": "选择背景图片",
+      "imageUploaded": "图片已上传",
+      "start": "开始游戏",
+      "pause": "暂停游戏",
+      "reset": "重置游戏",
+      "showHelp": "显示帮助",
+      "hideHelp": "隐藏帮助",
+      "moveSelected": "移动选中棋子"
+    },
+    "stats": {
+      "title": "游戏统计",
+      "time": "时间",
+      "moves": "移动次数",
+      "status": "状态",
+      "completed": "已完成",
+      "playing": "游戏中",
+      "movesCount": "步"
+    },
+    "game": {
+      "boardTitle": "游戏棋盘",
+      "victory": "恭喜过关！",
+      "exitArea": "出口",
+      "clickStart": "点击「开始游戏」来开始挑战",
+      "selectPiece": "点击选择棋子，拖拽移动，或右键上传背景图片",
+      "pieceSelected": "已选中 {piece}，拖拽或使用方向键移动"
+    },
+    "layout": {
+      "hengdaolima": "横刀立马"
+    },
+    "instructions": {
+      "title": "游戏说明",
+      "objective": "游戏目标",
+      "objectiveDesc": "移动棋子，帮助曹操（红色大方块）移动到棋盘底部中央的出口位置。",
+      "howToPlay": "游戏玩法",
+      "step1": "点击棋子选中，或直接拖拽棋子到目标位置",
+      "step2": "右键点击任意棋子可上传个性化背景图片",
+      "step3": "每次只能移动一个棋子到相邻的空位",
+      "step4": "合理安排其他棋子的位置，为曹操让出通道",
+      "step5": "最终目标是让曹操到达底部中央出口",
+      "pieces": "棋子说明"
+    },
+    "pieces": {
+      "caocao": "曹操 (2×2) - 目标棋子",
+      "guanyu": "关羽 (2×1) - 横刀",
+      "generals": "四大将军 (1×2) - 立马",
+      "soldiers": "四小兵 (1×1)"
+    }
+  },
+  "hanoi": {
+    "title": "汉诺塔算法演示",
+    "subtitle": "通过动画可视化学习经典递归算法的工作原理",
+    "visualization": "算法可视化",
+    "complete": "算法完成",
+    "step": "步骤",
+    "moving": "移动",
+    "disk": "圆盘",
+    "from": "从",
+    "to": "到",
+    "tower": "柱子",
+    "controls": {
+      "title": "播放控制",
+      "play": "播放",
+      "pause": "暂停",
+      "stop": "停止",
+      "step": "单步",
+      "reset": "重置",
+      "speed": "动画速度"
+    },
+    "generator": {
+      "title": "难度选择",
+      "difficulty": "圆盘数量",
+      "disks": "个圆盘",
+      "moves": "步"
+    },
+    "stats": {
+      "title": "算法统计",
+      "currentStep": "当前步骤",
+      "totalMoves": "总移动次数",
+      "timeElapsed": "用时",
+      "complexity": "时间复杂度",
+      "minMoves": "最少步数"
+    },
+    "explanation": {
+      "title": "算法说明",
+      "rules": "游戏规则",
+      "rule1": "一次只能移动一个圆盘",
+      "rule2": "只能移动最上面的圆盘",
+      "rule3": "大圆盘不能放在小圆盘上",
+      "algorithm": "递归算法",
+      "step1": "将上面n-1个圆盘移动到辅助柱",
+      "step2": "将最大的圆盘移动到目标柱",
+      "step3": "将辅助柱上的n-1个圆盘移动到目标柱",
+      "complexity": "复杂度分析",
+      "complexityDesc": "移动n个圆盘需要2^n-1步，时间复杂度为O(2^n)"
+    },
+    "code": {
+      "title": "递归代码"
+    }
   }
 }
